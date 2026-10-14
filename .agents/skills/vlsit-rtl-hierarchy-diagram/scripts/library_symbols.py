@@ -22,7 +22,7 @@ EDITABLE = {
     'labelPosition', 'verticalLabelPosition', 'spacing', 'spacingTop',
     'spacingBottom', 'spacingLeft', 'spacingRight', 'entryX', 'entryY',
     'entryDx', 'entryDy', 'exitX', 'exitY', 'exitDx', 'exitDy',
-    'entryPerimeter', 'exitPerimeter',
+    'entryPerimeter', 'exitPerimeter', 'jumpStyle', 'jumpSize',
 }
 BLACK = {'black', '#000000', '#000'}
 WHITE = {'white', '#ffffff', '#fff'}
@@ -152,6 +152,13 @@ def validate_pages(pages, digest, prototypes):
         groups = {}
         for cell in cells:
             if cell.get('id') in roots:
+                continue
+            if cell.get('vlsit_native_table') == '1':
+                native = style_map(cell.get('style'))
+                if native.get('fontSize') != '18' or native.get('fontColor', '').lower() not in BLACK:
+                    raise ValueError('Native table cells must use black 18 pt text.')
+                if native.get('strokeColor', '').lower() not in BLACK | {'none'} or native.get('fillColor', '').lower() not in WHITE | {'none'}:
+                    raise ValueError('Native table cells must be black and white.')
                 continue
             if cell.get('vlsit_library_sha256') != digest:
                 raise ValueError('A cell is missing the correct library hash.')

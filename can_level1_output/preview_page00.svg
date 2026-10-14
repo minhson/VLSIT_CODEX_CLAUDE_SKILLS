@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1500" viewBox="0 0 2800 3000" font-family="Helvetica" font-size="18">
+<rect width="100%" height="100%" fill="white"/>
+<rect x="1230" y="500" width="60" height="60" fill="white" stroke="black" stroke-width="2"/>
+<rect x="1320" y="500" width="60" height="60" fill="white" stroke="black" stroke-width="2"/>
+<rect x="1235" y="610" width="130" height="60" fill="white" stroke="black" stroke-width="2"/>
+<text x="1300" y="635" text-anchor="middle">TOP</text>
+<text x="1300" y="657" text-anchor="middle">(can_top)</text>
+<line x1="1230" y1="500" x2="1290" y2="560" stroke="black" stroke-width="2"/><line x1="1290" y1="500" x2="1230" y2="560" stroke="black" stroke-width="2"/>
+<line x1="1320" y1="500" x2="1380" y2="560" stroke="black" stroke-width="2"/><line x1="1380" y1="500" x2="1320" y2="560" stroke="black" stroke-width="2"/>
+<text x="1145" y="590" text-anchor="middle">CLK</text>
+<text x="1145" y="612" text-anchor="middle">clk_i, rst_i</text>
+<text x="288" y="2289" text-anchor="start">Interface connector (one per signal group; arrow = active to passive)</text>
+<text x="1410" y="715" text-anchor="middle">CKO</text>
+<text x="1410" y="737" text-anchor="middle">clkout_o</text>
+<text x="1180" y="715" text-anchor="middle">BOS</text>
+<text x="1180" y="737" text-anchor="middle">bus_off_on</text>
+<text x="1350" y="464" text-anchor="middle">TX</text>
+<text x="1350" y="486" text-anchor="middle">tx_o</text>
+<text x="108" y="2364" text-anchor="start">The enclosing frame is the parent module; blocks inside are its instances and functional groups (FG = functional group of the module own logic). [pulse] = one-cycle signal, [level] = held value. Interface labels outside the frame mark connections to the outside.</text>
+<text x="920" y="644" text-anchor="middle">HOST</text>
+<text x="920" y="666" text-anchor="middle">ale_i, rd_i, wr_i, cs_can_i</text>
+<text x="920" y="688" text-anchor="middle">port_0_io[7:0]</text>
+<text x="108" y="2248" text-anchor="start">Legend</text>
+<text x="1260" y="464" text-anchor="middle">RX</text>
+<text x="1260" y="486" text-anchor="middle">rx_i</text>
+<text x="1300" y="740" text-anchor="middle">IRQ</text>
+<text x="1300" y="762" text-anchor="middle">irq_on</text>
+<rect x="100" y="1380" width="2400" height="156" fill="white" stroke="black" stroke-width="2"/>
+<text x="1300" y="1407" text-anchor="middle" font-weight="bold">Block Functions &amp; Interfaces (level 0)</text>
+<rect x="100" y="1420" width="330" height="36" fill="none" stroke="black"/>
+<text x="106" y="1444" font-size="14">Block</text>
+<rect x="430" y="1420" width="1480" height="36" fill="none" stroke="black"/>
+<text x="436" y="1444" font-size="14">Function</text>
+<rect x="1910" y="1420" width="230" height="36" fill="none" stroke="black"/>
+<text x="1916" y="1444" font-size="14">Source</text>
+<rect x="2140" y="1420" width="360" height="36" fill="none" stroke="black"/>
+<text x="2146" y="1444" font-size="14">Interfaces (mnemonics)</text>
+<rect x="100" y="1456" width="330" height="80" fill="none" stroke="black"/>
+<text x="106" y="1480" font-size="14">TOP (can_top)</text>
+<rect x="430" y="1456" width="1480" height="80" fill="none" stroke="black"/>
+<text x="436" y="1480" font-size="14">Top level of a CAN protocol controller for microcontroller-style hosts. It joins the host bus to an internal register file, a bit-timing generator and a frame-processing engine, and exposes the s</text>
+<rect x="1910" y="1456" width="230" height="80" fill="none" stroke="black"/>
+<text x="1916" y="1480" font-size="14">can_top.v:214-874</text>
+<rect x="2140" y="1456" width="360" height="80" fill="none" stroke="black"/>
+<text x="2146" y="1480" font-size="14">HOST, RX, TX, BOS, IRQ, CKO, CLK</text>
+<rect x="100" y="1576" width="2400" height="592" fill="white" stroke="black" stroke-width="2"/>
+<text x="1300" y="1603" text-anchor="middle" font-weight="bold">Interface Table (level 0)</text>
+<rect x="100" y="1616" width="90" height="36" fill="none" stroke="black"/>
+<text x="106" y="1640" font-size="14">ID</text>
+<rect x="190" y="1616" width="300" height="36" fill="none" stroke="black"/>
+<text x="196" y="1640" font-size="14">Interface</text>
+<rect x="490" y="1616" width="110" height="36" fill="none" stroke="black"/>
+<text x="496" y="1640" font-size="14">Category</text>
+<rect x="600" y="1616" width="470" height="36" fill="none" stroke="black"/>
+<text x="606" y="1640" font-size="14">Active side -&gt; passive side</text>
+<rect x="1070" y="1616" width="1430" height="36" fill="none" stroke="black"/>
+<text x="1076" y="1640" font-size="14">Key signals</text>
+<rect x="100" y="1652" width="90" height="80" fill="none" stroke="black"/>
+<text x="106" y="1676" font-size="14">HOST</text>
+<rect x="190" y="1652" width="300" height="80" fill="none" stroke="black"/>
+<text x="196" y="1676" font-size="14">Host bus (8051-style)</text>
+<rect x="490" y="1652" width="110" height="80" fill="none" stroke="black"/>
+<text x="496" y="1676" font-size="14">custom, proto</text>
+<rect x="600" y="1652" width="470" height="80" fill="none" stroke="black"/>
+<text x="606" y="1676" font-size="14">external host -&gt; TOP</text>
+<rect x="1070" y="1652" width="1430" height="80" fill="none" stroke="black"/>
+<text x="1076" y="1676" font-size="14">external -&gt; TOP: ale_i, rd_i, wr_i, cs_can_i; bidirectional: port_0_io[7:0] (address and write data in, read data out)</text>
+<rect x="100" y="1732" width="90" height="146" fill="none" stroke="black"/>
+<text x="106" y="1756" font-size="14">RX</text>
+<rect x="190" y="1732" width="300" height="146" fill="none" stroke="black"/>
+<text x="196" y="1756" font-size="14">CAN RX</text>
+<rect x="490" y="1732" width="110" height="146" fill="none" stroke="black"/>
+<text x="496" y="1756" font-size="14">custom (recei</text>
+<rect x="600" y="1732" width="470" height="146" fill="none" stroke="black"/>
+<text x="606" y="1756" font-size="14">external -&gt; TOP</text>
+<rect x="1070" y="1732" width="1430" height="146" fill="none" stroke="black"/>
+<text x="1076" y="1756" font-size="14">rx_i</text>
+<rect x="100" y="1878" width="90" height="146" fill="none" stroke="black"/>
+<text x="106" y="1902" font-size="14">TX</text>
+<rect x="190" y="1878" width="300" height="146" fill="none" stroke="black"/>
+<text x="196" y="1902" font-size="14">CAN TX</text>
+<rect x="490" y="1878" width="110" height="146" fill="none" stroke="black"/>
+<text x="496" y="1902" font-size="14">custom (trans</text>
+<rect x="600" y="1878" width="470" height="146" fill="none" stroke="black"/>
+<text x="606" y="1902" font-size="14">TOP -&gt; external</text>
+<rect x="1070" y="1878" width="1430" height="146" fill="none" stroke="black"/>
+<text x="1076" y="1902" font-size="14">tx_o</text>
+<rect x="100" y="2024" width="90" height="36" fill="none" stroke="black"/>
+<text x="106" y="2048" font-size="14">BOS</text>
+<rect x="190" y="2024" width="300" height="36" fill="none" stroke="black"/>
+<text x="196" y="2048" font-size="14">Bus-off status</text>
+<rect x="490" y="2024" width="110" height="36" fill="none" stroke="black"/>
+<text x="496" y="2048" font-size="14">custom</text>
+<rect x="600" y="2024" width="470" height="36" fill="none" stroke="black"/>
+<text x="606" y="2048" font-size="14">TOP -&gt; external</text>
+<rect x="1070" y="2024" width="1430" height="36" fill="none" stroke="black"/>
+<text x="1076" y="2048" font-size="14">bus_off_on (low = bus-off)</text>
+<rect x="100" y="2060" width="90" height="36" fill="none" stroke="black"/>
+<text x="106" y="2084" font-size="14">IRQ</text>
+<rect x="190" y="2060" width="300" height="36" fill="none" stroke="black"/>
+<text x="196" y="2084" font-size="14">Interrupt</text>
+<rect x="490" y="2060" width="110" height="36" fill="none" stroke="black"/>
+<text x="496" y="2084" font-size="14">custom</text>
+<rect x="600" y="2060" width="470" height="36" fill="none" stroke="black"/>
+<text x="606" y="2084" font-size="14">TOP -&gt; external</text>
+<rect x="1070" y="2060" width="1430" height="36" fill="none" stroke="black"/>
+<text x="1076" y="2084" font-size="14">irq_on (level, active low)</text>
+<rect x="100" y="2096" width="90" height="36" fill="none" stroke="black"/>
+<text x="106" y="2120" font-size="14">CKO</text>
+<rect x="190" y="2096" width="300" height="36" fill="none" stroke="black"/>
+<text x="196" y="2120" font-size="14">Clock output</text>
+<rect x="490" y="2096" width="110" height="36" fill="none" stroke="black"/>
+<text x="496" y="2120" font-size="14">custom</text>
+<rect x="600" y="2096" width="470" height="36" fill="none" stroke="black"/>
+<text x="606" y="2120" font-size="14">TOP -&gt; external</text>
+<rect x="1070" y="2096" width="1430" height="36" fill="none" stroke="black"/>
+<text x="1076" y="2120" font-size="14">clkout_o</text>
+<rect x="100" y="2132" width="90" height="36" fill="none" stroke="black"/>
+<text x="106" y="2156" font-size="14">CLK</text>
+<rect x="190" y="2132" width="300" height="36" fill="none" stroke="black"/>
+<text x="196" y="2156" font-size="14">Clock/reset</text>
+<rect x="490" y="2132" width="110" height="36" fill="none" stroke="black"/>
+<text x="496" y="2156" font-size="14">custom</text>
+<rect x="600" y="2132" width="470" height="36" fill="none" stroke="black"/>
+<text x="606" y="2156" font-size="14">external -&gt; TOP</text>
+<rect x="1070" y="2132" width="1430" height="36" fill="none" stroke="black"/>
+<text x="1076" y="2156" font-size="14">clk_i (all six blocks), rst_i (all blocks except Read-data select)</text>
+<polyline points="1250,670 1250,720" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1250,720 1244,706 1256,706" fill="black"/>
+<polyline points="1350,670 1350,720" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1350,720 1344,706 1356,706" fill="black"/>
+<polyline points="1300,670 1300,720" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1300,720 1294,706 1306,706" fill="black"/>
+<polyline points="1185,630 1235,630" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1235,630 1221,636 1221,624" fill="black"/>
+<polyline points="1065,660 1235,660" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1235,660 1221,666 1221,654" fill="black"/>
+<polyline points="1260,560 1260,610" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1260,610 1254,596 1266,596" fill="black"/>
+<polyline points="1350,610 1350,560" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="1350,560 1356,574 1344,574" fill="black"/>
+<polyline points="100,2283 260,2283" fill="none" stroke="black" stroke-width="3"/>
+<polygon points="260,2283 246,2289 246,2277" fill="black"/>
+</svg>

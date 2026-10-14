@@ -21,6 +21,17 @@ The project folders are the most portable choice for this repository. Commit the
 
 Thư mục project là cách dùng ổn định nhất cho repository này. Commit các thư mục đó để chia sẻ skill với nhóm. Xem README của từng skill để biết chức năng và đầu vào/đầu ra cụ thể.
 
+## Skill structure / Cấu trúc skill
+
+| Path | Role / Vai trò |
+|---|---|
+| SKILL.md | Top file: workflow and routing; always reads rule.md first. / File đầu vào: quy trình, luôn đọc rule.md trước. |
+| rule.md | Numbered mandatory rules (for example OCI-010, RHD-041, RSC-034, V2S-010); highest priority. / Các rule bắt buộc có đánh số ID; ưu tiên cao nhất. |
+| references/ | Supporting information, templates, examples, improvement_log.md; priority below rule.md. / Tài liệu tham khảo, mẫu, ví dụ; ưu tiên sau rule.md. |
+| scripts/ | Helper scripts with an index in scripts/README.md; the model adds scripts here when a step recurs. / Script hỗ trợ; model tự thêm script khi một bước lặp lại thường xuyên. |
+
+Rule prefixes / Tiền tố rule: OCI (opencore-ip-downloader), RHD (rtl-hierarchy-diagram), RSC (rtl-spec-change-implementer), V2S (vhdl-to-systemverilog). Each rule.md ends with self-improvement rules: the model may add scripts and refine SKILL.md and references, logging changes in references/improvement_log.md, but may edit rule.md only with explicit user approval. / Mỗi rule.md có nhóm rule tự cải tiến: model được thêm script, chỉnh SKILL.md và references (ghi vào improvement_log.md), nhưng chỉ sửa rule.md khi người dùng đồng ý rõ ràng.
+
 ## Skills / Danh sách skill
 
 | Skill | Purpose / Mục đích | Guides / Hướng dẫn |

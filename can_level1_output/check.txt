@@ -1,0 +1,16 @@
+== page 01_LEVEL_1
+CROSS RRD x FAC (arc)
+crossings with arc jump: 1
+bend histogram: 0 bends: 18, 2 bends: 1, 3 bends: 2 of 21 connectors
+PROP FG1 fillW=0.74 fillH=0.73 ok
+PROP R fillW=0.77 fillH=0.73 ok
+PROP FG3 fillW=0.69 fillH=0.73 ok
+PROP S fillW=0.69 fillH=0.73 ok
+PROP FG2 fillW=0.74 fillH=0.73 ok
+PROP B fillW=0.69 fillH=0.73 ok
+FRAME 860x300 ratio 2.87
+== page 00_TOP
+crossings with arc jump: 0
+bend histogram: 0 bends: 7 of 7 connectors
+PROP TOP fillW=0.64 fillH=0.73 ok
+issues: 0
