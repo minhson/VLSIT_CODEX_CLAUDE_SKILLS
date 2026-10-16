@@ -10,8 +10,9 @@ description: Convert complete VHDL RTL designs into readable, synthesizable Syst
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (V2S-xxx) are mandatory and rank above everything else. V2S-010 makes [references/VLSIT_RTL_Design_Rule.md](references/VLSIT_RTL_Design_Rule.md) normative; read it in full too.
 2. Follow the workflow below. It orders the work; it never relaxes a rule.
 3. Consult the other `references/` files as needed: they rank below `rule.md`.
-4. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
-5. Apply the self-improvement rules V2S-090..095 at the end of every run.
+4. Prerequisite (V2S-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
+5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
+6. Apply the self-improvement rules V2S-090..096 at the end of every run.
 
 ## Workflow
 
@@ -22,7 +23,7 @@ description: Convert complete VHDL RTL designs into readable, synthesizable Syst
 5. **Validate (V2S-050..052).** Follow [references/validation_and_reports.md](references/validation_and_reports.md).
 6. **Deliver (V2S-053, 054).** Required deliverable set with separated evidence categories.
 7. **Gate 2 (V2S-055).** Present evidence and limits.
-8. **Improve (V2S-090..095).** Add or fix scripts and references, log in `references/improvement_log.md`, and propose rule changes to the user.
+8. **Improve (V2S-090..096).** Add or fix scripts and references, log in `references/improvement_log.md`, and propose rule changes to the user.
 
 ## Folder map
 

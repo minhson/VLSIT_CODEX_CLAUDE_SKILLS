@@ -1,6 +1,6 @@
 # rtl_analysis.md template
 
-Reference only. `rule.md` (RHD-070..077) takes precedence. A complete worked example is [examples/rtl_analysis.md](examples/rtl_analysis.md); it predates the signal-level sections below, so follow this template for those parts.
+Reference only. `rule.md` (RHD-070..077) takes precedence. A complete worked example is [examples/rtl_analysis.md](examples/rtl_analysis.md); it was produced by this skill version. Follow this template for all sections.
 
 ```markdown
 # <Design> RTL Analysis

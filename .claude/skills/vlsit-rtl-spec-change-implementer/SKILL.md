@@ -10,8 +10,9 @@ description: Analyze existing RTL against an optional prior specification and a 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (RSC-xxx) are mandatory and rank above everything else.
 2. Follow the workflow below. It orders the work; it never relaxes a rule.
 3. Consult `references/` for the review-document template. References rank below `rule.md`.
-4. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
-5. Apply the self-improvement rules RSC-090..095 at the end of every run.
+4. Prerequisite (RSC-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
+5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
+6. Apply the self-improvement rules RSC-090..096 at the end of every run.
 
 ## Workflow
 
@@ -21,7 +22,7 @@ description: Analyze existing RTL against an optional prior specification and a 
 4. **Gate (RSC-034..037).** Ask APPROVE / REVISE / STOP for the named plan version; wait.
 5. **Implement (RSC-040..044).** Minimal approved edits only.
 6. **Validate and report (RSC-050..051, 060..063).** Run only approved checks, then `python scripts/rtl_change_metrics.py compare <SNAPSHOT_DIR> <RTL_DIR>` for the percentage; update the review document.
-7. **Improve (RSC-090..095).** Add or fix scripts and references, log in `references/improvement_log.md`, and propose rule changes to the user.
+7. **Improve (RSC-090..096).** Add or fix scripts and references, log in `references/improvement_log.md`, and propose rule changes to the user.
 
 ## Folder map
 

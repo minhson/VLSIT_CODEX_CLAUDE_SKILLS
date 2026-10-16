@@ -10,8 +10,9 @@ description: Search OpenCores and its linked public repositories for open-source
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (OCI-xxx) are mandatory and rank above everything else.
 2. Follow the workflow below. It orders the work; it never relaxes a rule.
 3. Consult `references/` for templates and examples when needed. They rank below `rule.md`.
-4. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
-5. Apply the self-improvement rules OCI-090..095 at the end of every run.
+4. Prerequisite (OCI-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
+5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
+6. Apply the self-improvement rules OCI-090..096 at the end of every run.
 
 ## Workflow
 
@@ -21,7 +22,7 @@ description: Search OpenCores and its linked public repositories for open-source
 4. **Verify and store (OCI-040..043, OCI-060).** Run `python scripts/verify_archive.py <ARCHIVE>` before extraction, extract into a per-project folder, write `DOWNLOAD_INFO.md` per project and update `CATALOG.md`.
 5. **Evaluate (OCI-050..057).** Write the bilingual `README.md` using [references/readme_template.md](references/readme_template.md).
 6. **Report (OCI-061..062).** Summarize per OCI-061 without claiming validation.
-7. **Improve (OCI-090..095).** Add or fix scripts and references, log the change in `references/improvement_log.md`, and propose any rule changes to the user.
+7. **Improve (OCI-090..096).** Add or fix scripts and references, log the change in `references/improvement_log.md`, and propose any rule changes to the user.
 
 ## Folder map
 

@@ -1,244 +1,195 @@
-# CAN RTL Design Analysis
+# CAN Controller RTL Analysis (diagram level 1)
+
+Companion of `rtl_hierarchy.drawio`. Skill: `vlsit-rtl-hierarchy-diagram`. Facts proven by RTL are cited as `file:line`; statements marked *Interpretation* are inferences.
 
 ## 1. Scope and evidence
 
-This report accompanies `rtl_hierarchy.drawio`. The analysis is based on the supplied RTL directory, its `verilog` subdirectory, `verilog/README.txt`, and the nearby `syn/synplicity/can.prj`. Source references below are relative to the supplied RTL directory. No RTL source file was modified.
+- RTL root: `C:\HQuan\100_ForMe\013_Opencore\CAN\can\rtl\verilog` (13 files: 12 Verilog modules/headers listed below, `can_defines.v`, `README.txt`). No RTL file was modified.
+- Selected diagram level N = 1 (user choice): level 0 = `can_top`; level 1 = the direct children of `can_top` and the functional groups of `can_top` own logic. Effective level = 1 (the hierarchy is deeper, see section 7).
+- Top module: `can_top`. Evidence: `set_option -top_module "can_top"` in `syn/synplicity/can.prj:39`.
+- Configuration assumption: delivered `can_defines.v` with no extra macros. `CAN_WISHBONE_IF` (`can_defines.v:100`), vendor RAM macros (`:103-113`), and `CAN_BIST` (`:116`) are commented out. Active host interface: 8051-style (`can_top.v:276-287`, `834-871`). The WISHBONE branch (`can_top.v:782-831`) is inactive and excluded.
+- Evidence level: static RTL reading only. No compilation, simulation, or synthesis was run.
+- Files inspected in detail: `can_top.v` (full), `can_btl.v` (ports, lines 155-481), `can_registers.v` (ports, 420-1255), `can_bsp.v` (ports and selected logic: 699-760, 1255-1440, 1590-1650, 1760-1840, 2008-2130), `can_register_asyn_syn.v`, `can_defines.v`, `README.txt`. Level-N modules are not analyzed below their ports and top-level behavior (RHD-013).
 
-- Selected top: **can_top**, explicitly selected by `set_option -top_module` in the synthesis project.
-- Source inventory: 13 Verilog files, including one definitions header; 12 module definitions.
-- Active hierarchy: **57 module instances including TOP**, comprising 3 instances at depth 1 and 53 at depth 2 (35 register cells and 18 protocol helpers). Eleven module types are reachable; `can_register_syn` is defined but not instantiated.
-- Configuration assumption: use the delivered `can_defines.v` with no additional command-line macro definitions. `CAN_WISHBONE_IF`, vendor RAM selections, and `CAN_BIST` are commented out. The drawing therefore represents the **8051-style host interface and behavioral receive memory**. External build definitions can change this hierarchy; they were not supplied.
-- Runtime reset defaults: basic register mode (`extended_mode = 0`), controller reset mode asserted (`reset_mode = 1`), clock-divider control reset to zero, and error-warning limit 96. Some write-only storage cells do not have reset ports and require software initialization.
-- Evidence level: static RTL analysis. No HDL compilation, simulation, synthesis, CDC analysis, formal proof, or standards conformance test was performed. Historical verification claims in `verilog/README.txt` are author statements, not results of this analysis.
+## 2. Hierarchy (levels 0-1)
 
-## 2. Diagram interpretation
+| Depth | Instance | Module | File:line | Parent | Parameters | Notes |
+|---|---|---|---|---|---|---|
+| 0 | TOP | can_top | can_top.v:214 | - | `Tp = 1` | Own logic present; grouped into 3 functional groups (section 3a) |
+| 1 | i_can_registers | can_registers | can_top.v:443 | TOP | none | Own logic present; **(not expanded; own logic)** |
+| 1 | i_can_btl | can_btl | can_top.v:563 | TOP | none | Own logic present; **(not expanded; own logic)** |
+| 1 | i_can_bsp | can_bsp | can_top.v:607 | TOP | none | Own logic present; **(not expanded; own logic)** |
 
-Tabs appear left to right as `00_TOP`, `01_LEVEL_1`, `02_LEVEL_2`. The final tab contains both depth-1 parent contexts and every active depth-2 instance; each repeated instance remains a separate block. Depth-1 `i_can_btl` is a leaf and does not repeat at depth 2.
+Direct child modules of level-1 blocks (listed only, not analyzed):
 
-Module labels contain exactly two lines: `instance_name`, then `(module_name)`. TOP uses `TOP` and `(can_top)`. Text is 18 pt; fills are white and outlines/text are black. Thin solid arrows mean instantiation. Thick dashed arrows mean functional relationships. Shared hierarchy trunks are drawing conventions, not hardware buses. External annotation arrows indicate interface associations; actual signal directions are stated in the annotations and tables below.
-
-Detailed explanations are outside the block layout, in separate bordered note panels and this Markdown report. The diagram shows principal functional paths; it is not an exhaustive netlist or a cycle-accurate timing diagram. The two CRC helper links show the actual `calculated_crc` slices feeding their bit-order converters. No direct filter-to-FIFO connection is drawn: the filter's `id_ok` is consumed by parent BSP control before that parent generates FIFO writes.
-
-## 3. Functions and supported features
-
-| Function / feature | RTL implementation and evidence | Qualification |
-|---|---|---|
-| Host programming and readback | `can_top` address latch, host-edge strobes, register/FIFO read selection; `can_registers` address decode | 8-bit data and address; active-high `rd_i` / `wr_i`; default interface is multiplexed 8051 style |
-| Optional Wishbone host | `can_top.v` conditional `CAN_WISHBONE_IF` branch, CYC/STB synchronization and ACK pulse generation | Alternative compile configuration; not active in this diagram; no protocol conformance result |
-| CAN standard and extended frame parsing | `can_bsp.v:699-1056` frame phases through ID1, IDE, ID2, RTR, DLC, data, CRC, ACK and EOF | 11-bit and 29-bit ID paths are present; extended register mode is distinct from extended frame format |
-| Payload and remote frames | `remote_rq`, `limited_data_len`, header packing and TX-chain assembly in `can_bsp.v:735-736, 1328-1407, 1693-1744` | Payload limited to 8 bytes; remote frames retain header information without received payload |
-| Bit timing | `can_btl.v:257-475` prescaler, segments, phase correction, sampling and TX point | Programmable BRP/SJW/TSEG1/TSEG2 and optional majority triple sampling |
-| Serialization and bit stuffing | `can_bsp.v:1074-1130, 1598-1762` TX selection, stuffing counters and TX pointers | Combinational bit-order helper instances support packed serial chains |
-| CRC | `can_crc.v` recurrence and `can_bsp.v:1260-1267` | 15-bit accumulator; feedback polynomial constant `15'h4599`; initialized explicitly at frame start |
-| Acceptance filtering | `can_acf.v` comparison masks and `id_ok` state; mapping at `can_bsp.v:1275-1321` | Basic matching and extended-mode single/dual filters; mask bit 1 means ignore that comparison |
-| RX buffering | `can_fifo.v` data array, length metadata, overrun metadata, pointer/counter logic | 64-byte data capacity; 64 metadata slots do not imply capacity for 64 full frames |
-| Error handling and arbitration | `can_bsp.v:738-750, 1890-2142` error conditions, arbitration capture, counters and bus-off state | Bit/stuff/form/ACK/CRC errors, error-active/passive transitions and recovery logic are present; unverified |
-| Listen-only, self-test and self reception | Register-mode controls and BSP qualification of TX, ACK and self-frame storage | Extended-mode controls; normal receive processing remains distinct from these modes |
-| Abort and single-shot TX | `can_registers.v:598-610`; BSP `need_to_tx` termination logic at `1765-1773` | Command semantics depend on command combinations and sample-point timing |
-| Interrupts | `can_registers.v:1146-1256` cause latches, enables and `irq_n` | Active-low external `irq_on`; individual causes have different clear conditions |
-| Programmable clock output | `can_registers.v:782-851` | Divider, clock bypass and clock-off selection; clock-off drives constant high |
-| Software overload requests | `can_registers.v:615-635` | **Not supported**: instance is commented out and `overload_request` is tied to zero; automatic overload handling is a separate BSP path |
-| CAN FD / AXI / APB | No corresponding port sets, longer payload datapath, or FD phase logic found in the analyzed RTL | Do not label this design as supporting these interfaces or CAN FD |
-
-## 4. External interfaces
-
-| Interface | Input signals | Output / bidirectional signals | Behavior |
-|---|---|---|---|
-| Default multiplexed host | `ale_i`, `rd_i`, `wr_i`, `cs_can_i` | `port_0_io[7:0]` bidirectional | Address captured on `clk_i` when ALE is high. A rising read/write strobe generates internal `cs` when selected. `port_0_io` drives registered read data while selected and reading; otherwise high impedance. No ready/acknowledge output exists in this branch. |
-| Core clock and reset | `clk_i`, `rst_i` | — | Core processing is in `clk_i` domain; reset is active high. Many control registers use asynchronous assertion. |
-| CAN pins | `rx_i` | `tx_o` | RX passes through two sequential synchronizer stages in TOP before BTL sampling. TX comes from BSP. These are digital transceiver-side signals, not a differential CAN physical layer. |
-| Interrupt | — | `irq_on` | Connected to register bank `irq_n`; asserted low. |
-| Bus-off indication | — | `bus_off_on` | BSP assigns `~node_bus_off`; asserted low despite the `_on` name. |
-| Clock output | — | `clkout_o` | Connected to register bank programmable clock output. |
-| Optional Wishbone | `wb_clk_i`, `wb_rst_i`, `wb_dat_i[7:0]`, `wb_cyc_i`, `wb_stb_i`, `wb_we_i`, `wb_adr_i[7:0]` | `wb_dat_o[7:0]`, `wb_ack_o` | Conditional alternative to the multiplexed host; synchronized transaction request and returned ACK pulse. No `SEL`, `ERR`, or `RTY` ports are present. |
-| Optional BIST | `mbist_si_i`, `mbist_ctrl_i` | `mbist_so_o` | Requires CAN_BIST, its control-width definition, and appropriate memory implementation; inactive here. |
-
-Primary port and integration evidence: `can_top.v:214-301, 443-737, 743-869`. TOP's 8051 host input strobes require adequate timing relative to `clk_i`; the RTL does not provide a transaction-completion handshake on that interface.
-
-## 5. Principal internal functional relationships
-
-| Source → destination | Key mapped signals | Functional meaning |
-|---|---|---|
-| TOP host logic → registers | `cs`, `we`, `addr[7:0]`, `data_in[7:0]` | Register reads/writes qualified by host access |
-| Registers → TOP | `data_out_regs`, `irq_n`, `clkout` | Read-data response, interrupt and exported clock |
-| Registers → BTL | `baud_r_presc[5:0]`, `sync_jump_width[1:0]`, `time_segment1[3:0]`, `time_segment2[2:0]`, `triple_sampling` | Timing configuration |
-| BTL → BSP and selected register logic | `sample_point`, `sampled_bit`, `sampled_bit_q`, `tx_point`, `hard_sync` | Bit sampling and TX scheduling; `sample_point` also qualifies command handling in registers |
-| BSP → BTL | `rx_idle`, `rx_inter`, `transmitting`, `transmitter`, `go_rx_inter`, `tx_next`, `go_overload_frame`, `go_error_frame`, `go_tx`, `send_ack`, `node_error_passive` | Protocol-state feedback for synchronization and bit timing |
-| Registers → BSP | Modes, `tx_data_0..12`, acceptance codes/masks, `release_buffer`, `tx_request`, `abort_tx`, `self_rx_request`, `single_shot_transmission`, warning limit and counter-write strobes | Software-selected behavior, TX contents, filtering and receive-buffer management |
-| BSP → registers | `tx_state`, `tx_state_q`, `node_bus_off`, `error_status`, error counters, TX/RX status, `tx_successful`, `need_to_tx`, FIFO status, IRQ event strobes and capture values | Status, error reporting and command completion context |
-| TOP → BSP → FIFO | Host `addr`, FIFO selection, and FIFO read result through BSP `data_out` | Memory-mapped RX readback; TOP selects register or FIFO output |
-| BSP → CRC | `sampled_bit`; enable = `crc_enable & sample_point & ~bit_de_stuff`; initialize = `go_crc_enable` | Accumulate unstuffed frame bits |
-| CRC → BSP and CRC IBO helpers | `calculated_crc[14:0]` | RX CRC comparison and TX CRC packing |
-| BSP → ACF → BSP | ID, mode, codes/masks, first payload bytes, RTR/IDE and frame phase; `id_ok` result | Acceptance decision; BSP qualifies FIFO commit with this result |
-| BSP → FIFO → BSP | `wr_fifo`, `data_for_fifo[7:0]`, address, mode, release/select controls; `data_out`, `overrun`, `info_empty`, `info_cnt` | Frame-byte storage, host readout and occupancy/error status |
-| BSP TX byte inputs → IBO → BSP TX chains | `tx_data_N` → `r_tx_data_N`, N = 0..12 | Pure combinational reversal of each 8-bit vector, not a handshake or FIFO |
-
-The CRC IBO inputs are specifically `calculated_crc[14:7]` and `{calculated_crc[6:0], 1'b0}`. They produce `r_calculated_crc[7:0]` and `[15:8]`. Acceptance filter output is not a ready/valid interface. FIFO uses a write strobe and a release-buffer command; message metadata is committed when the write burst ends (`~wr & wr_q`).
-
-## 6. Configuration and status registers
-
-Addresses below are **decimal byte addresses**, not word offsets. Decode and read selection: `can_registers.v:444-485, 1084-1140`; FIFO window selection: `can_top.v:743-761`. Basic/extended mode and controller reset/operation mode alter the address meanings.
-
-| Address | Basic mode | Extended mode | Access / condition |
-|---|---|---|---|
-| 0 | Reset bit and basic IRQ enables | Reset, listen-only, self-test, filter selection | Mode control; extended mode fields write only while controller reset mode is set |
-| 1 | Command; reads `0xff` | Command; reads zero | TX request, abort/single-shot, RX release, clear-overrun and self-reception controls; command cells self-clear according to their RTL |
-| 2 | Status | Status | Read-only live/latched status |
-| 3 | Basic IRQ causes plus fixed upper bits | Extended IRQ causes | Reading clears selected causes; RX cause clears through buffer release/reset, not merely this register read |
-| 4 | Acceptance code 0 in reset; otherwise read `0xff` | IRQ enable | Basic filter write requires reset mode; extended enable byte has no hardware reset |
-| 5 | Acceptance mask 0 in reset; otherwise read `0xff` | No decoded register | Basic filter write requires reset mode |
-| 6, 7 | Bus timing 0, 1 | Bus timing 0, 1 | Writable only in controller reset mode; storage has no hardware reset |
-| 10..19 | TX header/data registers in operation | See individual entries below | Basic TX writes require available transmit buffer; basic RX reads use a different window |
-| 11 | TX byte 1 when operating | Arbitration-lost capture | Extended capture read unlocks further capture |
-| 12 | TX byte 2 when operating | Error-code capture | Extended capture read clears the code and unlocks capture |
-| 13 | TX byte 3 when operating | Error-warning limit | Extended warning-limit writes require reset mode; reset value 96 |
-| 14, 15 | TX bytes 4, 5 when operating | RX / TX error counters | Extended software counter writes require reset mode; internal counters are 9 bits, host sees low 8 bits |
-| 16..19 | TX bytes 6..9 when operating | Acceptance codes 0..3 in reset; TX bytes 0..3 for writes in operation | Extended operating-mode reads select RX FIFO, not TX storage |
-| 20..23 | RX read window | Acceptance masks 0..3 in reset; TX bytes 4..7 for writes in operation | Extended operating-mode reads select RX FIFO |
-| 24..28 | RX read window | TX bytes 8..12 for writes in operation | Extended operating-mode reads select RX FIFO; reset-mode readback of these slots is zero |
-| 29 | RX read window | RX message count | Extended count = `{1'b0, rx_message_counter}` |
-| 31 | Clock divider / mode control | Clock divider / mode control | Bit 7 chooses extended register mode; bit 3 disables clock output; bits 2:0 select divider/bypass. High fields require reset mode for writes. |
-
-Basic RX window: 20..29. Extended RX window: 16..28 while not in controller reset mode. Address windows overlap TX/filter storage intentionally; read/write direction and mode select the function. Acceptance storage and TX bytes use non-reset `can_register` cells.
-
-### Status byte at address 2
-
-| Bit | RTL field | Meaning |
-|---|---|---|
-| 7 | `node_bus_off` | Bus-off status |
-| 6 | `error_status` | Warning threshold reached |
-| 5 | `transmit_status` | Transmitting / relevant extended waiting state |
-| 4 | `receive_status` | Receive / relevant extended waiting state |
-| 3 | `transmission_complete` | TX success or abort recorded |
-| 2 | `transmit_buffer_status` | Transmit buffer available |
-| 1 | `overrun_status` | Latched receive overrun |
-| 0 | `receive_buffer_status` | Receive message available |
-
-### Extended IRQ byte at address 3
-
-Bits 7..0 are bus error, arbitration lost, error passive, fixed zero, data overrun, error warning, transmit and receive. Basic mode exposes the low four causes with fixed high bits. Enables map to the corresponding extended byte bits, with bit 4 unused. Interrupt cause latches, their clear priorities, and external IRQ deassertion are separate logic: reading the IRQ register or releasing a buffer drives `irq_n` high; a remaining cause can reassert it later. Evidence: `can_registers.v:1146-1256`.
-
-## 7. Implementation status, advantages and disadvantages
-
-**Implemented in source:** classic CAN framing paths, programmable bit timing, masking filters, TX register storage, receive buffering, error confinement, status and interrupts. These statements describe code presence and traced behavior; they do not establish verification pass status.
-
-**Advantages:** clear division between register, timing and protocol modules; selectable host interface; source-available behavioral receive storage; programmable filters and timing; error/status observability; reusable small register and bit-reversal helper modules.
-
-**Limitations:** fixed classic CAN payload size; finite 64-byte receive storage; software initialization of several non-reset registers; legacy explicit sensitivity lists, implicit nets and simulation delays; asynchronous host integration needs timing/CDC review; vendor memories and BIST require separately available dependencies. BSP combines many protocol responsibilities in one large module, which complicates independent review. Software-triggered overload requests are disabled. Throughput, timing closure, area, power and protocol compliance were not measured.
-
-The adjacent historical synthesis project selects `can_top` and lists external Actel memory files, but the delivered definitions do not enable the Actel RAM branch. It documents a possible integration target rather than proving that the active snapshot uses those RAM instances.
-
-## 8. Potential bugs and review points
-
-These findings are separated from confirmed feature limitations. Reproduction or a specification comparison is required before changing RTL.
-
-| ID | Observation and source evidence | Potential impact / proposed check | Confidence and scope |
-|---|---|---|---|
-| CAN-R01 | `can_fifo.v:278-284, 341-358` advances `rd_info_pointer` on `release_buffer & ~info_full`, while `info_cnt` decrements on release only when `~info_empty`. | At metadata-full occupancy, release can decrement count without advancing its pointer; an empty release can advance the pointer without decrementing count. Review whether release should be qualified by nonempty metadata. Exercise metadata full, empty release, and simultaneous write/release. | High confidence in static mismatch; reachability of 64 metadata slots and permitted host behavior are unverified. |
-| CAN-R02 | `can_registers.v:444-485, 1093-1140` read mux decodes `addr[4:0]`, but write and capture-read strobes compare full 8-bit addresses. | Addresses above 31 can alias read values without the corresponding write or read-to-clear effects. Determine whether system-level address qualification guarantees addresses 0..31. | Observed asymmetry; may be intentional if the host supplies a constrained address range. |
-| CAN-R03 | At `can_top.v:787-831`, optional Wishbone request is synchronized, but `wb_we_i`, `wb_adr_i`, and `wb_dat_i` feed the core directly; `cs_ack1/2/3` and `wb_ack_o` have no explicit reset assignments. | Review the bundled-data stability assumption, reset/startup ACK behavior, clock ratios and back-to-back transfers. Add CDC/timing constraints only after confirming the intended integration contract. | Conditional risk; Wishbone branch is inactive in this drawing. No CDC or bus compliance result. |
-| CAN-R04 | At `can_registers.v:715-1076`, `IRQ_EN_REG`, bus timing, acceptance and TX storage use `can_register`, which has no reset. | Uninitialized enables/timing/masks can propagate unknown values in simulation or unspecified startup behavior until software initializes them. Document mandatory initialization before leaving reset/entering extended mode. | Confirmed lack of reset; not automatically a bug if the software contract requires initialization. |
-| CAN-R05 | At `can_top.v:837-869`, in the active host branch, ALE/read/write inputs are sampled without a transaction ACK. | Short or asynchronous strobes can be missed; read data is registered on a core clock, so the host must meet access timing. Confirm external timing constraints and sample pulse lengths. | Integration risk; no supplied timing contract was analyzed. |
-| CAN-R06 | At `can_top.v:589, 666`, TOP uses `rx_inter` in child mappings without an explicit net declaration; legacy implicit-wire behavior supplies it. | A build using `default_nettype none` may reject the source; inspect strict compilation settings and declare the net if a portability update is authorized. | Static portability finding; no strict compilation was run. |
-| CAN-R07 | At `can_fifo.v:369-376, 684-698`, FIFO metadata initialization runs over multiple clocks using `initialize_memories`; software may write/release during this period unless externally prevented. | Check reset-to-operation sequencing, initialization completion and any race with metadata writes. | Review hypothesis; no assertion or simulation trace confirms a failure. |
-
-Known limitation separate from potential bugs: `overload_request` is assigned zero in `can_registers.v:635`. This does not remove the separate automatic overload-frame logic in BSP.
-
-## 9. Complete active instance inventory
-
-Parameters listed below are instance overrides as written in RTL, or `default` when absent. Standard top and protocol-module default `Tp` is 1; register helper defaults are defined in their corresponding module files. There are no active generate scopes in this snapshot. Commented-out `COMMAND_REG_OVERLOAD` is excluded.
-
-| Depth | Instance path | Module | Instance parameters | Source |
-|---|---|---|---|---|
-| 0 | TOP | can_top | Tp = 1 (default) | verilog/can_top.v |
-| 1 | TOP.i_can_registers | can_registers | default | verilog/can_top.v |
-| 1 | TOP.i_can_btl | can_btl | default | verilog/can_top.v |
-| 1 | TOP.i_can_bsp | can_bsp | default | verilog/can_top.v |
-| 2 | TOP.i_can_registers.MODE_REG0 | can_register_asyn_syn | 1, 1'h1 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.MODE_REG_BASIC | can_register_asyn | 4, 0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.MODE_REG_EXT | can_register_asyn | 3, 0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.COMMAND_REG0 | can_register_asyn_syn | 1, 1'h0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.COMMAND_REG1 | can_register_asyn_syn | 1, 1'h0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.COMMAND_REG | can_register_asyn_syn | 2, 2'h0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.COMMAND_REG4 | can_register_asyn_syn | 1, 1'h0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.IRQ_EN_REG | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.BUS_TIMING_0_REG | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.BUS_TIMING_1_REG | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ERROR_WARNING_REG | can_register_asyn | 8, 96 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.CLOCK_DIVIDER_REG_7 | can_register_asyn | 1, 0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.CLOCK_DIVIDER_REG_3 | can_register_asyn | 1, 0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.CLOCK_DIVIDER_REG_LOW | can_register_asyn | 3, 0 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_CODE_REG0 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_MASK_REG0 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG0 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG1 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG2 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG3 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG4 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG5 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG6 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG7 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG8 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG9 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG10 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG11 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.TX_DATA_REG12 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_CODE_REG1 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_CODE_REG2 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_CODE_REG3 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_MASK_REG1 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_MASK_REG2 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_registers.ACCEPTANCE_MASK_REG3 | can_register | 8 | verilog/can_registers.v |
-| 2 | TOP.i_can_bsp.i_can_crc_rx | can_crc | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_can_acf | can_acf | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_can_fifo | can_fifo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_0 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_1 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_2 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_3 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_4 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_5 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_6 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_7 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_8 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_9 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_10 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_11 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_ibo_tx_data_12 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_calculated_crc0 | can_ibo | default | verilog/can_bsp.v |
-| 2 | TOP.i_can_bsp.i_calculated_crc1 | can_ibo | default | verilog/can_bsp.v |
-
-## 10. Conditional and unresolved resources
-
-The active hierarchy resolves every instantiated module from the supplied RTL. No active module is unresolved. FIFO behavioral arrays are storage objects, not additional hierarchy instances.
-
-Alternative memory branches use `lpm_ram_dp` (Altera), `actel_ram_64x8_sync`, `actel_ram_64x4_sync`, `actel_ram_64x1_sync`, Xilinx `RAMB4_S8_S8`, `RAMB4_S4_S4`, `RAMB4_S1_S1`, Virtual Silicon RAM variants, and Artisan RAM variants. Their implementation sources are not in the analyzed RTL directory. If enabled, those branches need a separate hierarchy analysis and library dependency inventory. CAN_BIST also depends on its selected memory branch and control-width macro. These conditional resources are not drawn as active blocks.
-
-Simulation-only `timescale.v` includes refer outside the supplied RTL directory; a file was found in adjacent `bench/verilog`, and the synthesis project lists that include directory. This report does not imply that compilation was completed.
-
-## 11. Artifact checks and provenance
-
-- All diagram symbols, note borders, text cells and connectors were cloned exclusively from `VLSIT_DRAWIO_LIB_V1.drawio.xml` bundled with the invoked skill.
-- Library SHA-256: `D1631ACF98A920526B235E8970FEDDC9305EA2F0D6A35C6529CD220D62AFABB6`.
-- Template indices: 0 (text), 27 (orthogonal arrow), 32 (rectangle).
-- Bundled library validator: 146 library-derived cells across three pages; checks provenance, template styles, endpoint references, complete clones and monochrome 18 pt text. It does not prove RTL semantics, geometry or protocol correctness.
-- A geometry preview derived from the generated XML was inspected for layout and corrected. The native diagrams.net renderer was not available; final native rendering should be reviewed after opening the editable file.
-- Hashes of the 12 module-definition source files were compared after analysis and remained unchanged; the definitions header was read without modification.
-
-### Analyzed RTL source fingerprints
-
-| Source | SHA-256 |
+| Level-1 block | Direct child modules |
 |---|---|
-| verilog/can_acf.v | `404e8581e035a45b6830bba6a1e87c7899e7f54d4e3940c33ba1a25d1f20b4d6` |
-| verilog/can_bsp.v | `2c3f6ed47e9f72a425c5b51980e2d0ac58640e540eb2b2a14ebe9dc2e5fc96e1` |
-| verilog/can_btl.v | `7f6c42ea3d790b1643389581792ed293266d98eb0a3c1d01e6ddc777482e8335` |
-| verilog/can_crc.v | `ae60397523f22b1ddcff600838949c6ded70d801d54d105ca0ad0a51013fdc07` |
-| verilog/can_defines.v | `10a47046d4140f130e9bb7d161e4995d67291d33fbdb8e77903956f46bb10665` |
-| verilog/can_fifo.v | `54fcf4dbfa3f0b40d24d17b758256a0e5fabe3cd45531cf2fb1a702665ae4940` |
-| verilog/can_ibo.v | `4afb496a2b8e3197a5f6accaf2cb493c4ff1d8b645748dfa1a1f8535acbcc7cf` |
-| verilog/can_register.v | `691454933514031ddd0f3694e1ffe68b19822ec9113b30f88dc1f2c3ca8e4fd0` |
-| verilog/can_register_asyn.v | `4b83cdf224c3560f740b44d9db9d7c78e7dff6139e98685796e16baea5605561` |
-| verilog/can_register_asyn_syn.v | `308ee96d28a92179915ed0ce90a8345b7b4cc4e515e245d6f00eca2fcabb9e61` |
-| verilog/can_register_syn.v | `2c8b90f432acf65ed23f6b88923648f02f5e45f5727608a7011f873c633437b7` |
-| verilog/can_registers.v | `ddd9d7b22c73c23c1aa52dd8e348f71a912957f963ac6dbd257a5916e0f0cae3` |
-| verilog/can_top.v | `ba9f813bdee1c2d65cfa55dbf5ab9e6e33c305e30ea02b71cb9e89854bf9f921` |
+| can_registers | can_register_asyn_syn, can_register_asyn, can_register (`can_registers.v:511-1069`) |
+| can_btl | none |
+| can_bsp | can_crc (`i_can_crc_rx`, :1260), can_acf (`i_can_acf`, :1275), can_fifo (`i_can_fifo`, :1398), can_ibo (15 instances, :1674-1690) |
+
+`can_register_syn` is defined in `can_register_syn.v` but no instance of it was found in the RTL directory.
+
+## 3. Module functions
+
+| Module / block | Main function (from RTL) | Evidence |
+|---|---|---|
+| can_top | Integration level. Connects the three sub-blocks; implements the 8051-style host adapter, the host read-data multiplexer, and a two-stage synchronizer for `rx_i`. | `can_top.v:443-739`, `743-778`, `836-869` |
+| i_can_registers (can_registers) | Host-visible register file: mode, command, status, interrupt enable, bus timing 0/1, error warning limit, clock divider, acceptance code/mask, 13 TX buffer bytes. Decodes host writes (`we_*` strobes), assembles the status register, generates seven interrupt sources and the latched active-low `irq_n`, multiplexes register reads, and derives the divided `clkout`. | `can_registers.v:444-486`, `502-700`, `715-855`, `1084-1142`, `1145-1251` |
+| i_can_btl (can_btl) | CAN bit timing logic: baud-rate enable generation (`preset_cnt = (BRP+1)*2`), sync/seg1/seg2 segment machine with hard synchronization and resynchronization, optional triple sampling, generation of `sample_point` and `tx_point`. | `can_btl.v:257-445` |
+| i_can_bsp (can_bsp) | CAN bit stream processor: receive state sequencing (idle, ID, RTR, IDE, DLC, data, CRC, ACK, EOF, intermission), bit de-stuffing, transmit bit selection and the registered `tx` output, arbitration-loss detection, error/overload frame control, error counters with error-passive and bus-off states, status flags, and, through children, CRC, acceptance filter and RX FIFO. | `can_bsp.v:699-721`, `1630-1646`, `1762-1840`, `2013-2127`; children at :1260, :1275, :1398 |
+
+*Interpretation:* `can_registers` corresponds to an SJA1000-style register map (basic and extended mode selected by `extended_mode`, `can_registers.v:1093-1139`); the code itself does not name SJA1000.
+
+### 3a. Functional groups of can_top own logic (RHD-080..085)
+
+can_top own logic exists under the active configuration (inactive WISHBONE branch excluded). Three groups, within the limit of 10. Trivial renames `assign rst = rst_i; we = wr_i; addr = addr_latched; data_in = port_0_io` (`can_top.v:865-868`) are plain wiring and are not counted as logic. `initial` blocks: none.
+
+| Module | Group | Function | Constructs and line ranges | State elements | Signals driven | Inputs | Outputs | Merge note |
+|---|---|---|---|---|---|---|---|---|
+| can_top | Host bus adapter | Latches the multiplexed address, detects write/read strobe edges, generates the one-cycle chip-select `cs`, and drives the bidirectional data port during reads. | `always` 837-843 (addr latch on `ale_i`), `always` 847-859 (`wr_i_q`, `rd_i_q`), `assign cs` 862, `assign port_0_io` 869 | `addr_latched[7:0]`, `wr_i_q`, `rd_i_q` | `cs`, `we`, `addr`, `data_in`, `rst`, `port_0_io` (read phase) | `ale_i`, `rd_i`, `wr_i`, `cs_can_i`, `rst_i`, `clk_i`, `port_0_io`, `data_out` | `cs`, `we`, `addr[7:0]`, `data_in[7:0]`, `rst`, `port_0_io` | none (3 groups) |
+| can_top | Read-data select | Selects between register read data and RX-FIFO read data by address and mode, and registers the selected byte on a host read. | `always @(...)` 744-750 (`data_out_fifo_selected`), `always @(posedge clk_i)` 753-762 (`data_out`) | `data_out[7:0]` | `data_out_fifo_selected`, `data_out` | `extended_mode`, `reset_mode`, `addr`, `cs`, `we`, `data_out_regs`, `data_out_fifo` | `data_out_fifo_selected`, `data_out[7:0]` | none |
+| can_top | RX synchronizer | Two-flop synchronizer of the asynchronous `rx_i`, reset to 1 (recessive). | `always` 766-778 | `rx_sync_tmp`, `rx_sync` | `rx_sync` | `rx_i`, `clk_i`, `rst` | `rx_sync` | none |
+
+Group boundaries follow function: host-side bus handling, read-path selection, and input synchronization. Every own-logic statement of the active configuration is in exactly one group.
+
+## 4. Signal analysis (inter-block signals at levels 0-1)
+
+Types: **level** = value held until changed; **pulse** = asserted for one clock cycle by construction; **event** = combinational condition that is qualified by a pulse. Evidence in the last column.
+
+### 4.1 Host side
+
+| Signal | Src -> Dst | Width | Type | Meaning | Evidence | Group |
+|---|---|---|---|---|---|---|
+| cs | Host bus adapter -> i_can_registers, Read-data select | 1 | pulse | Chip select: rising edge of `wr_i` or `rd_i`, qualified by `cs_can_i` | `assign cs = ((wr_i & ~wr_i_q) \| (rd_i & ~rd_i_q)) & cs_can_i` (can_top.v:862); `wr_i_q`, `rd_i_q` are one-cycle delays (847-859) | IF01, IF02 |
+| we | Host bus adapter -> i_can_registers, Read-data select | 1 | level | Write indicator = `wr_i` | can_top.v:866 | IF01, IF02 |
+| addr[7:0] | Host bus adapter -> i_can_registers, i_can_bsp, Read-data select | 8 | level | Register/FIFO address, latched while `ale_i` is high | can_top.v:837-843, 867 | IF01, IF02, IF03 |
+| data_in[7:0] | Host bus adapter -> i_can_registers, i_can_bsp | 8 | level (data) | Write data = `port_0_io` | can_top.v:868 | IF01, IF03 |
+| data_out_regs[7:0] | i_can_registers -> Read-data select | 8 | level (data), combinational | Register read data selected by `{extended_mode, addr[4:0]}` | can_registers.v:1093-1141 | IF04 |
+| extended_mode, reset_mode | i_can_registers -> Read-data select | 1 each | level | Operating mode selectors, used for FIFO-select decode | can_top.v:746; can_registers.v:536, 808 | IF04 |
+| data_out_fifo[7:0] | i_can_bsp -> Read-data select | 8 | level (data) | RX FIFO read data (output of `can_fifo`, `.data_out(data_out)` at can_bsp.v:1404) | can_top.v:621, can_bsp.v:1404 | IF05 |
+| data_out_fifo_selected | Read-data select -> i_can_bsp | 1 | level, combinational | 1 when the address maps to the RX buffer window (16..28 extended, 20..29 basic) | can_top.v:744-750 | IF06 |
+| data_out[7:0] | Read-data select -> Host bus adapter | 8 | level (data), registered | Byte registered on a read (`cs & ~we`); held until the next read | can_top.v:753-762; driven to `port_0_io` at 869 | IF07 |
+
+### 4.2 can_registers <-> can_bsp
+
+| Signal | Src -> Dst | Width | Type | Meaning | Evidence | Group |
+|---|---|---|---|---|---|---|
+| reset_mode, listen_only_mode, acceptance_filter_mode, self_test_mode, extended_mode | i_can_registers -> i_can_bsp | 1 each | level | Mode bits from mode/clock-divider registers | can_registers.v:536-539, 808 | Control |
+| release_buffer | i_can_registers -> i_can_bsp | 1 | pulse | Release RX buffer command | `assign release_buffer = command[2]` (599); `COMMAND_REG` self-clears with `rst_sync = \|command[3:2] \| reset_mode` (568-575) | Control |
+| tx_request | i_can_registers -> i_can_bsp | 1 | level (auto-clearing) | Transmit request; held until the next `sample_point` | `= command[0] \| command[4]` (600); clear at `command[0] & sample_point` (556, 583) | Control |
+| abort_tx | i_can_registers -> i_can_bsp | 1 | level (auto-clearing) | Abort request | `= command[1] & ~tx_request` (601); clear at 565 | Control |
+| self_rx_request, single_shot_transmission | i_can_registers -> i_can_bsp | 1 each | level | Self-reception / single-shot mode, set by command bits, cleared when `tx_state` falls | can_registers.v:587-612 | Control |
+| overload_request | i_can_registers -> i_can_bsp | 1 | constant 0 | Overload requests unsupported | can_registers.v:635 | Control |
+| error_warning_limit[7:0] | i_can_registers -> i_can_bsp | 8 | level (data) | Error warning threshold (reset value 96) | can_registers.v:763 | Control |
+| we_rx_err_cnt, we_tx_err_cnt | i_can_registers -> i_can_bsp | 1 each | pulse | Host write strobes to the error counters; derive from `cs` (pulse) | can_registers.v:478-479 | Control |
+| read_arbitration_lost_capture_reg, read_error_code_capture_reg | i_can_registers -> i_can_bsp | 1 each | pulse | Host read strobes of the capture registers | can_registers.v:453-454 (`read = cs & ~we`) | Control |
+| acceptance_code_0..3, acceptance_mask_0..3 | i_can_registers -> i_can_bsp | 8 each | level (data) | Acceptance filter configuration | can_registers.v:863-1074 | Config data |
+| tx_data_0..12 | i_can_registers -> i_can_bsp | 8 each | level (data) | Transmit buffer bytes | can_registers.v:884-1004 | Config data |
+| node_bus_off, node_error_passive, node_error_active, error_status | i_can_bsp -> i_can_registers | 1 each | level | Fault-confinement state and warning flag | can_bsp.v:2013-2027, 2021, 2086 | Status |
+| rx_err_cnt[7:0], tx_err_cnt[7:0] | i_can_bsp -> i_can_registers | 8 each | level (data) | Error counters (bit 8 dropped at can_top.v:670-671) | can_bsp.v:2086; can_top.v:670-671 | Status |
+| transmit_status, receive_status, transmitting, need_to_tx | i_can_bsp -> i_can_registers | 1 each | level | Bus-activity and pending-transmit flags | can_bsp.v:2089-2090, 1834-1838 | Status |
+| overrun, info_empty, rx_message_counter[6:0] | i_can_bsp -> i_can_registers | 1, 1, 7 | level (data) | RX FIFO overrun, empty flag, message count (registers detect the `overrun` edge with `overrun_q`) | can_bsp.v:1405-1407; can_registers.v:685 | Status |
+| error_capture_code[7:0], arbitration_lost_capture[4:0] | i_can_bsp -> i_can_registers | 8, 5 | level (data) | Capture register content | can_bsp.v:2106-2111; can_registers.v:1101-1102 | Status |
+| tx_state, tx_state_q, overload_frame | i_can_bsp -> i_can_registers | 1 each | level | Transmit state feedback | can_bsp.v:1796-1811; can_registers.v:593, 610 | Status |
+| set_reset_mode | i_can_bsp -> i_can_registers | 1 | pulse | Entering bus-off forces reset mode | `= node_bus_off & ~node_bus_off_q` (can_bsp.v:2085) | Event |
+| set_bus_error_irq | i_can_bsp -> i_can_registers | 1 | event (pulse-qualified) | Bus-error interrupt request | `= go_error_frame & ~error_capture_code_blocked` (2127) | Event |
+| set_arbitration_lost_irq | i_can_bsp -> i_can_registers | 1 | pulse | Arbitration-lost interrupt request | `= arbitration_lost & ~arbitration_lost_q & ~arbitration_blocked` (1915) | Event |
+| tx_successful | i_can_bsp -> i_can_registers | 1 | event | Successful transmission completed; consumer detects its rising edge | `can_bsp.v:1762`; `can_registers.v:663` | Event |
+
+### 4.3 can_btl, can_bsp, can_registers, synchronizer
+
+| Signal | Src -> Dst | Width | Type | Meaning | Evidence | Group |
+|---|---|---|---|---|---|---|
+| sample_point | i_can_btl -> i_can_bsp, i_can_registers | 1 | pulse | Bit sample instant | Set in a `clk_en_q` cycle and cleared in the next cycle because `clk_en_q` cannot repeat at consecutive cycles (`preset_cnt >= 2`): can_btl.v:257, 275-293, 403-430 | Bit sampling, Sample-point event |
+| tx_point | i_can_btl -> i_can_bsp | 1 | pulse | Bit transmit instant | `tx_point <= ~tx_point & ...` guarantees a single cycle (can_btl.v:304-312) | Bit sampling |
+| sampled_bit, sampled_bit_q | i_can_btl -> i_can_bsp | 1 each | level (registered) | Sampled bus value (optionally majority of 3) and its previous value | can_btl.v:403-430 | Bit sampling |
+| hard_sync | i_can_btl -> i_can_bsp | 1 | level (combinational) | Hard synchronization condition on the dominant edge | can_btl.v:258 | Bit sampling |
+| baud_r_presc[5:0], sync_jump_width[1:0], time_segment1[3:0], time_segment2[2:0], triple_sampling | i_can_registers -> i_can_btl | 6, 2, 4, 3, 1 | level (static data) | Bit timing configuration; writable only in reset mode | can_registers.v:446-447, 742-743, 756-758 | Bit timing config |
+| rx_idle, rx_inter, transmitting, transmitter | i_can_bsp -> i_can_btl | 1 each | level | Receiver/transmitter state flags | can_bsp.v:757-761, 938-942, 1820-1838 | Bit stream control |
+| go_rx_inter, go_overload_frame, go_error_frame, go_tx | i_can_bsp -> i_can_btl | 1 each | event (combinational, qualified by `sample_point`/error terms) | State-transition requests | can_bsp.v:715, 717, 721, 1778 | Bit stream control |
+| send_ack | i_can_bsp -> i_can_btl | 1 | level (combinational) | Acknowledge slot drive | can_bsp.v:1598 | Bit stream control |
+| tx_next | i_can_bsp -> i_can_btl | 1 | level (combinational) | Next transmit bit value | can_bsp.v:1606-1634 | Bit stream control |
+| node_error_passive | i_can_bsp -> i_can_btl | 1 | level | Error-passive state | can_bsp.v:2013-2017 | Bit stream control |
+| tx (= tx_o) | i_can_bsp -> i_can_btl | 1 | level (registered) | Transmit line fed back to the bit timing logic | can_bsp.v:1640-1646; can_top.v:567-568, 722 | Bit stream control |
+| rx_sync | RX synchronizer -> i_can_btl | 1 | level (registered) | Synchronized receive line | can_top.v:766-778, 567 | RX synchronized |
+
+### 4.4 External ports of can_top (active configuration)
+
+| Port | Dir | Width | Type | Meaning | Evidence | Group |
+|---|---|---|---|---|---|---|
+| ale_i, rd_i, wr_i, cs_can_i | in | 1 each | level | Host strobes (active high; revision note: negate externally for 8051) | can_top.v:277-282, 119-121 | Host bus control |
+| port_0_io[7:0] | inout | 8 | level (data) | Multiplexed address/data. Address captured on `ale_i`; write data read here; read data driven when `cs_can_i & rd_i` | can_top.v:281, 842, 868-869 | Host data bus |
+| rx_i | in | 1 | level | CAN bus receive line | can_top.v:290, 775 | CAN RX |
+| tx_o | out | 1 | level (registered, reset 1) | CAN bus transmit line | can_bsp.v:1640-1646 | CAN TX |
+| bus_off_on | out | 1 | level | `~node_bus_off`: low while the node is bus-off | can_bsp.v:2083 | Bus-off status |
+| irq_on | out | 1 | level (latched, active low) | Interrupt request, set low when any enabled interrupt is pending, cleared on IRQ register read or `release_buffer` | can_registers.v:1243-1251 | Interrupt |
+| clkout_o | out | 1 | clock | Programmable clock output: constant 1, `clk`, or divided clock | can_registers.v:851 | Clock output |
+| clk_i | in | 1 | clock | Core clock | can_top.v:289 | Clock/reset |
+| rst_i | in | 1 | level (asynchronous, active high) | Reset (`posedge rst` in all sequential blocks) | can_top.v:277, 865, 766 | Clock/reset |
+
+## 5. Interface classification
+
+No standard bus protocol (APB, AXI, Wishbone, AHB) is active in this configuration. The WISHBONE alternative exists only in the inactive branch.
+
+| Interface | Category | Protocol | Active side -> passive side (evidence) | Mandatory signals / missing | Evidence |
+|---|---|---|---|---|---|
+| HOST (host bus control and bidirectional data) | custom, protocol-like (8051 multiplexed address/data) | none verified | Host -> TOP: host drives `ale_i`, `rd_i`, `wr_i`; data port is bidirectional | The code documents no protocol; timing not checked | can_top.v:277-287, 836-869 |
+| Host register access, Host access qualifier, FIFO access | custom | none | Host bus adapter -> consumer (drives address, write strobe, data) | - | can_top.v:862-868 |
+| Register read, FIFO read data, Read data return | custom (data return) | none | Producer drives data: i_can_registers / i_can_bsp -> Read-data select -> Host bus adapter | - | can_registers.v:1093; can_top.v:753-762 |
+| FIFO select | custom | none | Read-data select -> i_can_bsp (decode drives select) | - | can_top.v:744-750 |
+| Control | custom | none | i_can_registers -> i_can_bsp (host-written control drives the bit stream processor) | - | section 4.2 |
+| Config data | custom | none | i_can_registers -> i_can_bsp | - | section 4.2 |
+| Status, Event | custom | none | i_can_bsp -> i_can_registers (producer reports) | - | section 4.2 |
+| Bit timing config | custom | none | i_can_registers -> i_can_btl | - | section 4.3 |
+| Bit sampling, Sample-point event | custom (event/data) | none | i_can_btl -> consumers (timing source) | - | can_btl.v |
+| Bit stream control | custom | none | i_can_bsp -> i_can_btl | - | can_bsp.v, can_btl.v |
+| RX synchronized | custom | none | RX synchronizer -> i_can_btl | - | can_top.v:766-778 |
+| CAN RX / CAN TX | custom (CAN bus lines) | CAN physical layer is outside the RTL (external transceiver) | External -> RX synchronizer; i_can_bsp -> external | - | can_top.v:290-291 |
+| Interrupt | custom (level, active low) | none | i_can_registers -> external | - | can_registers.v:1243 |
+| Bus-off status, Clock output | custom | none | i_can_bsp / i_can_registers -> external | - | can_bsp.v:2083; can_registers.v:851 |
+| Clock/reset | custom | none | External -> all blocks | - | can_top.v:289 |
+
+No catalog-external signal group was found, so no `(proposed group)` exists.
+
+## 6. Interfaces and signal groups (mnemonics, RHD-059, RHD-074)
+
+Signals that belong together functionally form ONE interface, drawn as one connector whose arrow points from the initiating side (request/response pairs and bus-like sets are not split by direction). The complete signal lists per direction are in the Interface Table of the diagram and repeated here.
+
+| Mnemonic | Interface | Endpoints (initiator first) | Signals (all, by direction) |
+|---|---|---|---|
+| HOST | Host bus (8051-style) | external host -> Host bus adapter | ale_i, rd_i, wr_i, cs_can_i; port_0_io[7:0] (bidirectional) |
+| HRA | Host register access | Host bus adapter -> i_can_registers | cs [pulse], we, addr[7:0], data_in[7:0] |
+| HRS | Host read select | Host bus adapter -> Read-data select | request: cs [pulse], we, addr[7:0]; return: data_out[7:0] |
+| FAC | FIFO access | Host bus adapter -> i_can_bsp | addr[7:0], data_in[7:0] |
+| RRD | Register read data | i_can_registers -> Read-data select | data_out_regs[7:0], extended_mode, reset_mode |
+| FRI | FIFO read | Read-data select -> i_can_bsp | request: data_out_fifo_selected; return: data_out_fifo[7:0] |
+| CSI | Control and status | i_can_registers -> i_can_bsp | registers -> bsp: reset_mode, listen_only_mode, acceptance_filter_mode, self_test_mode, extended_mode, release_buffer, tx_request, abort_tx, self_rx_request, single_shot_transmission, overload_request, error_warning_limit[7:0], we_rx_err_cnt, we_tx_err_cnt, read_arbitration_lost_capture_reg, read_error_code_capture_reg, acceptance_code_0..3[7:0], acceptance_mask_0..3[7:0], tx_data_0..12[7:0], clear_data_overrun (open); bsp -> registers: node_bus_off, node_error_passive, node_error_active, error_status, rx_err_cnt[7:0], tx_err_cnt[7:0], transmit_status, receive_status, transmitting, tx_successful, need_to_tx, overrun, info_empty, rx_message_counter[6:0], error_capture_code[7:0], arbitration_lost_capture[4:0], tx_state, tx_state_q, overload_frame, set_reset_mode, set_bus_error_irq, set_arbitration_lost_irq |
+| BTI | Bit timing | i_can_registers -> i_can_btl | registers -> btl: baud_r_presc[5:0], sync_jump_width[1:0], time_segment1[3:0], time_segment2[2:0], triple_sampling; btl -> registers: sample_point |
+| BSI | Bit stream | i_can_btl -> i_can_bsp | btl -> bsp: sample_point, tx_point, sampled_bit, sampled_bit_q, hard_sync; bsp -> btl: rx_idle, rx_inter, transmitting, transmitter, go_rx_inter, go_overload_frame, go_error_frame, go_tx, send_ack, tx_next, node_error_passive, tx |
+| rx_sync | RX synchronized | RX synchronizer -> i_can_btl | rx_sync |
+| rx_i | CAN RX (dedicated pad line) | external -> RX synchronizer | rx_i |
+| tx_o | CAN TX (dedicated pad line) | i_can_bsp -> external | tx_o |
+| bus_off_on | Bus-off status | i_can_bsp -> external | bus_off_on |
+| irq_on | Interrupt | i_can_registers -> external | irq_on |
+| clkout_o | Clock output | i_can_registers -> external | clkout_o |
+| CLK | Clock/reset | external -> all six blocks (one entry point, distribution tree with one branch per block) | clk_i; rst_i (not used by Read-data select) |
+
+The initiator of CSI is the register file (it carries host-written control and configuration; the status information returns), of BTI the register file (it supplies the timing configuration), and of BSI the bit-timing logic (it supplies the sample and transmit instants that sequence the frame-processing engine). *Interpretation:* these initiator choices follow the direction of control, not a protocol label in the RTL.
+
+`Ungrouped`: none. `rst_i` reaches the children as `rst` through the rename `assign rst = rst_i` (can_top.v:865). The signal group names used in section 4 (Control, Config data, Status, Event, and the separate host-bus signal rows) map to CSI and HOST.
+
+## 7. Conditional and unresolved items
+
+- Active hierarchy is configuration dependent: with `CAN_WISHBONE_IF` defined, the host adapter changes to a WISHBONE synchronizer (can_top.v:782-831) and the functional groups would differ. Not drawn.
+- `CAN_BIST` and vendor RAM macros are inactive; `can_fifo` selects its RAM implementation by macro (can_fifo.v:382-512). Level-2 content is outside the selected level.
+- `can_top.v:589, 666`: `rx_inter` is connected to both children but has no declaration in `can_top`; it is an implicit 1-bit wire. `not_first_bit_of_inter` (can_top.v:407) is driven by `i_can_bsp` and not used elsewhere. `clear_data_overrun` of `i_can_registers` is left open (can_top.v:482).
+- `overload_request` is constant 0 (`can_registers.v:635`) and `overload_frame` feedback is connected but its consumer is commented out.
+- Level-1 modules at level N are not expanded: can_registers, can_btl, can_bsp each have own logic that was not grouped (RHD-084).
+- All signal types in section 4 come from static reading; none are verified by simulation.
+
+## 8. Diagram mapping
+
+| Page | Blocks | Connectors |
+|---|---|---|
+| 01_LEVEL_1 | Frame TOP (can_top) enclosing i_can_registers, i_can_btl, i_can_bsp, Host bus adapter, Read-data select, RX synchronizer | No hierarchy arrows (hierarchy is shown by the enclosing frame); 9 internal interface connectors (HRA, HRS, FAC, RRD, FRI, CSI, BTI, BSI, rx_sync), 7 external interfaces (HOST, rx_i, tx_o, bus_off_on, irq_on, clkout_o, CLK with one clock/reset distribution tree); the Interface Table below the diagram lists every signal |
