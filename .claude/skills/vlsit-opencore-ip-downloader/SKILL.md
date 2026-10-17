@@ -12,6 +12,7 @@ description: Search OpenCores and its linked public repositories for open-source
 3. Consult `references/` for templates and examples when needed. They rank below `rule.md`.
 4. Prerequisite (OCI-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
+6. Excel or CSV input (OCI-097): analyze it with `scripts/analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
 6. Apply the self-improvement rules OCI-090..096 at the end of every run.
 
 ## Workflow

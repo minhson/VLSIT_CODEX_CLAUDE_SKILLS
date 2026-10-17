@@ -1,6 +1,6 @@
 # Scripts index
 
-Python 3, standard library only (rule RHD-090). Check `python --version` first; if Python is missing, propose the installation to the user and wait for approval (RHD-103). Register every script here (RHD-091); scripts obey `rule.md` (RHD-092).
+Python 3, standard library only (exception: `analyze_excel.py` needs `openpyxl`) (rule RHD-090). Check `python --version` first; if Python is missing, propose the installation to the user and wait for approval (RHD-103). Register every script here (RHD-091); scripts obey `rule.md` (RHD-092).
 
 | Script | Purpose | Status |
 |---|---|---|
@@ -9,6 +9,7 @@ Python 3, standard library only (rule RHD-090). Check `python --version` first; 
 | `layout_search.py` | Runs the generator over parameter sets and ranks by crossings, bends, area (RHD-097). `python scripts/layout_search.py SPEC.json PARAMS.txt WORK_DIR [--top N]` | Tested with 4 parameter sets |
 | `drawio_geometry_check.py` | Geometry review of a `.drawio`: connector through shapes, label overlaps, collinear overlaps, physical crossings, bends (RHD-079), text fill (RHD-052), frame ratio (RHD-087), page bounds. `--allow-shared-start` accepts one distribution tree (RHD-102). | Tested: 0 findings on the generated diagram, findings on a damaged copy |
 | `library_symbols.py` | Library catalog, template clone, and `validate --diagram FILE` for provenance, protected styles, groups, 18 pt black and white (RHD-061). Accepts `jumpStyle`/`jumpSize` (RHD-057) and skips native table cells tagged `vlsit_native_table="1"` (RHD-023). | Tested: PASS on the generated diagram (83 library cells, 2 pages) |
+| `analyze_excel.py` | Read-only analyzer for .xlsx/.xlsm/.xltx/.xltm/.xls/.xlsb/.csv: sheet summary, `--range`, `--search`, `--cells` dump, JSON output (RHD-105). Needs `openpyxl`. Master copy: `C:\HQuan\002_FTEL\002_FTEL_FU3\003_Architecture\analyze_excel.py`. | Tested: openpyxl 3.x installed; workbook summary of FTEL_FU3_Common_Spec_v2.1.xlsx (13 sheets) OK |
 
 ## Adding a script
 

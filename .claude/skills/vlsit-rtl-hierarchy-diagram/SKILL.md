@@ -9,7 +9,7 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (RHD-xxx) are mandatory and rank above everything else; this file only orders the work.
 2. References ([references/](references/)) explain terms, templates, and examples. Follow them for detail, but when a reference differs from a rule, follow the rule and report the difference.
-3. Scripts ([scripts/README.md](scripts/README.md)) do the repeatable work so that tokens are spent on analysis, not on drawing or counting. Python 3 with the standard library only.
+3. Scripts ([scripts/README.md](scripts/README.md)) do the repeatable work so that tokens are spent on analysis, not on drawing or counting. Python 3 with the standard library only. Excel or CSV input (RHD-105): analyze it with `scripts/analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
 4. Prerequisite (RHD-103): run `python --version`. If Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. At the end of every run apply the self-improvement rules RHD-090..096.
 

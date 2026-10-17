@@ -1,12 +1,13 @@
 # Scripts index
 
-Python 3, standard library only. Check `python --version` first; if Python is missing, propose the installation to the user and wait for approval.
+Python 3, standard library only (exception: `analyze_excel.py` needs `openpyxl`). Check `python --version` first; if Python is missing, propose the installation to the user and wait for approval.
 
 Register every script here (rule V2S-091). Scripts must obey `rule.md` (V2S-092).
 
 | Script | Purpose | Status |
 |---|---|---|
 | `create_rule_matrix.py` | Create an unassessed evidence matrix (`rule_compliance.json`) from `references/VLSIT_RTL_Design_Rule.md` and record its SHA-256. A document inventory, not a compliance checker. | Tested: 159 NOT_RUN entries created from the bundled rule, SHA-256 recorded |
+| `analyze_excel.py` | Read-only analyzer for .xlsx/.xlsm/.xltx/.xltm/.xls/.xlsb/.csv: sheet summary, `--range`, `--search`, `--cells` dump, JSON output (V2S-097). Needs `openpyxl`. Master copy: `C:\HQuan\002_FTEL\002_FTEL_FU3\003_Architecture\analyze_excel.py`. | Tested: openpyxl 3.x installed; workbook summary of FTEL_FU3_Common_Spec_v2.1.xlsx (13 sheets) OK |
 
 ## Adding a script
 

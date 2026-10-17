@@ -12,6 +12,7 @@ description: Convert complete VHDL RTL designs into readable, synthesizable Syst
 3. Consult the other `references/` files as needed: they rank below `rule.md`.
 4. Prerequisite (V2S-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
+6. Excel or CSV input (V2S-097): analyze it with `scripts/analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
 6. Apply the self-improvement rules V2S-090..096 at the end of every run.
 
 ## Workflow
