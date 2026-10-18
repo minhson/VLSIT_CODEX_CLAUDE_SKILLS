@@ -1,8 +1,8 @@
 # Skills for Codex and Claude Code / Bộ skill cho Codex và Claude Code
 
-This repository contains five paired project skills. Every skill has a Codex copy and a Claude Code copy, plus a short bilingual README.
+This repository contains six paired project skills. Every skill has a Codex copy and a Claude Code copy, plus a short bilingual README.
 
-Repository này có năm skill dự án, mỗi skill gồm bản Codex và Claude Code cùng README song ngữ ngắn.
+Repository này có sáu skill dự án, mỗi skill gồm bản Codex và Claude Code cùng README song ngữ ngắn.
 
 ## Language convention / Quy định ngôn ngữ
 
@@ -30,7 +30,7 @@ Thư mục project là cách dùng ổn định nhất cho repository này. Comm
 | references/ | Supporting information, templates, examples, improvement_log.md; priority below rule.md. / Tài liệu tham khảo, mẫu, ví dụ; ưu tiên sau rule.md. |
 | scripts/ | Python 3 helper scripts (standard library only) with an index in scripts/README.md; the model adds scripts here when a step recurs. / Script Python 3 hỗ trợ (chỉ thư viện chuẩn), model tự thêm script khi một bước lặp lại. |
 
-Rule prefixes / Tiền tố rule: OCI (opencore-ip-downloader), RHD (rtl-hierarchy-diagram), RSC (rtl-spec-change-implementer), V2S (vhdl-to-systemverilog), and the skill-authoring skill vlsit-create-skill. Each rule.md ends with self-improvement rules: the model may add scripts and refine SKILL.md and references, logging changes in references/improvement_log.md, but may edit rule.md only with explicit user approval. / Mỗi rule.md có nhóm rule tự cải tiến: model được thêm script, chỉnh SKILL.md và references (ghi vào improvement_log.md), nhưng chỉ sửa rule.md khi người dùng đồng ý rõ ràng.
+Rule prefixes / Tiền tố rule: OCI (opencore-ip-downloader), RHD (rtl-hierarchy-diagram), RSC (rtl-spec-change-implementer), V2S (vhdl-to-systemverilog), the skill-authoring skill vlsit-create-skill, and vlsit-wavedrom-waveform (R, rules numbered R-NNN). Each rule.md ends with self-improvement rules: the model may add scripts and refine SKILL.md and references, logging changes in references/improvement_log.md, but may edit rule.md only with explicit user approval. / Mỗi rule.md có nhóm rule tự cải tiến: model được thêm script, chỉnh SKILL.md và references (ghi vào improvement_log.md), nhưng chỉ sửa rule.md khi người dùng đồng ý rõ ràng.
 
 ## Requirements / Yêu cầu
 
@@ -45,6 +45,7 @@ Python 3 (standard library only) runs the helper scripts. Each skill checks `pyt
 | vlsit-rtl-spec-change-implementer | Analyze RTL against a new feature and optional old spec, gate implementation behind approval of an English technical plan, and report RTL code-change percentage. / Phân tích RTL theo yêu cầu mới và spec cũ tùy chọn, chờ duyệt kế hoạch kỹ thuật tiếng Anh trước khi triển khai và báo cáo tỷ lệ code RTL thay đổi. | [Codex](.agents/skills/vlsit-rtl-spec-change-implementer/README.md) · [Claude](.claude/skills/vlsit-rtl-spec-change-implementer/README.md) |
 | vlsit-vhdl-to-systemverilog | Convert complete VHDL RTL into synthesizable SystemVerilog under the bundled VLSIT rules, with semantic analysis, two review gates, source mappings, and evidence-based validation. / Chuyển đầy đủ RTL VHDL sang SystemVerilog tổng hợp được theo rule VLSIT đi kèm, có phân tích semantics, hai gate duyệt, mapping nguồn và kiểm chứng bằng bằng chứng. | [Codex](.agents/skills/vlsit-vhdl-to-systemverilog/README.md) · [Claude](.claude/skills/vlsit-vhdl-to-systemverilog/README.md) |
 | vlsit-create-skill | Create a new skill in this house format (SKILL.md, rule.md with numbered rules, references, Python scripts): interviews the user, offers design options, validates and mirrors it to `.claude` and `.agents`. / Tạo skill mới theo chuẩn của repository: phỏng vấn, đưa phương án thiết kế, kiểm tra và đồng bộ sang `.claude` và `.agents`. | [Codex](.agents/skills/vlsit-create-skill/README.md) · [Claude](.claude/skills/vlsit-create-skill/README.md) |
+| vlsit-wavedrom-waveform | Draw timing waveforms with the bundled offline WaveDrom from a short request, a VCD file (whole file, time window or chosen signals) or a waveform image; outputs WaveJSON plus a self-contained HTML viewer that opens without internet. / Vẽ waveform bằng WaveDrom đi kèm chạy ngoại tuyến từ yêu cầu ngắn, file VCD (toàn bộ, khoảng thời gian hoặc tín hiệu chọn) hoặc ảnh waveform; xuất WaveJSON và file HTML xem được không cần Internet. | [Codex](.agents/skills/vlsit-wavedrom-waveform/README.md) · [Claude](.claude/skills/vlsit-wavedrom-waveform/README.md) |
 
 The hierarchy-diagram skill includes assets/VLSIT_DRAWIO_LIB_V1.drawio.xml as its mandatory, exclusive symbol library. Copy the complete skill folder, including assets, references, and scripts. The skill checks symbol provenance and preserves black-and-white styling, 18 pt text, and two-line instance/module labels.
 
