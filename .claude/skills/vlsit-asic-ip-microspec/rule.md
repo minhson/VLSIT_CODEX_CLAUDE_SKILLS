@@ -1,0 +1,132 @@
+# Rules
+
+These rules are mandatory every time this skill runs. When this file, SKILL.md and a file in `reference/` differ, this file wins.
+
+Each rule is one checkable requirement. It has a permanent ID (R-NNN) that is never reused or renumbered, a statement that starts with MUST or MUST NOT, a Why line and a Check line. No two rules may repeat or contradict each other.
+
+## General
+
+### R-001 Report only verified results
+MUST report a result as checked, tested or installed only when a command or an inspection in the current run confirmed it, and list everything that was not confirmed.
+- Why: the user acts on the report, and an unverified claim costs more than an honest "not checked".
+- Check: manual - every claim in the final report points to a command output or to a file that was read.
+
+### R-002 Protect existing files
+MUST ask the user before overwriting or deleting a file that this skill did not create in the current run.
+- Why: the user may have edited the file by hand, and a silent overwrite destroys that work.
+- Check: manual - no existing file changed without a recorded yes from the user.
+
+### R-003 Questions carry options
+MUST give every question to the user at least two concrete options, each with a specific explanation and a worked example, end the set with an open choice where the user writes their own answer, and put at most four questions in one message.
+- Why: a spec decision is made faster and more correctly from visible alternatives with examples than from an open question, and the open choice covers what the list missed.
+- Check: manual - each question in the chat shows options with explanations, an example and an open choice.
+
+### R-004 Ask instead of guessing
+MUST ask the user about every requirement, parameter, timing, interface detail or protocol choice that is missing or unclear, and record any answer of "you decide" as an assumption in section 20 of the specification.
+- Why: an invented detail becomes a silent defect in a document that RTL, verification and physical design will all trust.
+- Check: manual - every requirement traces to the user's answer, a cited reference, or a recorded assumption.
+
+### R-005 Writing language
+MUST write the specification and every file created for it in precise English that uses the vocabulary of microelectronics, semiconductor engineering, computer science and electronics, and reply to the user in the language the user writes.
+- Why: the specification is a technical contract that tools and reviewers read, while the conversation serves the person.
+- Check: manual - read the specification for terms that are not standard engineering terms.
+
+## Protocols and reference documents
+
+### R-006 Protocol facts come from md_doc
+MUST take every statement about a standard protocol from a file in `reference/md_doc/` and cite the file and section, and when the standard is missing there, ask the user to supply it or to approve a download before writing the statement.
+- Why: protocol behavior written from memory is a common source of wrong specifications, while the converted standard is exact.
+- Check: manual - each protocol statement cites a `md_doc` file; a statement written without one is listed as an open item in section 20.
+
+### R-007 Verbatim Markdown with a header
+MUST keep each Markdown document in `reference/md_doc/` word for word as in its source, produced by `scripts/vlsit_doc_to_md.py` or `scripts/vlsit_pdf_to_md.py`, with a header that records the protocol, the revision, the source, the licence, the retrieval date and the source checksum, and with the important notes at the top of the file. A figure that carries information as a drawing (a waveform, a state diagram, a block diagram) may be followed by a converter annotation between `CONVERTER ANNOTATION` markers that restates the drawing as text; `verify` ignores these blocks.
+- Why: a changed word in a standard changes the requirement, and the header tells the next reader which revision the text belongs to.
+- Check: `vlsit_doc_to_md.py verify` or `vlsit_pdf_to_md.py verify` reports OK; the header fields are present.
+
+### R-008 Licensed documents
+MUST store only the Markdown file, not the original PDF, for a standard whose licence does not allow redistribution, mark it `redistribution: "forbidden"` or `"unknown"` in its header, and keep it out of version control unless the licence allows redistribution.
+- Why: the repository may be shared or sold, and a copy of a licensed document would infringe the licence of its owner.
+- Check: manual - `reference/org_doc/` holds only files whose header says `redistribution: "allowed"`; the repository `.gitignore` lists every other converted file.
+
+### R-009 Downloads need approval
+MUST name the file, the source, the size and the licence to the user and wait for a yes before downloading a document, source code or a tool, and before installing any software.
+- Why: a download or an installation changes the machine and may break a licence, and the user did not ask for it by asking for a specification.
+- Check: `scripts/vlsit_protocol_docs.py fetch` stops with exit code 4 until `--yes` is given; manual - every other download or install has a recorded yes.
+
+## Reference IP
+
+### R-010 Evidence filter for reference IP
+MUST use a public IP as a design reference only when it has evidence of ASIC tapeout or FPGA validation, a testbench and a licence, and record the evidence link for each IP that is used and the reason for each IP that is excluded.
+- Why: unproven IP can carry mistakes that a silicon-proven design has already removed, and a missing licence forbids reuse of the ideas in a product.
+- Check: `scripts/vlsit_ip_search.py` prints QUALIFIED only for such IP; manual - the research log lists the evidence links and the exclusions.
+
+### R-011 Chinese-language sources
+MUST read relevant Chinese-language sources (for example Gitee, CSDN and Zhihu) in depth, summarize the technical findings in English with the source and a confidence level, and ask the user before downloading anything from them.
+- Why: some good open designs are documented only in Chinese, and a summary with its source lets the user judge it without reading the original.
+- Check: manual - each Chinese source in the research log has an English summary, a link and a confidence level, and a recorded yes precedes any download.
+
+### R-012 Reference IP is not copied
+MUST NOT copy text or code of a reference IP into the specification, and cite the licence of the source for each idea that is borrowed.
+- Why: copying text without its licence terms can infringe the licence, and a specification must describe this IP, not another one.
+- Check: manual - the specification contains no passage of reference code and every borrowed idea cites its source.
+
+## Specification content
+
+### R-013 Template structure
+MUST write the specification in the VLSIT template `reference/templates/VLSIT_ASIC_IP_Design_Specification_Template.md` with all 22 sections in the same order and with the same titles, and with the front matter filled.
+- Why: the template is the contract that RTL, verification, DFT and physical-design teams rely on, so a missing section hides a decision.
+- Check: `scripts/vlsit_spec_tool.py check` reports no section difference.
+
+### R-014 Sections that are not needed
+MUST write the exact line `**Not required (confirmed by user, YYYY-MM-DD):** reason` for every section or table row that the user confirms is not needed, and write a TBD only with its impact and the decision needed in section 20.
+- Why: a visible, dated "not required" tells the team that the point was considered, while a silent omission looks like a mistake.
+- Check: `scripts/vlsit_spec_tool.py check` reports no malformed Not required line and no TBD missing from section 20; `scripts/vlsit_spec_tool.py mark-not-required` writes the line.
+
+### R-015 Requirement identifiers
+MUST give every mandatory requirement a unique REQ-<AREA>-<NNN> identifier with a verification method in section 3 and a row in the traceability table of section 19.
+- Why: testable and traceable requirements are what turns a specification into verified silicon.
+- Check: `scripts/vlsit_spec_tool.py check` reports no duplicate, untraced or undefined requirement.
+
+### R-016 Registers only in the workbook
+MUST define software-visible registers only in the VLSIT CSR workbook, filled by `scripts/vlsit_csr_tool.py` from a JSON description and validated before delivery, with no register, field, offset or reset value declared in the specification.
+- Why: the workbook is the single source for the generated register RTL, so a second copy would drift.
+- Check: `scripts/vlsit_csr_tool.py validate` prints PASS; manual - section 11 holds no register table.
+
+## Diagrams and waveforms
+
+### R-017 Block diagram and key waveforms
+MUST include in every specification a block diagram in section 5.2 and the key waveform of each important transaction of every external interface (at least one success case and one error case per interface), each as an image file with its source file beside it.
+- Why: a reader checks a protocol bridge by looking at its handshakes, and an image with a source can be reviewed and edited.
+- Check: manual - section 5.2 links a block diagram and the interface sections link waveform images whose `.json` or `.tex` sources exist.
+
+### R-018 LaTeX first
+MUST generate the block diagram as LaTeX (TikZ) by `scripts/vlsit_block_diagram.py` from a JSON description, and build and render it only after a LaTeX compiler is found; when none is found, ask the user whether to install one.
+- Why: a script makes the diagram repeatable and editable from one source, and LaTeX is the user's chosen format.
+- Check: `scripts/vlsit_block_diagram.py check` prints READY before `build`; manual - the install question was asked.
+
+### R-019 draw.io alternative
+MUST use draw.io only after the user declined LaTeX and agreed to draw.io, building the draw.io file with `scripts/vlsit_block_diagram.py drawio` so that every shape is a clone of the VLSIT library `reference/drawio/VLSIT_DRAWIO_LIB_V1.drawio.xml`.
+- Why: the user fixed that library as the only symbol source, and the script keeps the provenance of every shape.
+- Check: `scripts/vlsit_library_symbols.py validate --diagram FILE` prints PASS.
+
+### R-020 draw.io style
+MUST follow the conventions of `reference/drawio/VLSIT_daigram_reference.drawio` in every draw.io diagram: black and white only, 18 pt text, rectangular blocks inside an enclosing frame whose name is at the top right, protocol names on the arrows, and no grid.
+- Why: the reference diagram is the user's approved look, and a uniform style lets the diagrams of many IP be compared.
+- Check: `scripts/vlsit_library_symbols.py validate --diagram FILE` prints PASS; manual - compare the diagram with the reference pages.
+
+## Scripts and tools
+
+### R-021 Python scripts first
+MUST do each recurring mechanical step with a Python script in `scripts/`, and when a step recurs without a script, propose a new script to the user and create it only after the user agrees.
+- Why: a script is repeatable and cheap in tokens, and the user decides which tools join the skill.
+- Check: manual - no recurring step is done by hand; every new script was proposed first.
+
+### R-022 External packages
+MUST use no third-party Python package other than `openpyxl` (CSR workbook) and `PyMuPDF` (PDF conversion and image rendering), install either only after the user agrees, and propose any other package to the user before use.
+- Why: every package is something the user must install and keep working.
+- Check: `scripts/vlsit_spec_tool.py env` lists the packages; manual - no other import appears in a script.
+
+### R-023 AGPL isolation
+MUST import PyMuPDF only in `scripts/vlsit_pdf_to_md.py` and `scripts/vlsit_pdf_render.py`, keep the AGPL-3.0 notice at the top of each, and keep every other script free of that import.
+- Why: PyMuPDF is licensed under the AGPL, so the importing files carry it and the rest of the skill keeps its own licence.
+- Check: a search of `scripts/` for `import pymupdf` and `import fitz` finds only these two files.

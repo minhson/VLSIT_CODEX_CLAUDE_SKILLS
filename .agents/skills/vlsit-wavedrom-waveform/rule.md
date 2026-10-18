@@ -19,9 +19,9 @@ MUST ask the user before overwriting or deleting a file that this skill did not 
 ## Drawing
 
 ### R-003 Bundled WaveDrom only
-MUST draw waveforms only with the WaveDrom files in `assets/wavedrom/`, after `scripts/wavedrom_waveform.py check` reports READY, with no WaveDrom or other script loaded from the network and no other drawing tool substituted.
+MUST draw waveforms only with the WaveDrom files in `assets/wavedrom/`, after `scripts/vlsit_wavedrom_waveform.py check` reports READY, with no WaveDrom or other script loaded from the network and no other drawing tool substituted.
 - Why: the viewer then works offline and always renders the version whose checksum was recorded, so the user sees the same result on every machine.
-- Check: `scripts/wavedrom_waveform.py check`; the generated HTML contains no `src="http` reference.
+- Check: `scripts/vlsit_wavedrom_waveform.py check`; the generated HTML contains no `src="http` reference.
 
 ### R-004 Ask instead of guessing
 MUST ask the user whenever a signal name, group, order, value, timing, edge or annotation is missing, unreadable or ambiguous, and fill none of them with an assumption.
@@ -51,14 +51,14 @@ MUST tell the user before drawing when the requested content cannot be expressed
 ## Output
 
 ### R-009 Strict WaveJSON checked before delivery
-MUST write the WaveJSON as strict JSON and run `scripts/wavedrom_waveform.py lint` on it with zero errors before building or delivering the HTML.
+MUST write the WaveJSON as strict JSON and run `scripts/vlsit_wavedrom_waveform.py lint` on it with zero errors before building or delivering the HTML.
 - Why: strict JSON loads in every tool and the check catches the errors that make WaveDrom draw nothing, such as a wave starting with `.` or edges naming missing nodes.
-- Check: `scripts/wavedrom_waveform.py lint FILE` prints PASS.
+- Check: `scripts/vlsit_wavedrom_waveform.py lint FILE` prints PASS.
 
 ### R-010 Deliver both files
-MUST deliver the `.json` file and the offline `.html` viewer built by `scripts/wavedrom_waveform.py html`, state their full paths, and tell the user to open the HTML file in a browser.
+MUST deliver the `.json` file and the offline `.html` viewer built by `scripts/vlsit_wavedrom_waveform.py html`, state their full paths, and tell the user to open the HTML file in a browser.
 - Why: the JSON is the editable source and the HTML lets the user inspect the result at once without installing anything.
-- Check: `scripts/wavedrom_waveform.py html` prints OK and the report names both paths.
+- Check: `scripts/vlsit_wavedrom_waveform.py html` prints OK and the report names both paths.
 
 ### R-011 Ask before installing or using the network
 MUST ask the user and wait for a yes before installing software, downloading a file or using the network.

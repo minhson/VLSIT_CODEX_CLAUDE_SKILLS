@@ -1,0 +1,9 @@
+- Issue D of IHI 0024 covers APB2 (Issue A), APB3 (Issue B: PREADY, PSLVERR), APB4 (Issue C: PPROT, PSTRB) and APB5 (Issue D: PWAKEUP, user signals, parity). "APB4" means the signal set of Issue C; do not use the Issue D additions (PWAKEUP, PAUSER, PWUSER, PRUSER, PBUSER, check signals) for an APB4 interface.
+- This issue uses the terms Requester and Completer; older issues say Master and Slave.
+- Appendix A: PADDR, PPROT, PENABLE, PWRITE, PSTRB and the active lanes of PWDATA must be valid whenever PSEL is asserted (that is, already in the Setup phase). PREADY must be valid when PSEL and PENABLE are asserted. PRDATA (reads) and PSLVERR must be valid only when PSEL, PENABLE and PREADY are all HIGH.
+- Section 3.1: PADDR, PWDATA and the other control signals must be stable until the transfer completes (they stay unchanged while PREADY is LOW).
+- Section 3.2: PSTRB must be driven LOW for all bits during a read transfer. PSTRB is optional; a Completer documents which sparse writes it supports.
+- Section 3.4: PSLVERR is valid only in the last cycle of a transfer. A read that receives an error can return invalid data, and the Requester might still use it. A write that receives an error might or might not have updated the Completer.
+- Page numbers in the original are marked with the comment lines "<!-- page N -->".
+- Tables are real Markdown tables (re-extracted 2026-10-18 with column detection from the header row); figure drawings are followed by a marked CONVERTER ANNOTATION (operator-written, read from the rendered figure) with a per-interval table and WaveJSON: Figures 3-1, 3-2, 3-4, 3-5, 3-6, 3-7 (waveforms), 3-3 (byte lanes), 4-1 (state diagram), 5-1 (parity block diagram).
+- Figure 4-1: the bus moves directly from ACCESS to SETUP when PREADY = 1 and another transfer follows (PSELx stays 1, only PENABLE changes); this is the back-to-back case.

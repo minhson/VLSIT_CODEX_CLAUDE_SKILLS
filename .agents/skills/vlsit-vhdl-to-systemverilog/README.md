@@ -38,9 +38,9 @@ Replace example directory tokens with your actual input and output locations. / 
 
     $vlsit-vhdl-to-systemverilog Convert the complete VHDL RTL in <VHDL_SOURCE_DIRECTORY> to synthesizable SystemVerilog using the bundled VLSIT rules. Top: uart_top. Architecture: rtl. Output: <OUTPUT_DIRECTORY>. Prepare the conversion plan in scientific English and wait for Gate 1 approval. Preserve cycle behavior and report actual validation evidence.
 
-Instructions: [SKILL.md](SKILL.md). Semantic notes: [vhdl_semantics.md](references/vhdl_semantics.md). Validation and report contract: [validation_and_reports.md](references/validation_and_reports.md).
+Instructions: [SKILL.md](SKILL.md). Semantic notes: [vlsit_vhdl_semantics.md](references/vlsit_vhdl_semantics.md). Validation and report contract: [vlsit_validation_and_reports.md](references/vlsit_validation_and_reports.md).
 
-Hướng dẫn: [SKILL.md](SKILL.md). Lưu ý semantics: [vhdl_semantics.md](references/vhdl_semantics.md). Quy định kiểm chứng và báo cáo: [validation_and_reports.md](references/validation_and_reports.md).
+Hướng dẫn: [SKILL.md](SKILL.md). Lưu ý semantics: [vlsit_vhdl_semantics.md](references/vlsit_vhdl_semantics.md). Quy định kiểm chứng và báo cáo: [vlsit_validation_and_reports.md](references/vlsit_validation_and_reports.md).
 
 ## Installation options / Các cách cài đặt
 
@@ -57,7 +57,7 @@ Helper chỉ dùng thư viện chuẩn, tạo checklist bằng chứng chứ kh�
 
 Run from this skill folder / Chạy từ thư mục skill này:
 
-    python scripts/create_rule_matrix.py --output <NEW_RULE_MATRIX_JSON>
+    python scripts/vlsit_create_rule_matrix.py --output <NEW_RULE_MATRIX_JSON>
 
 The output must not exist already. The script finds the bundled rule relative to itself and records its hash. / Đầu ra phải chưa tồn tại. Script tìm rule tương đối theo vị trí của nó và ghi hash rule.
 

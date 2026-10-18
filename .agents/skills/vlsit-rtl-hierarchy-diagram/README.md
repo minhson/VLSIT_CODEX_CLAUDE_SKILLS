@@ -23,17 +23,17 @@ The library is preserved byte for byte. SHA-256: D1631ACF98A920526B235E8970FEDDC
 
 Thư viện được giữ nguyên từng byte, có SHA-256 ở trên. Khi cài đặt, chép toàn bộ thư mục skill, gồm assets, references và scripts.
 
-See [library_usage.md](references/library_usage.md) for template selection and cloning. Run the following from this skill folder; the checker validates symbol provenance and styling, not RTL correctness or visual quality.
+See [vlsit_library_usage.md](references/vlsit_library_usage.md) for template selection and cloning. Run the following from this skill folder; the checker validates symbol provenance and styling, not RTL correctness or visual quality.
 
-Xem [library_usage.md](references/library_usage.md) để chọn và sao chép template. Chạy lệnh dưới từ thư mục skill; công cụ kiểm nguồn gốc và style ký hiệu, không chứng minh RTL đúng hoặc sơ đồ dễ đọc.
+Xem [vlsit_library_usage.md](references/vlsit_library_usage.md) để chọn và sao chép template. Chạy lệnh dưới từ thư mục skill; công cụ kiểm nguồn gốc và style ký hiệu, không chứng minh RTL đúng hoặc sơ đồ dễ đọc.
 
-    python scripts/library_symbols.py validate --diagram <GENERATED_DRAWIO_FILE>
+    python scripts/vlsit_library_symbols.py validate --diagram <GENERATED_DRAWIO_FILE>
 
 ## Input and output / Đầu vào và đầu ra
 
-An explicit RTL source-directory path is required. The default deliverable is a multi-page rtl_hierarchy.drawio file. The skill analyzes RTL but does not modify it.
+An explicit RTL source-directory path is required. The default deliverable is a multi-page vlsit_rtl_hierarchy.drawio file. The skill analyzes RTL but does not modify it.
 
-Bắt buộc cung cấp đường dẫn thư mục RTL cụ thể. Kết quả mặc định là file rtl_hierarchy.drawio nhiều trang. Skill phân tích RTL nhưng không sửa mã nguồn.
+Bắt buộc cung cấp đường dẫn thư mục RTL cụ thể. Kết quả mặc định là file vlsit_rtl_hierarchy.drawio nhiều trang. Skill phân tích RTL nhưng không sửa mã nguồn.
 
 ## Use / Cách gọi
 

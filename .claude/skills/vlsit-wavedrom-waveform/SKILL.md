@@ -23,12 +23,18 @@ Read [rule.md](rule.md) completely before doing anything else. Every rule in it 
 Every script in `scripts/` is Python 3 and uses only the standard library. Locate a working Python before running any of them:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File "<skill folder>\scripts\find-python.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "<skill folder>\scripts\vlsit_find_python.ps1"
 ```
 
-It prints the full path of a working Python 3 (called `<python>` below) and exits 0, or prints `NOT FOUND` and exits 3. Do not continue without Python and do not guess a path. Tell the user that Python 3 is needed and let them choose: install it themselves from python.org, or let you install it with `find-python.ps1 -Install` (uses winget). Run the install only after they agree, then run the locator again.
+On Linux or macOS run the twin script:
 
-Then verify the bundled WaveDrom: `<python> "<skill folder>\scripts\wavedrom_waveform.py" check` must print READY (exit 3 means a file is missing or changed; report it and stop).
+```sh
+sh "<skill folder>/scripts/vlsit_find_python.sh"
+```
+
+It prints the full path of a working Python 3 (called `<python>` below) and exits 0, or prints `NOT FOUND` and exits 3. Do not continue without Python and do not guess a path. Tell the user that Python 3 is needed and let them choose: install it themselves from python.org, or let you install it with `vlsit_find_python.ps1 -Install` (uses winget). Run the install only after they agree, then run the locator again.
+
+Then verify the bundled WaveDrom: `<python> "<skill folder>\scripts\vlsit_wavedrom_waveform.py" check` must print READY (exit 3 means a file is missing or changed; report it and stop).
 
 ### 3. Identify the source
 
@@ -36,17 +42,17 @@ Decide which input the user gave: a VCD file, a waveform image (screenshot or ph
 
 ### 4. Turn the source into WaveJSON
 
-- **Words only**: read [reference/question_bank.md](reference/question_bank.md), write a draft WaveJSON from the request using [reference/wavejson_cheatsheet.md](reference/wavejson_cheatsheet.md), show the draft with up to four questions with options (rule R-005) about what is missing, and revise after the answers.
-- **VCD**: read [reference/vcd_to_wavejson.md](reference/vcd_to_wavejson.md). Run `vcd-info`, show the result, ask the user to choose the whole file, a time window or a signal list (rule R-006), then run `vcd-to-wavejson`.
-- **Image**: read [reference/image_to_wavejson.md](reference/image_to_wavejson.md). Transcribe the image into the table, ask about every unreadable or ambiguous item, and get the user's confirmation of the table before writing the WaveJSON (rules R-004, R-007).
+- **Words only**: read [reference/vlsit_question_bank.md](reference/vlsit_question_bank.md), write a draft WaveJSON from the request using [reference/vlsit_wavejson_cheatsheet.md](reference/vlsit_wavejson_cheatsheet.md), show the draft with up to four questions with options (rule R-005) about what is missing, and revise after the answers.
+- **VCD**: read [reference/vlsit_vcd_to_wavejson.md](reference/vlsit_vcd_to_wavejson.md). Run `vcd-info`, show the result, ask the user to choose the whole file, a time window or a signal list (rule R-006), then run `vcd-to-wavejson`.
+- **Image**: read [reference/vlsit_image_to_wavejson.md](reference/vlsit_image_to_wavejson.md). Transcribe the image into the table, ask about every unreadable or ambiguous item, and get the user's confirmation of the table before writing the WaveJSON (rules R-004, R-007).
 
 State anything WaveDrom cannot express and the nearest drawable form (rule R-008).
 
 ### 5. Check and build
 
 ```powershell
-<python> "<skill folder>\scripts\wavedrom_waveform.py" lint "<file>.json"
-<python> "<skill folder>\scripts\wavedrom_waveform.py" html "<file>.json" --title "<title>"
+<python> "<skill folder>\scripts\vlsit_wavedrom_waveform.py" lint "<file>.json"
+<python> "<skill folder>\scripts\vlsit_wavedrom_waveform.py" html "<file>.json" --title "<title>"
 ```
 
 Fix every lint error and run it again; the HTML is built beside the JSON unless `--out` is given, and an existing file is not overwritten without `--force` (rule R-002).
@@ -65,10 +71,10 @@ Read a file only when the step needs it.
 
 | File | Read it when |
 |---|---|
-| [reference/question_bank.md](reference/question_bank.md) | Step 4, to word questions with options and to build a draft from a short request |
-| [reference/wavejson_cheatsheet.md](reference/wavejson_cheatsheet.md) | Step 4, when writing or editing WaveJSON |
-| [reference/vcd_to_wavejson.md](reference/vcd_to_wavejson.md) | Step 4 with a VCD file |
-| [reference/image_to_wavejson.md](reference/image_to_wavejson.md) | Step 4 with a waveform image |
+| [reference/vlsit_question_bank.md](reference/vlsit_question_bank.md) | Step 4, to word questions with options and to build a draft from a short request |
+| [reference/vlsit_wavejson_cheatsheet.md](reference/vlsit_wavejson_cheatsheet.md) | Step 4, when writing or editing WaveJSON |
+| [reference/vlsit_vcd_to_wavejson.md](reference/vlsit_vcd_to_wavejson.md) | Step 4 with a VCD file |
+| [reference/vlsit_image_to_wavejson.md](reference/vlsit_image_to_wavejson.md) | Step 4 with a waveform image |
 
 ## Scripts
 
@@ -76,16 +82,16 @@ Run each script as `<python> "<skill folder>\scripts\<script>.py" <action>`.
 
 | Script | Run it when |
 |---|---|
-| `scripts/find-python.ps1` | Before the first Python script, and again after Python was installed |
-| `scripts/wavedrom_waveform.py check` | Step 2: verify the bundled WaveDrom against `assets/CHECKSUMS.txt` |
-| `scripts/wavedrom_waveform.py vcd-info` | Step 4 with a VCD file: list signals and time range |
-| `scripts/wavedrom_waveform.py vcd-to-wavejson` | Step 4 with a VCD file, after the user chose the scope |
-| `scripts/wavedrom_waveform.py lint` | Step 5: check the structure of the WaveJSON |
-| `scripts/wavedrom_waveform.py html` | Step 5: build the offline viewer |
+| `scripts/vlsit_find_python.ps1` (Windows), `scripts/vlsit_find_python.sh` (Linux, macOS) | Before the first Python script, and again after Python was installed |
+| `scripts/vlsit_wavedrom_waveform.py check` | Step 2: verify the bundled WaveDrom against `assets/vlsit_CHECKSUMS.txt` |
+| `scripts/vlsit_wavedrom_waveform.py vcd-info` | Step 4 with a VCD file: list signals and time range |
+| `scripts/vlsit_wavedrom_waveform.py vcd-to-wavejson` | Step 4 with a VCD file, after the user chose the scope |
+| `scripts/vlsit_wavedrom_waveform.py lint` | Step 5: check the structure of the WaveJSON |
+| `scripts/vlsit_wavedrom_waveform.py html` | Step 5: build the offline viewer |
 
 ## Assets
 
-`assets/wavedrom/` holds the WaveDrom 3.7.0 library files (`wavedrom.unpkg.min.js`, `skins/default.js`, `LICENSE`, MIT licence, from the npm package `wavedrom`) and `assets/CHECKSUMS.txt` lists their SHA-256 values. Do not edit these files.
+`assets/wavedrom/` holds the WaveDrom 3.7.0 library files (`wavedrom.unpkg.min.js`, `skins/default.js`, `LICENSE`, MIT licence, from the npm package `wavedrom`) and `assets/vlsit_CHECKSUMS.txt` lists their SHA-256 values. Do not edit these files.
 
 ## Output
 

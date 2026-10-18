@@ -2,7 +2,7 @@
 
 These rules are mandatory every time this skill runs, and they describe what every skill it creates must satisfy. When this file, SKILL.md and a file in `reference/` differ, this file wins.
 
-Each rule is one checkable requirement. It has a permanent ID (R-NNN) that is never reused or renumbered, a statement that starts with MUST or MUST NOT, a Why line and a Check line. No two rules may repeat or contradict each other. "validate" below means `scripts/skillkit.py validate`.
+Each rule is one checkable requirement. It has a permanent ID (R-NNN) that is never reused or renumbered, a statement that starts with MUST or MUST NOT, a Why line and a Check line. No two rules may repeat or contradict each other. "validate" below means `scripts/vlsit_skillkit.py validate`.
 
 ## Layout
 
@@ -17,9 +17,9 @@ MUST NOT place any SKILL.md other than the top-level one inside a skill folder; 
 - Check: validate.
 
 ### R-003 One source, one mirror
-MUST write each skill in `.claude/skills/<name>/` and produce its copy in `.agents/skills/<name>/` only by running `scripts/skillkit.py mirror` after the last edit.
+MUST write each skill in `.claude/skills/<name>/` and produce its copy in `.agents/skills/<name>/` only by running `scripts/vlsit_skillkit.py mirror` after the last edit.
 - Why: both tools read the same format from different folders; a single source stops the two copies from drifting apart.
-- Check: `scripts/skillkit.py mirror --check` reports IN SYNC.
+- Check: `scripts/vlsit_skillkit.py mirror --check` reports IN SYNC.
 
 ## Metadata
 
@@ -127,14 +127,34 @@ MUST NOT import a third-party package in a script unless the standard library ca
 - Check: validate lists every import that is not in the standard library.
 
 ### R-023 Python must exist first
-MUST find a working Python 3 before running any script and, when there is none, ask the user to install it or to approve an installation by the assistant instead of continuing without it.
+MUST find a working Python 3 before running any script, with `vlsit_find_python.ps1` on Windows or `vlsit_find_python.sh` on Linux and macOS, and, when there is none, ask the user to install it or to approve an installation by the assistant instead of continuing without it.
 - Why: the user may not know that Python is missing, and on Windows the python command on PATH is often only a Microsoft Store shortcut, so a plain version check is not reliable.
-- Check: validate checks that scripts/find-python.ps1 ships with the skill and that SKILL.md runs it; manual - nothing was installed before the user agreed.
+- Check: validate checks that both locators ship with the skill and that SKILL.md runs them; manual - nothing was installed before the user agreed.
 
 ### R-024 UTF-8 text files
 MUST open every text file in a script with an explicit UTF-8 encoding.
 - Why: Python on Windows defaults to the local code page, which corrupts Vietnamese text without any error.
 - Check: validate.
+
+### R-040 One script, both operating systems
+MUST ship every non-Python script for both operating systems, a `.ps1` file for Windows and a `.sh` file for Linux and macOS with the same name, options, output and exit codes, showing in SKILL.md how to run each.
+- Why: a skill is used on Windows workstations and on Linux servers alike, and a script that exists for one system only makes the skill fail on the other.
+- Check: validate reports every `.ps1` without a `.sh` twin, and every `.sh` without a `.ps1` twin; manual - run both twins on a sample and compare the output.
+
+### R-041 Portable shell scripts
+MUST write each `.sh` script in POSIX sh, starting with `#!/bin/sh`, with LF line endings and without bash-only constructs.
+- Why: Linux distributions use different default shells (dash, ash, bash, zsh), and only POSIX sh behaves the same in all of them.
+- Check: validate checks the first line and the line endings and warns about bash-only constructs; manual - run the script under dash.
+
+### R-042 File names
+MUST name every file of the skill with the prefix `vlsit_`, for example `vlsit_find_python.sh` or `vlsit_writing_rules.md`, and write the same name wherever SKILL.md or another file mentions it. Script names use lowercase letters, digits and underscores only. Only these keep their names: `SKILL.md` (the tools find a skill by it), `rule.md`, `README.md`, `LICENSE`, and third-party files kept verbatim under `assets/`.
+- Why: skill files are copied to the machines of many users, and the prefix shows where a file comes from and keeps it from clashing with other tools.
+- Check: validate.
+
+### R-043 Script header
+MUST begin every `.py`, `.ps1` and `.sh` script with a header of comment lines that states what the script does (`Function:`), its author (`Author:`) and its GitHub link (`GitHub: https://github.com/...`).
+- Why: a script is often read or reused without its skill folder, and the header tells the reader its purpose and where to report or find updates.
+- Check: validate looks for the three fields in the first lines of each script; manual - the Function line describes what the script really does.
 
 ### R-025 ASCII-only PowerShell
 MUST keep every .ps1 file ASCII-only.
@@ -193,7 +213,7 @@ MUST ask the user for any missing purpose, trigger situation, input, output or c
 ### R-030 Existing skills
 MUST NOT overwrite or delete an existing skill folder without the user's explicit approval for that folder.
 - Why: the folder may hold work that is not stored anywhere else.
-- Check: `scripts/skillkit.py new` stops when the folder exists; manual - approval was given in chat before any change to an existing skill.
+- Check: `scripts/vlsit_skillkit.py new` stops when the folder exists; manual - approval was given in chat before any change to an existing skill.
 
 ### R-031 No leftover placeholders
 MUST NOT leave scaffold placeholders in SKILL.md, rule.md or a script.
