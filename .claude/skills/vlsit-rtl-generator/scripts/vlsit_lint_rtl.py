@@ -41,8 +41,18 @@ from pathlib import Path
 
 IS_WINDOWS = os.name == "nt"
 EXE = ".exe" if IS_WINDOWS else ""
-SUITE_DIRS = [os.environ.get("OSS_CAD_SUITE", ""), r"C:\Tools\oss-cad-suite", str(Path.home() / "oss-cad-suite"),
-              "/opt/oss-cad-suite", "/usr/local/oss-cad-suite", str(Path.home() / "tools" / "oss-cad-suite")]
+def home_dir():
+    """Home folder, or an empty path when the environment has none (for example HOME and USERPROFILE unset)."""
+    try:
+        return Path.home()
+    except (RuntimeError, KeyError):
+        return None
+
+
+HOME = home_dir()
+SUITE_DIRS = [os.environ.get("OSS_CAD_SUITE", ""), r"C:\Tools\oss-cad-suite",
+              str(HOME / "oss-cad-suite") if HOME else "", "/opt/oss-cad-suite", "/usr/local/oss-cad-suite",
+              str(HOME / "tools" / "oss-cad-suite") if HOME else ""]
 # tool -> (candidate executable names, can_lint)
 TOOLS = [("verilator", ["verilator_bin" + EXE, "verilator" + EXE], True), ("slang", ["slang" + EXE], True),
          ("yosys", ["yosys" + EXE], False), ("iverilog", ["iverilog" + EXE], False)]

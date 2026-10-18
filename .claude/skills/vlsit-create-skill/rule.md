@@ -147,7 +147,7 @@ MUST write each `.sh` script in POSIX sh, starting with `#!/bin/sh`, with LF lin
 - Check: validate checks the first line and the line endings and warns about bash-only constructs; manual - run the script under dash.
 
 ### R-042 File names
-MUST name every file of the skill with the prefix `vlsit_`, for example `vlsit_find_python.sh` or `vlsit_writing_rules.md`, and write the same name wherever SKILL.md or another file mentions it. Script names use lowercase letters, digits and underscores only. Only these keep their names: `SKILL.md` (the tools find a skill by it), `rule.md`, `README.md`, `LICENSE`, and third-party files kept verbatim under `assets/`.
+MUST name every file of the skill with the prefix `vlsit_`, for example `vlsit_find_python.sh` or `vlsit_writing_rules.md`, and write the same name wherever SKILL.md or another file mentions it. Script names use lowercase letters, digits and underscores only. Only these keep their names: `SKILL.md` (the tools find a skill by it), `rule.md`, `README.md`, `LICENSE`, third-party files kept verbatim under `assets/`, and the `.sv` files under `rtl_example/`, which are named after their module as the RTL rules require.
 - Why: skill files are copied to the machines of many users, and the prefix shows where a file comes from and keeps it from clashing with other tools.
 - Check: validate.
 

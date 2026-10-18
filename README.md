@@ -1,148 +1,101 @@
-# Skills for Codex and Claude Code / Bộ skill cho Codex và Claude Code
+# VLSIT skills for Claude Code and Codex / Bộ skill VLSIT cho Claude Code và Codex
 
-This repository contains eight paired project skills. Every skill has a Codex copy and a Claude Code copy, plus a short bilingual README.
+**EN:** Eight ready-to-use skills for ASIC/RTL work: write a design specification, generate and check RTL, write a testbench with protocol assertions, draw diagrams and waveforms, convert VHDL, and find open-source IP. Every skill exists twice: `.claude/skills/` (Claude Code) and `.agents/skills/` (Codex).
 
-Repository này có tám skill dự án, mỗi skill gồm bản Codex và Claude Code cùng README song ngữ ngắn.
+**VI:** Tám skill dùng ngay cho công việc ASIC/RTL: viết đặc tả thiết kế, sinh và kiểm RTL, viết testbench có assertion giao thức, vẽ sơ đồ và waveform, chuyển VHDL, tìm IP mã nguồn mở. Mỗi skill có hai bản: `.claude/skills/` (Claude Code) và `.agents/skills/` (Codex).
 
-## Language convention / Quy định ngôn ngữ
+---
 
-Skill instructions, technical references, code comments, plans, reports, diagram labels, and script outputs use precise scientific and engineering English. Only README files and explicitly designated user guidelines use bilingual English–Vietnamese content.
+## 1. Start in 3 steps / Bắt đầu trong 3 bước
 
-Nội dung skill, tài liệu tham khảo kỹ thuật, comment code, kế hoạch, báo cáo, nhãn sơ đồ và đầu ra script dùng tiếng Anh khoa học và kỹ thuật chuẩn. Chỉ README và tài liệu được xác định rõ là guideline cho người dùng sử dụng song ngữ Anh–Việt.
-
-## Skill locations / Vị trí skill
-
-| Tool | Project-level folder | Personal folder |
+| Step | Do this / Làm | Note / Ghi chú |
 |---|---|---|
-| Codex | .agents/skills/<skill-name>/ | Current Codex docs: $HOME/.agents/skills/<skill-name>/; some installer setups use $CODEX_HOME/skills/<skill-name>/ |
-| Claude Code | .claude/skills/<skill-name>/ | $HOME/.claude/skills/<skill-name>/ |
+| 1 | Clone the repository and open the folder as the workspace in **Claude Code** or **Codex**. / Clone repository rồi mở thư mục làm workspace trong **Claude Code** hoặc **Codex**. | The tool finds the skills by itself. / Công cụ tự nhận skill. |
+| 2 | Check Python 3: `python --version` (Windows install: `winget install Python.Python.3.12`). / Kiểm tra Python 3. | Standard library only. The skills ask before installing anything. / Chỉ dùng thư viện chuẩn; skill hỏi trước khi cài gì. |
+| 3 | Call a skill: Claude Code `/vlsit-rtl-generator`, Codex `$vlsit-rtl-generator`, or just describe the job. / Gọi skill hoặc mô tả công việc. | `/skills` lists the loaded skills; restart the tool if a new one is missing. / `/skills` liệt kê skill đã nạp; nếu thiếu thì khởi động lại công cụ. |
 
-The project folders are the most portable choice for this repository. Commit them to share the skills with teammates. Read the per-skill README for each skill’s functions and input/output details.
+Each skill asks you the questions it needs (with options and examples) and waits for your answer. Answer briefly, for example `1A 2B 3: my own idea`. / Mỗi skill tự hỏi những gì cần (có phương án và ví dụ) và chờ bạn trả lời. Trả lời ngắn, ví dụ `1A 2B 3: ý của tôi`.
 
-Thư mục project là cách dùng ổn định nhất cho repository này. Commit các thư mục đó để chia sẻ skill với nhóm. Xem README của từng skill để biết chức năng và đầu vào/đầu ra cụ thể.
+## 2. Which skill for which job / Việc nào dùng skill nào
 
-## Skill structure / Cấu trúc skill
+| I want to... / Tôi muốn... | Skill | Say, for example / Ví dụ câu lệnh |
+|---|---|---|
+| Write the design specification of an IP / Viết đặc tả thiết kế IP | `vlsit-asic-ip-microspec` | "Write the spec of an APB4 to TL-UL bridge" |
+| Generate RTL from a spec, or fix RTL under the VLSIT rules / Sinh RTL từ spec hoặc sửa RTL theo rule VLSIT | `vlsit-rtl-generator` | "Generate the RTL of this spec: `<spec.md>`" |
+| Add a feature to existing RTL with an approved plan / Thêm tính năng cho RTL có sẵn, có duyệt kế hoạch | `vlsit-rtl-spec-change-implementer` | "Add `<feature>` to the RTL in `<folder>`" |
+| Convert VHDL to SystemVerilog / Chuyển VHDL sang SystemVerilog | `vlsit-vhdl-to-systemverilog` | "Convert the VHDL design in `<folder>`" |
+| Draw the module hierarchy as Draw.io / Vẽ sơ đồ hierarchy RTL bằng Draw.io | `vlsit-rtl-hierarchy-diagram` | "Draw the hierarchy of `<top module>`" |
+| Draw a timing waveform from text, VCD or an image / Vẽ waveform | `vlsit-wavedrom-waveform` | "Draw the waveform of this VCD" |
+| Find open-source IP with RTL and compare it / Tìm và so sánh IP mã nguồn mở | `vlsit-opencore-ip-downloader` | "Find a UART IP with FPGA proof" |
+| Make a new skill in this house format / Tạo skill mới theo chuẩn | `vlsit-create-skill` | "Create a skill that..." |
 
-| Path | Role / Vai trò |
+Per-skill details: the `README.md` inside each skill folder. / Chi tiết từng skill: `README.md` trong thư mục skill.
+
+## 3. From idea to checked RTL, step by step / Từ ý tưởng đến RTL đã kiểm, từng bước
+
+| Step | What you do / Bạn làm | What you get / Bạn nhận |
+|---|---|---|
+| 1 | Run `vlsit-asic-ip-microspec` and describe the IP. Answer its questions. / Chạy skill và mô tả IP, trả lời câu hỏi. | A specification (22 sections, numbered requirements), a block diagram and key waveforms. / Spec 22 mục có requirement đánh số, sơ đồ khối và waveform. |
+| 2 | Read the spec, settle the open items (section 20). / Đọc spec, chốt các mục còn mở (mục 20). | A spec without open points. / Spec không còn điểm mở. |
+| 3 | Run `vlsit-rtl-generator` with the spec file, the project and author name, and the output folder. / Chạy skill với file spec, tên project, tên tác giả, thư mục output. | `.sv` files, `filelist.f`, rule-check report and lint logs, reported by rule ID. / File `.sv`, `filelist.f`, báo cáo rule và log lint theo ID rule. |
+| 4 | Ask for a testbench: "write a testbench with protocol assertions". / Yêu cầu testbench có assertion giao thức. | A self-checking testbench with 20+ assertions per protocol, derived from the spec and the standards, never from the RTL. / Testbench tự kiểm có từ 20 assertion mỗi giao thức, suy ra từ spec và chuẩn, không từ RTL. |
+| 5 | If a check fails and the cause is unclear, the skill shows you the spec, the RTL and the test side by side; you decide. / Nếu có FAIL chưa rõ nguyên nhân, skill đưa spec, RTL, test để bạn quyết định. | A decision, then exactly that change. / Quyết định của bạn, rồi đúng thay đổi đó. |
+
+A finished example of all five steps (APB4 to TL-UL bridge): [example/apb_tlul_bridge](example/apb_tlul_bridge) — spec, figures, `rtl/`, `verification/`, `sanity/` (logs and reports) and the design log [apb_tlul_bridge_design_process_log.md](example/apb_tlul_bridge/apb_tlul_bridge_design_process_log.md). To rerun its checks:
+
+Ví dụ hoàn chỉnh cả năm bước (cầu APB4 sang TL-UL) nằm ở [example/apb_tlul_bridge](example/apb_tlul_bridge). Chạy lại các kiểm tra của ví dụ:
+
+```sh
+cd example/apb_tlul_bridge
+make all          # rule check + lint + simulation (default and narrow parameters)
+```
+
+The Makefile header lists the tools it needs (GNU make, Icarus Verilog, Verilator and/or slang, Python 3; the [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) has all of them) and the Windows and Linux options. / Phần đầu Makefile ghi các công cụ cần có và cách dùng trên Windows, Linux.
+
+## 4. Tools / Công cụ
+
+| Need / Cần | For / Dùng cho | Required? / Bắt buộc? |
+|---|---|---|
+| Python 3 | all skill scripts / mọi script của skill | Yes / Có |
+| Verilator or slang | RTL lint (without it the skill says "lint not run") / lint RTL | No / Không |
+| Icarus Verilog + GNU make | simulation of the example / mô phỏng ví dụ | No / Không |
+| `openpyxl`, `PyMuPDF`, `tectonic` (LaTeX) | CSR workbook, PDF conversion, block diagrams of the specification skill / workbook CSR, chuyển PDF, sơ đồ khối | Only for that feature; asked first / Chỉ cho tính năng đó, hỏi trước |
+
+Standards under copyright (for example the Arm APB specification) are not shipped. The specification skill names the file, the source and the licence and asks your approval before it downloads one. / Tiêu chuẩn có bản quyền (ví dụ đặc tả APB của Arm) không đi kèm. Skill đặc tả báo tên file, nguồn, giấy phép và xin phép trước khi tải.
+
+## 5. Use the skills in another project or machine / Dùng skill ở project hoặc máy khác
+
+Copy the **whole** skill folder (keep `SKILL.md` where it is). / Chép **toàn bộ** thư mục skill, giữ nguyên vị trí `SKILL.md`.
+
+| Where / Đâu | Claude Code | Codex |
+|---|---|---|
+| One project / Một project | `<project>/.claude/skills/<skill>/` | `<project>/.agents/skills/<skill>/` |
+| Your account / Tài khoản cá nhân | `~/.claude/skills/<skill>/` | `~/.agents/skills/<skill>/` (some installs: `~/.codex/skills/<skill>/`) |
+
+```sh
+# Claude Code, one skill for all your projects (Linux/macOS/Git Bash)
+cp -r .claude/skills/vlsit-rtl-generator ~/.claude/skills/
+```
+
+```powershell
+# Claude Code, one skill for all your projects (PowerShell)
+Copy-Item -Recurse .claude\skills\vlsit-rtl-generator "$HOME\.claude\skills\"
+```
+
+Other ways: `claude --add-dir <this repository>` loads its skills for one session; Codex can install from GitHub with `$skill-installer` (give the owner/repository and the path `.agents/skills/<skill>`). If the destination exists, compare it before replacing. / Cách khác: `claude --add-dir <repository>` nạp skill cho một phiên; Codex cài từ GitHub bằng `$skill-installer`. Nếu thư mục đích đã có, hãy so sánh trước khi ghi đè.
+
+## 6. How the skills are built / Cấu trúc skill
+
+| Path / Đường dẫn | Role / Vai trò |
 |---|---|
-| SKILL.md | Top file: workflow and routing; always reads rule.md first. / File đầu vào: quy trình, luôn đọc rule.md trước. |
-| rule.md | Numbered mandatory rules (for example OCI-010, RHD-041, RSC-034, V2S-010); highest priority. / Các rule bắt buộc có đánh số ID; ưu tiên cao nhất. |
-| references/ | Supporting information, templates, examples, vlsit_improvement_log.md; priority below rule.md. / Tài liệu tham khảo, mẫu, ví dụ; ưu tiên sau rule.md. |
-| scripts/ | Python 3 helper scripts (standard library only) with an index in scripts/README.md; the model adds scripts here when a step recurs. / Script Python 3 hỗ trợ (chỉ thư viện chuẩn), model tự thêm script khi một bước lặp lại. |
+| `SKILL.md` | The workflow; always reads `rule.md` first. / Quy trình; luôn đọc `rule.md` trước. |
+| `rule.md` | Numbered mandatory rules; highest priority. / Rule bắt buộc có ID; ưu tiên cao nhất. |
+| `reference/` or `references/` | Guides, templates, examples (for RTL: `reference/rtl_example/`). / Hướng dẫn, mẫu, ví dụ. |
+| `scripts/` | Python 3 helpers (and a `.ps1`/`.sh` pair to locate Python). / Script Python 3 và cặp `.ps1`/`.sh` tìm Python. |
 
-Rule prefixes / Tiền tố rule: OCI (opencore-ip-downloader), RHD (rtl-hierarchy-diagram), RSC (rtl-spec-change-implementer), V2S (vhdl-to-systemverilog), the skill-authoring skill vlsit-create-skill, vlsit-rtl-generator (rules numbered R-NNN), vlsit-wavedrom-waveform and vlsit-asic-ip-microspec (both with rules numbered R-NNN). Each rule.md ends with self-improvement rules: the model may add scripts and refine SKILL.md and references, logging changes in references/vlsit_improvement_log.md, but may edit rule.md only with explicit user approval. / Mỗi rule.md có nhóm rule tự cải tiến: model được thêm script, chỉnh SKILL.md và references (ghi vào vlsit_improvement_log.md), nhưng chỉ sửa rule.md khi người dùng đồng ý rõ ràng.
+File names inside a skill start with `vlsit_` (except `SKILL.md`, `rule.md`, `README.md`, `LICENSE`, third-party files). Skill instructions are in precise English; the READMEs are bilingual. A skill changes its own `rule.md` only with your explicit approval. / Tên file trong skill bắt đầu bằng `vlsit_` (trừ `SKILL.md`, `rule.md`, `README.md`, `LICENSE`, file bên thứ ba). Hướng dẫn skill viết bằng tiếng Anh kỹ thuật; README song ngữ. Skill chỉ sửa `rule.md` của mình khi bạn đồng ý rõ ràng.
 
-## Requirements / Yêu cầu
+## Documentation / Tài liệu chính thức
 
-Python 3 (standard library only) runs the helper scripts. Each skill checks `python --version` first; if Python is missing it proposes the installation (Windows: `winget install Python.Python.3.12`) and waits for approval. / Python 3 (chỉ thư viện chuẩn) chạy các script hỗ trợ. Mỗi skill kiểm tra `python --version` trước; nếu thiếu Python, skill đề xuất cài đặt (Windows: `winget install Python.Python.3.12`) và chờ bạn đồng ý.
-
-## Skills / Danh sách skill
-
-| Skill | Purpose / Mục đích | Guides / Hướng dẫn |
-|---|---|---|
-| vlsit-opencore-ip-downloader | Find licensed open-source hardware IP with RTL, download complete projects, and compare features and FPGA/ASIC readiness. / Tìm IP phần cứng mã nguồn mở có RTL, tải dự án đầy đủ và so sánh tính năng cùng khả năng FPGA/ASIC. | [Codex](.agents/skills/vlsit-opencore-ip-downloader/README.md) · [Claude](.claude/skills/vlsit-opencore-ip-downloader/README.md) |
-| vlsit-rtl-hierarchy-diagram | Trace RTL hierarchy and important interfaces, then create a multi-page Draw.io diagram using only the bundled VLSIT symbol library. / Lần theo hierarchy và interface RTL, sau đó tạo sơ đồ Draw.io nhiều trang chỉ bằng thư viện ký hiệu VLSIT đi kèm. | [Codex](.agents/skills/vlsit-rtl-hierarchy-diagram/README.md) · [Claude](.claude/skills/vlsit-rtl-hierarchy-diagram/README.md) |
-| vlsit-rtl-spec-change-implementer | Analyze RTL against a new feature and optional old spec, gate implementation behind approval of an English technical plan, and report RTL code-change percentage. / Phân tích RTL theo yêu cầu mới và spec cũ tùy chọn, chờ duyệt kế hoạch kỹ thuật tiếng Anh trước khi triển khai và báo cáo tỷ lệ code RTL thay đổi. | [Codex](.agents/skills/vlsit-rtl-spec-change-implementer/README.md) · [Claude](.claude/skills/vlsit-rtl-spec-change-implementer/README.md) |
-| vlsit-vhdl-to-systemverilog | Convert complete VHDL RTL into synthesizable SystemVerilog under the bundled VLSIT rules, with semantic analysis, two review gates, source mappings, and evidence-based validation. / Chuyển đầy đủ RTL VHDL sang SystemVerilog tổng hợp được theo rule VLSIT đi kèm, có phân tích semantics, hai gate duyệt, mapping nguồn và kiểm chứng bằng bằng chứng. | [Codex](.agents/skills/vlsit-vhdl-to-systemverilog/README.md) · [Claude](.claude/skills/vlsit-vhdl-to-systemverilog/README.md) |
-| vlsit-create-skill | Create a new skill in this house format (SKILL.md, rule.md with numbered rules, references, Python scripts): interviews the user, offers design options, validates and mirrors it to `.claude` and `.agents`. / Tạo skill mới theo chuẩn của repository: phỏng vấn, đưa phương án thiết kế, kiểm tra và đồng bộ sang `.claude` và `.agents`. | [Codex](.agents/skills/vlsit-create-skill/README.md) · [Claude](.claude/skills/vlsit-create-skill/README.md) |
-| vlsit-rtl-generator | Generate synthesizable SystemVerilog RTL from a specification in the VLSIT ASIC IP template, or change existing RTL after approval of a change plan, under the VLSIT RTL rules, with a rule checker and lint, and a report by rule ID. / Tạo RTL SystemVerilog tổng hợp được từ specification theo mẫu ASIC IP của VLSIT, hoặc sửa RTL có sẵn sau khi duyệt kế hoạch, theo rule RTL của VLSIT, có script kiểm rule và lint, báo cáo theo ID rule. | [Codex](.agents/skills/vlsit-rtl-generator/README.md) · [Claude](.claude/skills/vlsit-rtl-generator/README.md) |
-| vlsit-wavedrom-waveform | Draw timing waveforms with the bundled offline WaveDrom from a short request, a VCD file (whole file, time window or chosen signals) or a waveform image; outputs WaveJSON plus a self-contained HTML viewer that opens without internet. / Vẽ waveform bằng WaveDrom đi kèm chạy ngoại tuyến từ yêu cầu ngắn, file VCD (toàn bộ, khoảng thời gian hoặc tín hiệu chọn) hoặc ảnh waveform; xuất WaveJSON và file HTML xem được không cần Internet. | [Codex](.agents/skills/vlsit-wavedrom-waveform/README.md) · [Claude](.claude/skills/vlsit-wavedrom-waveform/README.md) |
-| vlsit-asic-ip-microspec | Discuss and write an ASIC IP design specification in the VLSIT template: Q&A with options and examples, protocol standards converted to Markdown (`md_doc`), silicon- or FPGA-proven reference IP (GitHub, Gitee), CSR workbook, LaTeX block diagram and key interface waveforms; includes a worked APB-to-TL-UL bridge example. / Thảo luận và viết đặc tả thiết kế ASIC IP theo template VLSIT: hỏi đáp có options và ví dụ, tiêu chuẩn protocol chuyển sang Markdown, IP tham khảo đã có tapeout hoặc FPGA, workbook CSR, sơ đồ block bằng LaTeX và waveform interface quan trọng; kèm ví dụ cầu APB sang TL-UL. | [Codex](.agents/skills/vlsit-asic-ip-microspec/README.md) · [Claude](.claude/skills/vlsit-asic-ip-microspec/README.md) |
-
-The hierarchy-diagram skill includes assets/VLSIT_DRAWIO_LIB_V1.drawio.xml as its mandatory, exclusive symbol library. Copy the complete skill folder, including assets, references, and scripts. The skill checks symbol provenance and preserves black-and-white styling, 18 pt text, and two-line instance/module labels.
-
-Skill sơ đồ hierarchy chứa assets/VLSIT_DRAWIO_LIB_V1.drawio.xml làm thư viện ký hiệu bắt buộc và duy nhất. Chép toàn bộ thư mục skill, gồm assets, references và scripts. Skill kiểm nguồn gốc ký hiệu và giữ style đen trắng, chữ 18 pt cùng nhãn instance/module hai dòng.
-
-The VHDL conversion skill includes its own separately maintained references/VLSIT_RTL_Design_Rule.md. The agent must read the complete rule and assess every applicable requirement. Copy the entire skill folder, including references and scripts. Plan approval precedes conversion; final review distinguishes rule compliance, synthesis, and equivalence results.
-
-Skill chuyển VHDL chứa file references/VLSIT_RTL_Design_Rule.md riêng trong skill. Agent bắt buộc đọc đầy đủ rule và đánh giá mọi yêu cầu phù hợp. Chép toàn bộ thư mục skill, gồm references và scripts. Duyệt kế hoạch trước khi chuyển; duyệt cuối tách kết quả đạt rule, synthesis và equivalence.
-
-## Choose an installation method / Chọn cách cài đặt
-
-### 1. Use the repository directly / Dùng trực tiếp repository
-
-Open this repository as the workspace in Codex or Claude Code. The project skills under .agents/skills and .claude/skills are discovered in their respective tools. This is the easiest team setup.
-
-Mở repository này làm workspace trong Codex hoặc Claude Code. Mỗi công cụ tự nhận diện skill tại thư mục tương ứng .agents/skills hoặc .claude/skills. Đây là cách đơn giản nhất khi dùng theo nhóm.
-
-If you are setting up another machine, clone the repository first using its Git URL, then open the cloned repository in the tool.
-
-Nếu cài trên máy khác, hãy clone repository bằng Git URL rồi mở bản clone bằng công cụ tương ứng.
-
-### 2. Copy one skill manually into a project / Chép thủ công một skill vào project
-
-Copy the full skill folder, keeping SKILL.md at the same relative location. In File Explorer, copy from .agents/skills/<skill-name> to the target project’s .agents/skills/<skill-name> for Codex, or from .claude/skills/<skill-name> to .claude/skills/<skill-name> for Claude Code.
-
-Chép toàn bộ thư mục skill và giữ nguyên vị trí của SKILL.md. Trong File Explorer, chép .agents/skills/<skill-name> vào .agents/skills/<skill-name> của project đích cho Codex; với Claude Code, chép từ .claude/skills/<skill-name> vào .claude/skills/<skill-name> của project đích.
-
-Example for Codex on Windows / Ví dụ cài cho Codex trên Windows:
-
-    $repo = (Resolve-Path ".").Path # Run from the repository root
-    $project = Read-Host "Enter the target project directory"
-    $skill = "vlsit-rtl-hierarchy-diagram"
-    $dest = Join-Path $project ".agents\skills\$skill"
-    if (Test-Path $dest) { throw "Destination exists; review it before copying." }
-    New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
-    Copy-Item -Recurse (Join-Path $repo ".agents\skills\$skill") $dest
-
-Example for Claude Code on Windows / Ví dụ cài cho Claude Code trên Windows:
-
-    $repo = (Resolve-Path ".").Path # Run from the repository root
-    $project = Read-Host "Enter the target project directory"
-    $skill = "vlsit-rtl-hierarchy-diagram"
-    $dest = Join-Path $project ".claude\skills\$skill"
-    if (Test-Path $dest) { throw "Destination exists; review it before copying." }
-    New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
-    Copy-Item -Recurse (Join-Path $repo ".claude\skills\$skill") $dest
-
-Replace vlsit-rtl-hierarchy-diagram with any other skill name listed above to copy that skill. If the destination already exists, compare or back it up before replacing it.
-
-Thay vlsit-rtl-hierarchy-diagram bằng tên skill khác trong bảng trên để chép skill đó. Nếu thư mục đích đã tồn tại, hãy so sánh hoặc sao lưu trước khi thay thế.
-
-### 3. Install manually for your user / Cài thủ công cho tài khoản cá nhân
-
-For Codex, copy a skill into the user skills directory scanned by your installed Codex version. Current Codex documentation lists $HOME/.agents/skills/<skill-name>. The Codex Skill Installer may instead use $CODEX_HOME/skills; its default is commonly $HOME/.codex/skills. Check /skills after copying. For Claude Code, copy the skill folder to $HOME/.claude/skills/<skill-name>. These locations make the skill available across projects on that machine.
-
-Với Codex, chép skill vào thư mục cá nhân mà phiên bản Codex đang cài nhận diện. Tài liệu Codex hiện tại ghi $HOME/.agents/skills/<skill-name>. Codex Skill Installer có thể dùng $CODEX_HOME/skills, mặc định thường là $HOME/.codex/skills. Kiểm tra bằng /skills sau khi chép. Với Claude Code, chép thư mục skill vào $HOME/.claude/skills/<skill-name>. Cách này giúp dùng skill qua nhiều project trên cùng máy.
-
-Example in PowerShell / Ví dụ PowerShell:
-
-    $repo = (Resolve-Path ".").Path # Run from the repository root
-    $skill = "vlsit-rtl-spec-change-implementer"
-    $dest = Join-Path $HOME ".agents\skills\$skill"
-    if (Test-Path $dest) { throw "Destination exists; review it before copying." }
-    New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
-    Copy-Item -Recurse (Join-Path $repo ".agents\skills\$skill") $dest
-
-For Claude Code, use .claude\skills instead of .agents\skills in both source and destination. / Với Claude Code, thay .agents\skills bằng .claude\skills ở cả thư mục nguồn và đích.
-
-### 4. Install a GitHub-hosted skill with Codex / Cài skill từ GitHub bằng Codex
-
-If the repository is pushed to GitHub and Codex’s skill-installer is available, invoke it and provide the repository owner/name and the exact skill directory. For example: “$skill-installer Install vlsit-rtl-spec-change-implementer from <OWNER>/<REPOSITORY>, path .agents/skills/vlsit-rtl-spec-change-implementer.” This method is for a GitHub-hosted repository; use manual copy for a local-only folder.
-
-Nếu repository đã được đẩy lên GitHub và Codex có skill-installer, gọi skill đó rồi cung cấp owner/name của repository và đường dẫn thư mục skill chính xác. Ví dụ: “$skill-installer Install vlsit-rtl-spec-change-implementer from <OWNER>/<REPOSITORY>, path .agents/skills/vlsit-rtl-spec-change-implementer.” Cách này dành cho repository trên GitHub; nếu thư mục chỉ có trên máy, hãy chép thủ công.
-
-### 5. Load Claude Code skills for one session / Nạp skill Claude Code trong một phiên
-
-When working outside this repository, start Claude Code with this repository as an added directory:
-
-    $repo = (Resolve-Path ".").Path # Run from the repository root
-    claude --add-dir $repo
-
-Claude Code loads the .claude/skills directory from the added location for that session. / Claude Code sẽ nạp thư mục .claude/skills từ vị trí được thêm trong phiên đó.
-
-### 6. Package as a plugin for managed distribution / Đóng gói plugin để phân phối
-
-Codex plugins and Claude Code plugins can distribute skills with a plugin manifest and, optionally, a marketplace. This repository currently contains standalone skill folders, not ready-to-install plugin packages. Packaging and publishing are separate steps. / Plugin Codex và Claude Code có thể phân phối skill qua manifest và marketplace. Repository này hiện chứa các thư mục skill độc lập, chưa phải gói plugin cài đặt sẵn. Đóng gói và phát hành là các bước riêng.
-
-## Invoke after setup / Gọi skill sau khi cài
-
-- Codex CLI: explicitly type $skill-name or describe the task and let Codex select a matching skill. Use /skills to view available skills; if a new skill does not appear, restart Codex. / Gọi trực tiếp bằng $skill-name hoặc mô tả yêu cầu để Codex tự chọn. Dùng /skills để xem skill; nếu skill mới chưa xuất hiện, khởi động lại Codex.
-- Claude Code: type /skill-name or describe the task and let Claude choose it. Use /skills to see loaded skills. / Gõ /skill-name hoặc mô tả yêu cầu để Claude tự chọn. Dùng /skills để xem các skill đã nạp.
-
-## Official documentation / Tài liệu chính thức
-
-- [Codex skills, local locations, and installation](https://developers.openai.com/codex/skills)
-- [Claude Code skills and loading scopes](https://code.claude.com/docs/en/skills)
-- [Claude Code plugins](https://code.claude.com/docs/en/plugins/overview)
-- [Codex plugin packaging](https://developers.openai.com/plugins/build/plugins)
+- [Codex skills](https://developers.openai.com/codex/skills) · [Codex plugins](https://developers.openai.com/plugins/build/plugins)
+- [Claude Code skills](https://code.claude.com/docs/en/skills) · [Claude Code plugins](https://code.claude.com/docs/en/plugins/overview)

@@ -6,7 +6,7 @@ compatibility: Python 3.8 or later using the standard library only, on Windows o
 
 # VLSIT RTL generator
 
-This skill writes synthesizable SystemVerilog design RTL from a specification that follows the VLSIT ASIC IP specification template, or changes existing RTL after the designer approves a plan. Every file follows the VLSIT RTL design rules, and the result is checked by a rule-check script and by lint. It does not write testbenches, assertions or other verification code, and it never decides an open point of the specification by itself: it asks the designer.
+This skill writes synthesizable SystemVerilog design RTL from a specification that follows the VLSIT ASIC IP specification template, or changes existing RTL after the designer approves a plan. Every file follows the VLSIT RTL design rules, and the result is checked by a rule-check script and by lint. It writes a simulation testbench with protocol assertions only when the designer asks for one, always from the specification and the protocol standards and never from the RTL, and it never decides an open point of the specification by itself: it asks the designer.
 
 Reply to the user in the language they use.
 
@@ -61,13 +61,13 @@ Follow [reference/vlsit_modify_existing_rtl.md](reference/vlsit_modify_existing_
 
 ### 5. Write the RTL
 
-Write the modules leaf first and the top last, one module per file, into the output folder (R-009, R-018). Start each file from [reference/templates/vlsit_rtl_skeletons.md](reference/templates/vlsit_rtl_skeletons.md) and follow the rule file. After each module run the rule check and correct it before the next one:
+Write the modules leaf first and the top last, one module per file, into the output folder (R-009, R-018). Before each module read the matching example in [reference/rtl_example/](reference/rtl_example/) and write the module in its structure and style (R-020): an FSM follows `m_moore_fsm_example.sv` when its outputs depend on the state only and `m_mealy_fsm_example.sv` when they also depend on the inputs. Start each file from [reference/templates/vlsit_rtl_skeletons.md](reference/templates/vlsit_rtl_skeletons.md) and follow the rule file. After each module run the rule check and correct it before the next one:
 
 ```powershell
 <python> "<skill folder>\scripts\vlsit_rtl_check.py" check "<output folder>"
 ```
 
-Write every selection of three or more branches as `case` or `casez`, never as an `if` / `else if` chain (R-019). Fix every ERROR (R-012). Keep a list of the WARN and INFO findings for the report (R-013). Do not generate testbenches or assertions (R-010).
+Write every selection of three or more branches as `case` or `casez`, never as an `if` / `else if` chain (R-019). Fix every ERROR (R-012). Keep a list of the WARN and INFO findings for the report (R-013). Keep testbenches and assertions out of the design files (R-010).
 
 ### 6. Make the filelist and lint
 
@@ -86,6 +86,10 @@ Run `vlsit_rtl_check.py check` once more on the final folder, with `--report` if
 
 Write the reason in the module header for every deviation from a SHOULD rule (R-011).
 
+### 8b. Simulation testbench (only when the designer asks)
+
+Do not write a testbench unless the designer asks for one (R-022). Read [reference/vlsit_testbench_guide.md](reference/vlsit_testbench_guide.md) first. Derive every stimulus, expected value and check from the specification and from the standards of the protocols, with the requirement ID or clause named, and read the RTL only for port names, widths and parameters (R-023). Put at least 20 assertions on each standard protocol and the assertions that relate the interfaces, count their hits, and make the run fail when an assertion fails or never fires (R-024, R-025). Save the testbench in its own folder beside the RTL, not in the design folder. When a check or an assertion fails and you cannot tell whether the RTL, the test or the specification is at fault, stop, give the designer the analysis of the specification, the RTL and the test described in the guide, and wait for the decision before changing either (R-026).
+
 ### 9. Verify against the rules and report
 
 Check the result against every rule ID in [rule.md](rule.md). Run the checks that name a script, and inspect the rest by hand. Report by rule ID (R-016): rules failed, justified, clean by script, covered by lint, inspected by hand, and what was not run, with the commands the designer can repeat. Say plainly if lint did not run (R-001, R-015).
@@ -101,6 +105,11 @@ Read a file only when the step needs it.
 | [reference/vlsit_modify_existing_rtl.md](reference/vlsit_modify_existing_rtl.md) | Step 3 and 4b: the mode and the procedure for existing RTL |
 | [reference/templates/vlsit_rtl_skeletons.md](reference/templates/vlsit_rtl_skeletons.md) | Step 5: header, leaf module, FSM and top skeletons |
 | [reference/vlsit_lint_and_install.md](reference/vlsit_lint_and_install.md) | Step 6: running lint, reading warnings, install options |
+| [reference/vlsit_testbench_guide.md](reference/vlsit_testbench_guide.md) | Step 8b: source of the checks, assertions, strength check, failure analysis, layout |
+| `reference/rtl_example/m_moore_fsm_example.sv` | Step 5: example of a Moore FSM (current-state process, next-state process, state-only output process) |
+| `reference/rtl_example/m_mealy_fsm_example.sv` | Step 5: example of a Mealy FSM (outputs depend on the state and the inputs) |
+
+When an example is added or changed, check it with `vlsit_rtl_check.py check reference/rtl_example` and lint it, and fix the example if it breaks a rule (R-021).
 
 ## Scripts
 
@@ -117,4 +126,4 @@ Exit codes: `vlsit_spec_gaps.py` 0 no BLOCK gap, 2 gaps; `vlsit_rtl_check.py` 0 
 
 ## Output
 
-All deliverables are saved in the output folder the user names (R-018): the `.sv` files, `filelist.f`, the lint logs, and the rule-check report if one was asked for. The final message gives the folder, the file list, the top module, the rule-ID report and the commands that reproduce the checks.
+All deliverables are saved in the output folder the user names (R-018): the `.sv` files, `filelist.f`, the lint logs, the rule-check report if one was asked for, and, when asked, the testbench folder with its simulation logs and assertion table. The final message gives the folder, the file list, the top module, the rule-ID report and the commands that reproduce the checks.

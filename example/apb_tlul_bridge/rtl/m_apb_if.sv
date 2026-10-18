@@ -81,8 +81,9 @@ module m_apb_if #(
   assign o_apb_prdata  = reg_prdata;
 
   // Next-state logic: IDLE moves to BUSY on a launch or to DONE on a local error, BUSY moves to
-  // DONE when the response arrives, and DONE always returns to IDLE.
-  always_comb begin : p_com_fsm
+  // DONE when the response arrives, and DONE always returns to IDLE. The next state is assigned
+  // first (COM-02) and every case has a default (COM-03), so no latch is inferred (COM-07).
+  always_comb begin : p_com_fsm_nxt
     w_fsm_apb_nxt_state = reg_fsm_apb_current_state;
     case (reg_fsm_apb_current_state)
       ENUM_ST_IDLE: begin
@@ -102,6 +103,7 @@ module m_apb_if #(
 
   // Completion values: PREADY and PSLVERR last one cycle. A local error clears PRDATA, a response
   // loads PRDATA (already zero for writes and errors), otherwise PRDATA holds its last value.
+  // Every next value has its default first (COM-02), so no latch is inferred (COM-07).
   always_comb begin : p_com_resp
     w_pready_nxt  = 1'b0;
     w_pslverr_nxt = 1'b0;
@@ -117,19 +119,26 @@ module m_apb_if #(
     end
   end
 
-  // State and completion flip-flops: all are reset asynchronously to zero, so every output is
-  // defined after reset (REQ-RESET-001).
-  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_apb
-    if (!i_rst_n_core) begin
+  // Current-state register: the control state is reset asynchronously to IDLE and otherwise takes
+  // the next state every clock cycle.
+  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_fsm_apb
+    if (!i_rst_n_core)
       reg_fsm_apb_current_state <= ENUM_ST_IDLE;
-      reg_pready                <= 1'b0;
-      reg_pslverr               <= 1'b0;
-      reg_prdata                <= '0;
-    end else begin
+    else
       reg_fsm_apb_current_state <= w_fsm_apb_nxt_state;
-      reg_pready                <= w_pready_nxt;
-      reg_pslverr               <= w_pslverr_nxt;
-      reg_prdata                <= w_prdata_nxt;
+  end
+
+  // Completion flip-flops: all are reset asynchronously to zero, so every output is defined
+  // after reset (REQ-RESET-001).
+  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_resp
+    if (!i_rst_n_core) begin
+      reg_pready  <= 1'b0;
+      reg_pslverr <= 1'b0;
+      reg_prdata  <= '0;
+    end else begin
+      reg_pready  <= w_pready_nxt;
+      reg_pslverr <= w_pslverr_nxt;
+      reg_prdata  <= w_prdata_nxt;
     end
   end
 

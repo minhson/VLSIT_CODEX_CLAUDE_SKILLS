@@ -121,8 +121,9 @@ module m_tlul_if #(
 
   // Next-state logic: IDLE moves to REQ on a launch; REQ leaves when channel A is accepted, going
   // to IDLE if the response arrives in the same cycle and to WAIT otherwise; WAIT leaves on the
-  // response.
-  always_comb begin : p_com_fsm
+  // response. The next state is assigned first (COM-02) and every case has a default (COM-03),
+  // so no latch is inferred (COM-07).
+  always_comb begin : p_com_fsm_nxt
     w_fsm_tlul_nxt_state = reg_fsm_tlul_current_state;
     case (reg_fsm_tlul_current_state)
       ENUM_ST_IDLE: begin
@@ -146,7 +147,8 @@ module m_tlul_if #(
   end
 
   // Channel A control and payload values: the request loads at the launch edge and then holds, so
-  // channel A is stable while o_tlul_a_valid is high and i_tlul_a_ready is low.
+  // channel A is stable while o_tlul_a_valid is high and i_tlul_a_ready is low. Every next value
+  // has its default first (COM-02), so no latch is inferred (COM-07).
   always_comb begin : p_com_chan_a
     w_a_valid_nxt   = (w_fsm_tlul_nxt_state == ENUM_ST_REQ);
     w_a_rd_nxt      = reg_a_rd;
@@ -159,17 +161,24 @@ module m_tlul_if #(
     end
   end
 
-  // Control flip-flops: the FSM state, the A-channel valid and the D-channel ready. All are reset
-  // asynchronously to zero; reg_d_ready then becomes 1 at the first clock edge after reset release.
-  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_ctrl
-    if (!i_rst_n_core) begin
+  // Current-state register: the control state is reset asynchronously to IDLE and otherwise takes
+  // the next state every clock cycle.
+  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_fsm_tlul
+    if (!i_rst_n_core)
       reg_fsm_tlul_current_state <= ENUM_ST_IDLE;
-      reg_a_valid                <= 1'b0;
-      reg_d_ready                <= 1'b0;
-    end else begin
+    else
       reg_fsm_tlul_current_state <= w_fsm_tlul_nxt_state;
-      reg_a_valid                <= w_a_valid_nxt;
-      reg_d_ready                <= 1'b1;
+  end
+
+  // Channel flip-flops: the A-channel valid and the D-channel ready. Both are reset asynchronously
+  // to zero; reg_d_ready then becomes 1 at the first clock edge after reset release.
+  always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_chan_ctrl
+    if (!i_rst_n_core) begin
+      reg_a_valid <= 1'b0;
+      reg_d_ready <= 1'b0;
+    end else begin
+      reg_a_valid <= w_a_valid_nxt;
+      reg_d_ready <= 1'b1;
     end
   end
 
@@ -177,13 +186,13 @@ module m_tlul_if #(
   // the channel A outputs are defined after reset; the device ignores them while a_valid is low.
   always_ff @(posedge i_clk_core, negedge i_rst_n_core) begin : p_ff_payload
     if (!i_rst_n_core) begin
-      reg_a_rd      <= 1'b0;
+      reg_a_rd   <= 1'b0;
       reg_a_addr <= '0;
-      reg_a_data    <= '0;
+      reg_a_data <= '0;
     end else begin
-      reg_a_rd      <= w_a_rd_nxt;
+      reg_a_rd   <= w_a_rd_nxt;
       reg_a_addr <= w_a_addr_nxt;
-      reg_a_data    <= w_a_data_nxt;
+      reg_a_data <= w_a_data_nxt;
     end
   end
 

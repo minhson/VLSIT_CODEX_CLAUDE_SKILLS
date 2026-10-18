@@ -65,7 +65,8 @@ SCRIPT_NAME_PATTERN = r"^vlsit_[a-z0-9_]+(\.[a-z0-9]+)?$"
 # Files that keep their fixed names (R-042): the tools find a skill by SKILL.md, the house format names rule.md, README.md and
 # LICENSE are conventional; anything under assets/ is third-party material kept verbatim.
 FIXED_FILE_NAMES = {"SKILL.md", "rule.md", "README.md", "LICENSE", ".gitkeep"}
-FIXED_FOLDERS = {"assets", "__pycache__"}
+# rtl_example/ holds example RTL whose file name must equal its module name (the RTL rule HIE-01), so it cannot carry the prefix.
+FIXED_FOLDERS = {"assets", "__pycache__", "rtl_example"}
 FILE_PREFIX_PATTERN = r"^(vlsit|VLSIT)_[A-Za-z0-9_.-]+$"
 SCRIPT_EXTENSIONS = {".ps1", ".sh", ".bat", ".cmd", ".js", ".mjs", ".ts", ".rb", ".pl", ".php", ".lua", ".vbs"}
 ALLOWED_KEYS = ("name", "description", "compatibility", "license", "metadata")

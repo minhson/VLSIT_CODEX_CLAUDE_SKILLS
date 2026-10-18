@@ -1,5 +1,5 @@
 $ C:\Tools\oss-cad-suite\bin\verilator_bin.exe --lint-only -Wall --top-module m_apb_tlul_bridge m_apb_if.sv m_tlul_if.sv m_apb_tlul_bridge.sv
-(cwd C:\HQuan\102_MyGithub\VLSIT_CODEX_CLAUDE_SKILLS\Output\apb_tlul_bridge\rtl)
+(cwd C:\HQuan\102_MyGithub\VLSIT_CODEX_CLAUDE_SKILLS\example\apb_tlul_bridge\rtl)
 
 %Warning-UNUSEDSIGNAL: m_apb_tlul_bridge.sv:47:20: Signal is not used: 'i_apb_pprot'
                                                  : ... note: In instance 'm_apb_tlul_bridge'

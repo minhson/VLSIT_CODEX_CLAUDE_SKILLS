@@ -58,9 +58,9 @@ MUST write modified and generated RTL as new files in the output folder and leav
 - Check: manual - the original files have the same content as before the run.
 
 ### R-010 Design RTL only
-MUST NOT generate testbenches, SVA or any other verification code, nor apply the design rules to such code.
+MUST keep testbenches, assertions and any other verification code out of the design file set, and apply the design rules of the rule file to design RTL only.
 - Why: the rule file covers synthesizable RTL only, and verification belongs to a separate source set.
-- Check: vlsit_rtl_check.py reports no P14 or P19 finding; manual - the output folder holds design files only.
+- Check: vlsit_rtl_check.py reports no P14 or P19 finding on the design folder; manual - no verification file is in the design folder or in `filelist.f`.
 
 ### R-011 Deviations recorded
 MUST write a reason in the module header for every deviation from a SHOULD rule of the rule file.
@@ -71,6 +71,16 @@ MUST write a reason in the module header for every deviation from a SHOULD rule 
 MUST write a selection that has three or more conditional branches (an `if` followed by two or more `else if`) as a `case` or `casez` statement, never as an `if` / `else if` chain. Choose the statement with COM-03 and COM-04 of the rule file: a selection on the value of one signal is a plain `case`; a priority selection among independent conditions is a `casez` on the concatenated condition bits with `?` for the bits of lower priority, and its `default` assigns a defined value unless COM-04 allows `'x`. A chain with one or two conditions (with or without a final `else`), the reset test that opens a sequential process, and an elaboration-time `if` in a generate block are not counted.
 - Why: a `case` shows every alternative side by side and lets the synthesis frontend build one decoder, while a long `if` chain builds an unintended priority chain and hides a missing branch.
 - Check: `vlsit_rtl_check.py check` reports no R-019 finding; manual - the converted `case` keeps the priority of the original conditions and has the `default` that COM-03 requires.
+
+### R-020 Write from the examples
+MUST read the example in `reference/rtl_example/` that matches the kind of module before writing it, and write the module in the structure and style of that example, for example the three-process layout of the Moore and Mealy FSM examples.
+- Why: the examples show the accepted shape of each common design pattern, so the new RTL starts compliant and reads the same way as the rest of the delivered code.
+- Check: manual - the report names the example used for each module and the module follows its process split, naming and comments; a module with no matching example follows the rule file and the skeletons.
+
+### R-021 Examples follow the rules
+MUST change an example of `reference/rtl_example/` whenever it breaks a rule of this file or of the rule file, instead of copying its deviation into new RTL.
+- Why: an example that breaks a rule teaches the wrong pattern to every module written from it.
+- Check: `vlsit_rtl_check.py check reference/rtl_example` prints RESULT: PASS and lint of each example prints RESULT: PASS with 0 errors; manual - each example was inspected against the manual rules of `vlsit_rtl_check.py coverage`.
 
 ## Verification
 
@@ -98,6 +108,35 @@ MUST continue with the rule check, report lint as not run, and offer the designe
 MUST end with a report by rule ID that names the rules failed, justified, clean by script, covered by lint and inspected by hand, and says what was not run.
 - Why: the designer can then see exactly which rules stand behind the delivery and which do not.
 - Check: manual - the report lists the manual rules from `vlsit_rtl_check.py coverage` with the result of each inspection.
+
+## Simulation testbench
+
+These rules apply only when the user asks for a testbench; the skill never writes one on its own.
+
+### R-022 Testbench on request
+MUST write a simulation testbench only when the user asks for one, and save it in its own folder beside the design RTL, never in the design file set.
+- Why: the rule file and the lint cover design RTL, so verification code in the same folder would be judged by rules that do not apply to it.
+- Check: manual - the request for a testbench is in the chat, and the testbench files are outside the folder given to `vlsit_rtl_check.py` and `filelist.f`.
+
+### R-023 Specification and standards are the reference
+MUST derive every stimulus, expected value and check of a testbench from the specification and from the standards of the protocols on the ports, naming the requirement ID or the clause, and never from the behavior of the RTL code.
+- Why: a test copied from the RTL agrees with the RTL even when the RTL is wrong, so it proves nothing.
+- Check: manual - each check names a requirement ID or a protocol clause, and the RTL was read only for port names, widths and parameters.
+
+### R-024 Protocol assertions
+MUST include in the testbench at least 20 assertions on the rules of the standard protocol of each port, and assertions that relate the interfaces when the design converts between protocols, each named with the clause or requirement it checks.
+- Why: assertions watch every cycle of every test, so a protocol violation is found whatever stimulus reached it.
+- Check: manual - the simulation log lists every assertion with its name, clause and hit count, and the count is at least 20 per protocol.
+
+### R-025 Assertions must fire
+MUST make the simulation fail, with a non-zero exit status, when an assertion fails and when an assertion never became active.
+- Why: an assertion whose condition was never reached proves nothing, and a passing run would hide that.
+- Check: the last simulation log prints "assertion failures: 0, assertions never exercised: 0"; manual - the exit status was non-zero when a failure was injected.
+
+### R-026 Failure analysis for the designer
+MUST give the designer a detailed analysis of the specification text, the RTL behavior and the test when a simulation check or assertion fails and the cause is not clear, and wait for the designer's decision before changing the RTL or the test.
+- Why: changing the RTL or the test until the run passes hides either a real design bug or a wrong test, and only the designer can settle a silent or contradictory specification.
+- Check: manual - for each unexplained failure the report holds the analysis of [reference/vlsit_testbench_guide.md](reference/vlsit_testbench_guide.md) section 5 and the designer's decision, and no edit came before it.
 
 ## Delivery
 
