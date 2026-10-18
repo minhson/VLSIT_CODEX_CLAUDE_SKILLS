@@ -131,7 +131,7 @@ mandatory requirement from the design into one rule with a statement, a Why line
 a Check line. Read [reference/vlsit_writing_rules.md](reference/vlsit_writing_rules.md) when you
 are unsure how to word a rule or how to settle a duplicate or conflict.
 
-### 8. Write the workflow, references and scripts
+### 8. Write the workflow, reference files and scripts
 
 - **SKILL.md**: read [reference/vlsit_writing_skill_md.md](reference/vlsit_writing_skill_md.md)
   for the description, the step style and what to keep out of the file. Keep the

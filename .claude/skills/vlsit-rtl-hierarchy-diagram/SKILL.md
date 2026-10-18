@@ -8,7 +8,7 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 ## Operating contract
 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (RHD-xxx) are mandatory and rank above everything else; this file only orders the work.
-2. References ([references/](references/)) explain terms, templates, and examples. Follow them for detail, but when a reference differs from a rule, follow the rule and report the difference.
+2. References ([reference/](reference/)) explain terms, templates, and examples. Follow them for detail, but when a reference differs from a rule, follow the rule and report the difference.
 3. Scripts ([scripts/README.md](scripts/README.md)) do the repeatable work so that tokens are spent on analysis, not on drawing or counting. Python 3 with the standard library only. Excel or CSV input (RHD-105): analyze it with `scripts/vlsit_analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
 4. Prerequisite (RHD-103): run `python --version`. If Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. At the end of every run apply the self-improvement rules RHD-090..096.
@@ -20,12 +20,12 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 | 1 | Obtain the RTL directory and the diagram level N (1 = TOP frame with its children, 2 = one more level, ...; no separate TOP-only page); ask for both in one message if absent. | RHD-010..013 | |
 | 2 | Hierarchy analysis down to level N: files, top, instances, parameters, generate scope. | RHD-030..033, 036, 037 | `python scripts/vlsit_rtl_hier.py <RTL_DIR> --depth N`, `--ports MODULE` |
 | 3 | Module functions; split modules with own logic into at most 10 functional groups. | RHD-034, 071, 080..083 | |
-| 4 | Signals and interfaces: meaning, direction, width, level or pulse, standard, handshake or custom. | RHD-035, 072, 073 | `references/vlsit_interface_groups.md` |
+| 4 | Signals and interfaces: meaning, direction, width, level or pulse, standard, handshake or custom. | RHD-035, 072, 073 | `reference/vlsit_interface_groups.md` |
 | 5 | Group signals into interfaces (one per functionally related set, dedicated pad lines separate), assign mnemonics, find the active side. | RHD-074, 049, 059, 078, 100 | |
-| 6 | Write everything in one `vlsit_rtl_analysis.md`. | RHD-075..077 | `references/vlsit_analysis_template.md` |
-| 7 | Build the spec and generate the diagram; optionally search layouts. | RHD-020..025, 040..059, 079, 084..089, 097..102 | `references/vlsit_diagram_spec.md`, `scripts/vlsit_drawio_frame_diagram.py`, `scripts/vlsit_layout_search.py`, `references/vlsit_sizing_guide.md`, `references/vlsit_library_usage.md` |
+| 6 | Write everything in one `vlsit_rtl_analysis.md`. | RHD-075..077 | `reference/vlsit_analysis_template.md` |
+| 7 | Build the spec and generate the diagram; optionally search layouts. | RHD-020..025, 040..059, 079, 084..089, 097..102 | `reference/vlsit_diagram_spec.md`, `scripts/vlsit_drawio_frame_diagram.py`, `scripts/vlsit_layout_search.py`, `reference/vlsit_sizing_guide.md`, `reference/vlsit_library_usage.md` |
 | 8 | Validate and report: library validator, geometry check, preview when possible. | RHD-060..063 | `python scripts/vlsit_library_symbols.py validate --diagram FILE`, `python scripts/vlsit_drawio_geometry_check.py FILE --allow-shared-start` |
-| 9 | Improve: add scripts, refine references, log in `references/vlsit_improvement_log.md`, ask the user about proposed interface groups and rule changes. | RHD-078, 090..096 | |
+| 9 | Improve: add scripts, refine reference files, log in `reference/vlsit_improvement_log.md`, ask the user about proposed interface groups and rule changes. | RHD-078, 090..096 | |
 
 ## Folder map
 
@@ -33,6 +33,6 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 |---|---|---|
 | `rule.md` | Numbered mandatory rules | 1 (highest) |
 | `SKILL.md` | Workflow and routing | 2 |
-| `references/` | Guides, templates, catalog, worked examples, improvement log | 3 |
+| `reference/` | Guides, templates, catalog, worked examples, improvement log | 3 |
 | `assets/` | Bundled symbol library (immutable) | data |
 | `scripts/` | Python tools | tool |

@@ -1,0 +1,3 @@
+[01_LEVEL_1] frame i1__2 900x390 ratio 2.31
+[01_LEVEL_1] shapes: 6 blocks, 20 labels, 2 pads; connectors: 22; physical crossings: 4; bends: 0 bends=14, 1 bends=2, 2 bends=3, 3 bends=3; findings: 0
+total findings: 0

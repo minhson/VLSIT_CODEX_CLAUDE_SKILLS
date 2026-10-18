@@ -10,8 +10,8 @@ Purpose : turns the analysis tables (blocks, interfaces, external pins, clock/re
 Usage   : python vlsit_drawio_frame_diagram.py SPEC.json OUT_DIR [--gap-h N] [--gap-v N] [--seed N] [--svg]
           Parameters can also be given as environment variables GAPH, GAPV, SEED (the command line wins);
           sides chosen per run for connectors are read from the optional "variants" of the spec through
-          environment variables named in "variant_env" (see references/examples/vlsit_can_level1_spec.json).
-Input   : SPEC.json (schema: see references/examples/vlsit_can_level1_spec.json and references/vlsit_diagram_spec.md).
+          environment variables named in "variant_env" (see reference/examples/vlsit_can_level1_spec.json).
+Input   : SPEC.json (schema: see reference/examples/vlsit_can_level1_spec.json and reference/vlsit_diagram_spec.md).
 Output  : OUT_DIR/vlsit_rtl_hierarchy.drawio, OUT_DIR/generator_report.txt, optionally preview_page0N.svg;
           the last stdout line starts with "SCORE " (key=value pairs) for scripts/vlsit_layout_search.py.
 Exit    : 0 success, 2 usage or spec error.

@@ -9,7 +9,7 @@ description: Search OpenCores and its linked public repositories for open-source
 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (OCI-xxx) are mandatory and rank above everything else.
 2. Follow the workflow below. It orders the work; it never relaxes a rule.
-3. Consult `references/` for templates and examples when needed. They rank below `rule.md`.
+3. Consult `reference/` for templates and examples when needed. They rank below `rule.md`.
 4. Prerequisite (OCI-096): run `python --version`; if Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. Run helpers from `scripts/` (index: [scripts/README.md](scripts/README.md)) instead of repeating manual steps.
 6. Excel or CSV input (OCI-097): analyze it with `scripts/vlsit_analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
@@ -21,9 +21,9 @@ description: Search OpenCores and its linked public repositories for open-source
 2. **Search and select (OCI-020..025).** Search OpenCores and aliases, open candidate pages, verify function and license, remove duplicates and mirrors. When OpenCores has no suitable IP, search GitHub and Gitee with `python scripts/vlsit_ip_search.py search "<keywords>" --source both` and apply OCI-025 to Chinese-language sources.
 3. **Download (OCI-030..032).** Fetch the complete project package from the official link or the upstream repository.
 4. **Verify and store (OCI-040..043, OCI-060).** Run `python scripts/vlsit_verify_archive.py <ARCHIVE>` before extraction, extract into a per-project folder, write `DOWNLOAD_INFO.md` per project and update `CATALOG.md`.
-5. **Evaluate (OCI-050..057).** Write the bilingual `README.md` using [references/vlsit_readme_template.md](references/vlsit_readme_template.md).
+5. **Evaluate (OCI-050..057).** Write the bilingual `README.md` using [reference/vlsit_readme_template.md](reference/vlsit_readme_template.md).
 6. **Report (OCI-061..062).** Summarize per OCI-061 without claiming validation.
-7. **Improve (OCI-090..096).** Add or fix scripts and references, log the change in `references/vlsit_improvement_log.md`, and propose any rule changes to the user.
+7. **Improve (OCI-090..096).** Add or fix scripts and reference files, log the change in `reference/vlsit_improvement_log.md`, and propose any rule changes to the user.
 
 ## Folder map
 
@@ -31,5 +31,5 @@ description: Search OpenCores and its linked public repositories for open-source
 |---|---|---|
 | `rule.md` | Numbered mandatory rules | 1 (highest) |
 | `SKILL.md` | Workflow and routing | 2 |
-| `references/` | Templates, examples, improvement log | 3 |
+| `reference/` | Templates, examples, improvement log | 3 |
 | `scripts/` | Helper scripts, grown by the model per OCI-090 | tool |

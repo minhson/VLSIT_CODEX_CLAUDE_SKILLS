@@ -167,13 +167,13 @@ Signals that belong together functionally form ONE interface, drawn as one conne
 | CSI | Control and status | i_can_registers -> i_can_bsp | registers -> bsp: reset_mode, listen_only_mode, acceptance_filter_mode, self_test_mode, extended_mode, release_buffer, tx_request, abort_tx, self_rx_request, single_shot_transmission, overload_request, error_warning_limit[7:0], we_rx_err_cnt, we_tx_err_cnt, read_arbitration_lost_capture_reg, read_error_code_capture_reg, acceptance_code_0..3[7:0], acceptance_mask_0..3[7:0], tx_data_0..12[7:0], clear_data_overrun (open); bsp -> registers: node_bus_off, node_error_passive, node_error_active, error_status, rx_err_cnt[7:0], tx_err_cnt[7:0], transmit_status, receive_status, transmitting, tx_successful, need_to_tx, overrun, info_empty, rx_message_counter[6:0], error_capture_code[7:0], arbitration_lost_capture[4:0], tx_state, tx_state_q, overload_frame, set_reset_mode, set_bus_error_irq, set_arbitration_lost_irq |
 | BTI | Bit timing | i_can_registers -> i_can_btl | registers -> btl: baud_r_presc[5:0], sync_jump_width[1:0], time_segment1[3:0], time_segment2[2:0], triple_sampling; btl -> registers: sample_point |
 | BSI | Bit stream | i_can_btl -> i_can_bsp | btl -> bsp: sample_point, tx_point, sampled_bit, sampled_bit_q, hard_sync; bsp -> btl: rx_idle, rx_inter, transmitting, transmitter, go_rx_inter, go_overload_frame, go_error_frame, go_tx, send_ack, tx_next, node_error_passive, tx |
-| RXS | RX synchronized | RX synchronizer -> i_can_btl | rx_sync |
-| RX | CAN RX (dedicated pad line) | external -> RX synchronizer | rx_i |
-| TX | CAN TX (dedicated pad line) | i_can_bsp -> external | tx_o |
-| BOS | Bus-off status | i_can_bsp -> external | bus_off_on |
-| IRQ | Interrupt | i_can_registers -> external | irq_on |
-| CKO | Clock output | i_can_registers -> external | clkout_o |
-| CLK | Clock/reset | external -> all six blocks | clk_i; rst_i (not used by Read-data select) |
+| rx_sync | RX synchronized | RX synchronizer -> i_can_btl | rx_sync |
+| rx_i | CAN RX (dedicated pad line) | external -> RX synchronizer | rx_i |
+| tx_o | CAN TX (dedicated pad line) | i_can_bsp -> external | tx_o |
+| bus_off_on | Bus-off status | i_can_bsp -> external | bus_off_on |
+| irq_on | Interrupt | i_can_registers -> external | irq_on |
+| clkout_o | Clock output | i_can_registers -> external | clkout_o |
+| CLK | Clock/reset | external -> all six blocks (one entry point, distribution tree with one branch per block) | clk_i; rst_i (not used by Read-data select) |
 
 The initiator of CSI is the register file (it carries host-written control and configuration; the status information returns), of BTI the register file (it supplies the timing configuration), and of BSI the bit-timing logic (it supplies the sample and transmit instants that sequence the frame-processing engine). *Interpretation:* these initiator choices follow the direction of control, not a protocol label in the RTL.
 
@@ -192,5 +192,4 @@ The initiator of CSI is the register file (it carries host-written control and c
 
 | Page | Blocks | Connectors |
 |---|---|---|
-| 00_TOP | TOP (can_top) | External interfaces: HOST, RX, TX, BOS, IRQ, CKO, CLK |
-| 01_LEVEL_1 | Frame TOP (can_top) enclosing i_can_registers, i_can_btl, i_can_bsp, Host bus adapter, Read-data select, RX synchronizer | No hierarchy arrows (hierarchy is shown by the enclosing frame); 9 internal interface connectors (HRA, HRS, FAC, RRD, FRI, CSI, BTI, BSI, RXS), 7 external interfaces (HOST, RX, TX, BOS, IRQ, CKO, CLK with 6 clock/reset stubs); the Interface Table below the diagram lists every signal |
+| 01_LEVEL_1 | Frame TOP (can_top) enclosing i_can_registers, i_can_btl, i_can_bsp, Host bus adapter, Read-data select, RX synchronizer | No hierarchy arrows (hierarchy is shown by the enclosing frame); 9 internal interface connectors (HRA, HRS, FAC, RRD, FRI, CSI, BTI, BSI, rx_sync), 7 external interfaces (HOST, rx_i, tx_o, bus_off_on, irq_on, clkout_o, CLK with one clock/reset distribution tree); the Interface Table below the diagram lists every signal |

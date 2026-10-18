@@ -107,7 +107,7 @@ def build_matrix(rule_path):
     text = raw.decode('utf-8-sig')
     return {
         'format_version': 2,
-        'rule_document': 'references/VLSIT_RTL_Design_Rule.md',
+        'rule_document': 'reference/VLSIT_RTL_Design_Rule.md',
         'rule_sha256': hashlib.sha256(raw).hexdigest().upper(),
         'assessment': 'NOT_RUN',
         'notes': [
@@ -126,7 +126,7 @@ def main():
     args = parser.parse_args()
     rule_path = (
         Path(__file__).resolve().parent.parent
-        / 'references'
+        / 'reference'
         / 'VLSIT_RTL_Design_Rule.md'
     )
     try:

@@ -58,7 +58,7 @@ documents invocation for users.
 ## Folder names inside a skill
 
 Only `SKILL.md` is special. Codex documentation names the optional folders
-`scripts/`, `references/` and `assets/`; Claude Code documentation shows
+`scripts/`, `reference/` and `assets/`; Claude Code documentation shows
 `reference.md` files. Neither tool requires those names, because supporting files are
 found through links in `SKILL.md`. The house format uses `reference/` (singular) and
 `scripts/`, plus `rule.md`.

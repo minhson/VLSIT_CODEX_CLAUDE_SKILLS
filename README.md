@@ -90,7 +90,7 @@ Other ways: `claude --add-dir <this repository>` loads its skills for one sessio
 |---|---|
 | `SKILL.md` | The workflow; always reads `rule.md` first. / Quy trình; luôn đọc `rule.md` trước. |
 | `rule.md` | Numbered mandatory rules; highest priority. / Rule bắt buộc có ID; ưu tiên cao nhất. |
-| `reference/` or `references/` | Guides, templates, examples (for RTL: `reference/rtl_example/`). / Hướng dẫn, mẫu, ví dụ. |
+| `reference/` | Guides, templates, examples (for RTL: `reference/rtl_example/`). / Hướng dẫn, mẫu, ví dụ. |
 | `scripts/` | Python 3 helpers (and a `.ps1`/`.sh` pair to locate Python). / Script Python 3 và cặp `.ps1`/`.sh` tìm Python. |
 
 File names inside a skill start with `vlsit_` (except `SKILL.md`, `rule.md`, `README.md`, `LICENSE`, third-party files). Skill instructions are in precise English; the READMEs are bilingual. A skill changes its own `rule.md` only with your explicit approval. / Tên file trong skill bắt đầu bằng `vlsit_` (trừ `SKILL.md`, `rule.md`, `README.md`, `LICENSE`, file bên thứ ba). Hướng dẫn skill viết bằng tiếng Anh kỹ thuật; README song ngữ. Skill chỉ sửa `rule.md` của mình khi bạn đồng ý rõ ràng.
