@@ -169,6 +169,7 @@ end
 
 - **COM-05** `[NEW]` Combinational loops are not allowed. Feedback passes through a register.
 - **COM-06** `[NEW]` Functions used in RTL are `automatic`, deterministic, and side-effect free (see P9).
+- **COM-07** `[NEW]` An inferred latch is not allowed. Every signal that a combinational process drives MUST be assigned on every path: assign its default at the top of the process (COM-02) so that no `if` or `case` branch leaves it unassigned, and give every `case` a `default` (COM-03). A latch reported by lint (for example verilator `LATCH` or slang `inferred-latch`) is an error and MUST NOT be waived. Intentional storage uses a flip-flop (SEQ-01).
 
 ## 5. Arithmetic and widths
 
@@ -367,7 +368,7 @@ endmodule
 | P4 | `defparam` | Named parameter override at the instance |
 | P5 | Implicit nets from undeclared identifiers | Declare all signals; enforce `default_nettype none` (TYP-03) |
 | P6 | Plain `always` (any event-control or wildcard form) | `always_comb`, `always_ff` |
-| P7 | `always_latch` and inferred or intentional latches | Complete assignments (COM-02) or edge-triggered state |
+| P7 | `always_latch` and inferred or intentional latches (COM-07) | Default assignments (COM-02, COM-07) or edge-triggered state |
 | P8 | Multiple drivers on one signal | One assignment source |
 | P9 | Functions with side effects or static state | Deterministic `automatic` functions (COM-06) |
 | P10 | Unexplained magic numbers | Named parameter, localparam, or enum member |
@@ -396,7 +397,7 @@ endmodule
 Confirm before accepting an RTL handoff:
 
 - **Reproducibility:** synthesis top, parameter values, filelist, frontend version, options, constraints, and target libraries are recorded; the final report preserves the exact tool configuration and logs.
-- **Elaboration and lint:** the intended configuration elaborates with the expected hierarchy. Lint findings for width, unsigned sizing, inferred storage/latches, multiple drivers, undriven and unused signals, and unsupported constructs are resolved or waived. `[NEW]` Waivers carry a rationale and reviewer.
+- **Elaboration and lint:** the intended configuration elaborates with the expected hierarchy. Lint findings for width, unsigned sizing, inferred storage, multiple drivers, undriven and unused signals, and unsupported constructs are resolved or waived. `[NEW]` Waivers carry a rationale and reviewer. `[NEW]` An inferred latch is never waived; it is fixed (COM-07).
 - **CDC/RDC `[NEW]`:** CDC and reset-domain-crossing analysis is clean or waived; every crossing uses an approved structure (CLK-01, RST-02).
 - **Synthesis QoR:** register, memory, and logic inference matches the architecture; unresolved cells are explained; reset maps to library cells (RST-03).
 - **Equivalence `[NEW]`:** RTL-to-netlist formal equivalence is planned for the flow; don't-care use (COM-04) is reviewed because it can produce RTL-versus-netlist mismatch.

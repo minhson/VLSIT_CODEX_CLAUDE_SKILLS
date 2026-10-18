@@ -67,6 +67,11 @@ MUST write a reason in the module header for every deviation from a SHOULD rule 
 - Why: the rule file allows a deviation only when its reason is written down for the reviewer.
 - Check: manual - each deviation named in the report has its reason in the header of the file.
 
+### R-019 Case for three or more branches
+MUST write a selection that has three or more conditional branches (an `if` followed by two or more `else if`) as a `case` or `casez` statement, never as an `if` / `else if` chain. Choose the statement with COM-03 and COM-04 of the rule file: a selection on the value of one signal is a plain `case`; a priority selection among independent conditions is a `casez` on the concatenated condition bits with `?` for the bits of lower priority, and its `default` assigns a defined value unless COM-04 allows `'x`. A chain with one or two conditions (with or without a final `else`), the reset test that opens a sequential process, and an elaboration-time `if` in a generate block are not counted.
+- Why: a `case` shows every alternative side by side and lets the synthesis frontend build one decoder, while a long `if` chain builds an unintended priority chain and hides a missing branch.
+- Check: `vlsit_rtl_check.py check` reports no R-019 finding; manual - the converted `case` keeps the priority of the original conditions and has the `default` that COM-03 requires.
+
 ## Verification
 
 ### R-012 Rule check
@@ -82,7 +87,7 @@ MUST give each remaining WARN or INFO finding of the rule check and of lint eith
 ### R-014 Lint
 MUST lint the complete delivered file set with `vlsit_lint_rtl.py lint`, correcting each lint error before delivery.
 - Why: lint finds width, latch, undriven and connection problems that the rule check does not see.
-- Check: the last lint run prints RESULT: PASS with 0 errors.
+- Check: the last lint run prints RESULT: PASS with 0 errors; the script counts a latch finding of the tool (verilator LATCH, slang inferred-latch) as an error, because COM-07 forbids an inferred latch.
 
 ### R-015 No lint tool
 MUST continue with the rule check, report lint as not run, and offer the designer the install options when no lint tool is found, installing nothing unasked.

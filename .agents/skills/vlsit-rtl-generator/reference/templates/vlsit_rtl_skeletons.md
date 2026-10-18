@@ -70,6 +70,33 @@ endmodule
 
 The function part of the state names is at most 8 characters (ENM-04).
 
+## Selection of three or more branches (R-019)
+
+```systemverilog
+  // Selection by value: one signal chooses among several results. A plain case with a default.
+  always_comb begin : p_com_select
+    w_result = '0;
+    case (i_sel)
+      2'd0:    w_result = i_a;
+      2'd1:    w_result = i_b;
+      2'd2:    w_result = i_c;
+      default: w_result = '0;
+    endcase
+  end
+
+  // Priority selection: i_req_0 has the highest priority. casez with ? for the lower-priority
+  // bits is an intentional wildcard decode; the default assigns a defined value (COM-04).
+  always_comb begin : p_com_prio
+    w_grant = 3'b000;
+    casez ({i_req_2, i_req_1, i_req_0})
+      3'b??1:  w_grant = 3'b001;
+      3'b?10:  w_grant = 3'b010;
+      3'b100:  w_grant = 3'b100;
+      default: w_grant = 3'b000;
+    endcase
+  end
+```
+
 ## Structural top
 
 ```systemverilog

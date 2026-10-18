@@ -67,7 +67,7 @@ Write the modules leaf first and the top last, one module per file, into the out
 <python> "<skill folder>\scripts\vlsit_rtl_check.py" check "<output folder>"
 ```
 
-Fix every ERROR (R-012). Keep a list of the WARN and INFO findings for the report (R-013). Do not generate testbenches or assertions (R-010).
+Write every selection of three or more branches as `case` or `casez`, never as an `if` / `else if` chain (R-019). Fix every ERROR (R-012). Keep a list of the WARN and INFO findings for the report (R-013). Do not generate testbenches or assertions (R-010).
 
 ### 6. Make the filelist and lint
 
@@ -76,7 +76,7 @@ Fix every ERROR (R-012). Keep a list of the WARN and INFO findings for the repor
 <python> "<skill folder>\scripts\vlsit_lint_rtl.py" lint "<output folder>\filelist.f" --top <top module>
 ```
 
-Fix every lint error and run lint again (R-014). When the script exits with 3 there is no lint tool: continue, mark lint as not run, give the designer the install options it printed, and install nothing unasked (R-015). Read [reference/vlsit_lint_and_install.md](reference/vlsit_lint_and_install.md) to judge the warnings.
+Fix every lint error and run lint again (R-014); a latch finding is a lint error (COM-07), so give every always_comb signal a default at the top of the process. When the script exits with 3 there is no lint tool: continue, mark lint as not run, give the designer the install options it printed, and install nothing unasked (R-015). Read [reference/vlsit_lint_and_install.md](reference/vlsit_lint_and_install.md) to judge the warnings.
 
 ### 7. Check the whole set
 

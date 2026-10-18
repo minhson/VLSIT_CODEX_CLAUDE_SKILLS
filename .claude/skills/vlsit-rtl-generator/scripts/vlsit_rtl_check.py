@@ -68,9 +68,11 @@ COVERAGE = OrderedDict([
     ("ENM-04", ("script", "FSM state signal names")),
     ("ENM-05", ("script", "FSM state members ENUM_ST_*")),
     ("COM-01", ("manual", "one process owns each output")),
-    ("COM-02", ("manual", "defaults at the top of each process")),
+    ("COM-02", ("script", "every signal assigned in an always_comb has an unconditional default (heuristic, see COM-07)")),
+    ("COM-07", ("script", "no inferred latch: a signal assigned only inside if / case of an always_comb is an error; lint LATCH is an error")),
     ("COM-03", ("script", "every case has default; no casex")),
     ("COM-04", ("script", "'x only in the default of a full casez")),
+    ("R-019", ("script", "no if / else-if chain with three or more conditions: use case or casez")),
     ("COM-05", ("lint", "no combinational loops (P23)")),
     ("COM-06", ("script", "functions are automatic (P9 side effects stay manual)")),
     ("ARI-01", ("lint", "explicit operand sizes (width warnings)")),
@@ -92,7 +94,7 @@ COVERAGE = OrderedDict([
     ("CMT-01", ("script", "a comment before every process and instance (warning)")),
     ("CMT-05", ("script", "comment lines of at most 100 characters")),
     ("P1", ("script", "no delay controls")), ("P2", ("script", "no initial")), ("P3", ("script", "no casex")),
-    ("P4", ("script", "no defparam")), ("P6", ("script", "no plain always")), ("P7", ("script", "no always_latch")),
+    ("P4", ("script", "no defparam")), ("P6", ("script", "no plain always")), ("P7", ("script", "no always_latch; no latch inferred by an always_comb (see COM-07)")),
     ("P11", ("script", "no package, import, interface")), ("P12", ("script", "no `define / `undef")),
     ("P13", ("script", "no positional or .* connections")), ("P14", ("script", "no testbench system tasks")),
     ("P17", ("script", "inout only in pad/IO modules (warning)")), ("P18", ("script", "commented-out code (warning)")),
@@ -191,6 +193,143 @@ def split_top(text, sep=","):
             cur.append(ch)
     parts.append("".join(cur))
     return parts
+
+
+def stmt_end(code, i):
+    """Index just after the statement that starts at or after i: a begin/end block, an if chain, a
+    case, a for loop or a simple statement ending in ';'."""
+    n = len(code)
+    while i < n and code[i].isspace():
+        i += 1
+    if code.startswith("begin", i) and not code[i + 5:i + 6].isalnum():
+        depth = 0
+        for m in re.finditer(r"\b(begin|end)\b", code[i:]):
+            depth += 1 if m.group(1) == "begin" else -1
+            if depth == 0:
+                return i + m.end()
+        return n
+    m = re.match(r"(?:unique0?\s+|priority\s+)?if\b", code[i:])
+    if m:
+        return if_chain(code, i + m.end())[0]
+    if re.match(r"(?:unique0?\s+|priority\s+)?case[zx]?\b", code[i:]):
+        depth = 0
+        for t in re.finditer(r"\b(case[zx]?|endcase)\b", code[i:]):
+            depth += 1 if t.group(1) != "endcase" else -1
+            if depth == 0:
+                return i + t.end()
+        return n
+    if re.match(r"for\b", code[i:]):
+        p = code.find("(", i)
+        q = match_paren(code, p) if p >= 0 else -1
+        return stmt_end(code, q + 1) if q >= 0 else n
+    j = code.find(";", i)
+    return n if j < 0 else j + 1
+
+
+def if_chain(code, pos):
+    """pos is just after an 'if' keyword. Return (end index, [condition texts]) of the whole
+    if / else if / else chain."""
+    conds = []
+    while True:
+        p = code.find("(", pos)
+        q = match_paren(code, p) if p >= 0 else -1
+        if q < 0:
+            return len(code), conds
+        conds.append(code[p + 1:q])
+        end = stmt_end(code, q + 1)
+        m = re.match(r"\s*else\b", code[end:])
+        if not m:
+            return end, conds
+        k = end + m.end()
+        m2 = re.match(r"\s*(?:unique0?\s+|priority\s+)?if\b", code[k:])
+        if m2:
+            pos = k + m2.end()
+            continue
+        return stmt_end(code, k), conds
+
+
+def comb_blocks(code):
+    """Yield (start index, body start, body end) of every always_comb statement."""
+    for m in re.finditer(r"\balways_comb\b", code):
+        yield m.start(), m.end(), stmt_end(code, m.end())
+
+
+ASSIGN_LHS = re.compile(r"([A-Za-z_]\w*)((?:\s*\[[^\]]*\])*)\s*=(?!=)")
+
+
+def assigned_names(text, skip):
+    names = set()
+    for m in ASSIGN_LHS.finditer(text):
+        before = text[max(0, m.start() - 1):m.start()]
+        if before in ("<", ">", "!", "=", ".", "'"):
+            continue
+        if m.group(1) not in skip:
+            names.add(m.group(1))
+    return names
+
+
+def check_comb_defaults(code, name, f):
+    """COM-07: every signal assigned in an always_comb is assigned unconditionally at the top level of
+    the process (a default). A signal assigned only inside if / case would hold its value on the other
+    paths, which infers a latch."""
+    f.mark("COM-07", "COM-02", "P7")
+    for start, i, end in comb_blocks(code):
+        body = code[i:end]
+        skip = set(re.findall(r"\bfor\s*\(\s*int\s+(\w+)", body))
+        text = body.strip()
+        if text.startswith("begin"):
+            text = re.sub(r"^begin\s*(:\s*\w+)?", "", text, count=1)
+            text = re.sub(r"\bend\s*$", "", text)
+        top, nested = set(), set()
+        pos, n = 0, len(text)
+        while pos < n:
+            while pos < n and text[pos].isspace():
+                pos += 1
+            if pos >= n:
+                break
+            stop = stmt_end(text, pos)
+            stmt = text[pos:stop]
+            if re.match(r"(?:unique0?\s+|priority\s+)?(?:if|case[zx]?|for)\b|begin\b", stmt):
+                nested |= assigned_names(stmt, skip)
+            else:
+                top |= assigned_names(stmt, skip)
+            pos = max(stop, pos + 1)
+        for sig in sorted(nested - top):
+            f.add("ERROR", "COM-07", name, line_of(code, start),
+                  "'%s' is assigned only inside if / case of an always_comb: assign a default at the top of the "
+                  "process or a latch is inferred (COM-07, COM-02, P7)" % sig)
+
+
+RESET_COND = re.compile(r"\s*(?:!|~)\s*i_rst_n\w*\s*$|\s*i_rst_n\w*\s*==\s*1'b0\s*$")
+
+
+def check_if_chains(code, name, f):
+    """R-019: inside a process or a function, an if / else-if chain has at most two conditions.
+    A leading reset test of a sequential process is not counted."""
+    f.mark("R-019")
+    ranges = []
+    for m in re.finditer(r"\balways(?:_comb|_ff|_latch)?\b", code):
+        i = m.end()
+        if code[i:].lstrip().startswith("@"):
+            p = code.find("(", i)
+            q = match_paren(code, p) if p >= 0 else -1
+            i = q + 1 if q >= 0 else i
+        ranges.append((m.start(), stmt_end(code, i)))
+    for m in re.finditer(r"\bfunction\b.*?\bendfunction\b", code, re.S):
+        ranges.append((m.start(), m.end()))
+    for m in re.finditer(r"\bif\b", code):
+        start = m.start()
+        if not any(a <= start < b for a, b in ranges):
+            continue
+        if re.search(r"\belse\s*(?:unique0?\s+|priority\s+)?$", code[max(0, start - 40):start]):
+            continue  # an else-if continues a chain that was counted from its first if
+        end, conds = if_chain(code, m.end())
+        count = len(conds)
+        if conds and RESET_COND.match(conds[0]):
+            count -= 1
+        if count >= 3:
+            f.add("ERROR", "R-019", name, line_of(code, start),
+                  "if / else-if chain with %d conditions: write it as case or casez (R-019)" % count)
 
 
 # ------------------------------------------------------------------ one file
@@ -489,6 +628,10 @@ def check_file(path, f):
                 f.add("ERROR", "COM-04", name, c["line"], "plain case default must assign a defined value, not 'x")
     for m in re.finditer(r"'[xX]\b", code):
         pass
+
+    # --- if / else-if chains (R-019)
+    check_if_chains(code, name, f)
+    check_comb_defaults(code, name, f)
 
     # --- prohibited constructs
     simple = [

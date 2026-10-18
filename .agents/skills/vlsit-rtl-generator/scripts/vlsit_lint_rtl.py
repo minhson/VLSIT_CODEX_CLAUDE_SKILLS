@@ -18,6 +18,8 @@ Tools are looked for in PATH, then in an OSS CAD Suite folder (OSS_CAD_SUITE, C:
 ~/oss-cad-suite, /opt/oss-cad-suite). Lint order: verilator, slang (full lint); yosys, iverilog
 (elaboration only, reported as such).
 
+A latch finding of the tool (verilator LATCH, slang inferred-latch) counts as a lint error (COM-07).
+
 Exit codes: 0 success (lint: no error), 1 lint found errors, 2 bad input or filelist problem,
 3 no tool can lint (install options printed). Files are never overwritten without --force; a lint
 log gets a numbered name instead.
@@ -44,6 +46,10 @@ SUITE_DIRS = [os.environ.get("OSS_CAD_SUITE", ""), r"C:\Tools\oss-cad-suite", st
 # tool -> (candidate executable names, can_lint)
 TOOLS = [("verilator", ["verilator_bin" + EXE, "verilator" + EXE], True), ("slang", ["slang" + EXE], True),
          ("yosys", ["yosys" + EXE], False), ("iverilog", ["iverilog" + EXE], False)]
+
+
+# Warning texts of the supported tools that report an inferred latch (verilator LATCH, slang inferred-latch).
+LATCH_FINDING = re.compile(r"%Warning-LATCH\b|-Winferred-latch\b|latch inferred|inferred latch", re.I)
 
 
 def suite_folder():
@@ -297,6 +303,11 @@ def action_lint(args):
     else:
         errors = [l for l in lines if re.search(r"(?i)\berror\b", l)] if run.returncode != 0 else []
         warnings = [l for l in lines if re.search(r"(?i)\bwarning\b", l)]
+    # COM-07: an inferred latch is an error, not a warning, whatever the tool calls it.
+    latch = [w for w in warnings if LATCH_FINDING.search(w)]
+    if latch:
+        warnings = [w for w in warnings if w not in latch]
+        errors = errors + ["LATCH (COM-07) " + w for w in latch]
     # Verilator exits with 1 for warnings too, so a non-zero code alone is an error only when nothing explains it.
     if run.returncode != 0 and not errors and not (name == "verilator" and warnings):
         errors = ["exit code %d" % run.returncode] + (lines[:3] if name in ("yosys", "iverilog") else [])
