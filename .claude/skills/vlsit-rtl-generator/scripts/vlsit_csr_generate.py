@@ -11,7 +11,8 @@ Purpose : the register RTL is never written by hand; it comes from APB-CSR-Gener
           (https://github.com/nguyenquanicd/APB-CSR-Generator, script CSR_Generation.py), which in the VLSIT
           flow is the submodule APB-CSR-Generator of VLSIT_RTL_Generator_AI_Model. This script runs it in a
           work folder, checks the result against the workbook, replaces the generator's placeholder
-          synchronizer by an adapter to the library wrapper m_vlsit_afifo_cell_sync, and writes the manifest.
+          synchronizer by an adapter to the library wrapper m_vlsit_afifo_cell_sync (asynchronous sheet), and writes the
+          manifest. Generator 2.7 (embedded) or 3.2+ (canonical) supports `wo` hardware-clear and optional APB register-event sidebands; the module supports both clock architectures (parameter PARA_ASYNCHRONOUS).
 Actions :
   locate [--generator PATH]     print the path and commit of CSR_Generation.py (search order: --generator,
                                 environment variable VLSIT_CSR_GENERATOR, folders APB-CSR-Generator found
@@ -20,11 +21,12 @@ Actions :
            [--generator PATH] [--force] [--allow-sample]
                                 check the workbook, run the generator, write DIR/<module>.sv, DIR/filelist_csr.f,
                                 DIR/CSR_GENERATED.md, DIR/debug.json and, for an asynchronous sheet, the
-                                adapter DIR/m_csr_sync.sv
+                                adapter DIR/m_vlsit_csr_sync.sv
   verify DIR                    compare the files of DIR with the hashes in CSR_GENERATED.md (the generated
                                 files must not be edited by hand)
   ports WORKBOOK --sheet SHEET  print the ports that the generator builds from the workbook (Markdown)
-Rules   : the workbook checks are those of the generator's limits: types rw, ro, rwi, w1c; offsets unique,
+Rules   : supported types are rw, ro, rwi, w1c, w0c, w2c, r2c, wo; `wo` hardware clear requires generator 2.7 (embedded) or 3.2+ (canonical); APB event sidebands are workbook-selected; repeat metadata (columns H to K:
+          FIXED, PARAMETERIZED); offsets unique,
           4-byte aligned, below 0x10000, written 0x...; fields of one register tile bits 31..0; a field named
           reserved is type ro; data width 32, address width 16, write strobe 4, protocol APB.
 Exit    : 0 success, 1 findings, 2 generator or input not found, 3 openpyxl missing.
@@ -49,7 +51,10 @@ GEN_NAME = "CSR_Generation.py"
 GEN_DIR = "APB-CSR-Generator"
 MANIFEST = "CSR_GENERATED.md"
 LIB_WRAPPER = "m_vlsit_afifo_cell_sync"
-TYPES = {"rw", "ro", "rwi", "w1c"}
+TYPES = {"rw", "ro", "rwi", "w1c", "w0c", "w2c", "r2c", "wo"}
+HW_TYPES = {"rwi", "w1c", "w0c", "w2c", "r2c"}   # types with i_hw_we_ and i_hw_wdata_ ports
+MIN_VERSION = (2, 4)      # generator version that this script was written for
+VERSION_RE = re.compile(r'(?m)^VERSION\s*=\s*"(\d+)\.(\d+)"')
 FIRST_ROW = 16
 SAMPLE_MODULES = {"m_vlsi_csr", "m_vlsi_async_csr"}
 
@@ -68,32 +73,54 @@ def sha256(path):
 def git_commit(folder):
     try:
         out = subprocess.run(["git", "-C", str(folder), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, timeout=20)
-        dirty = subprocess.run(["git", "-C", str(folder), "status", "--porcelain", "--", GEN_NAME], capture_output=True, text=True, timeout=20)
+        dirty = subprocess.run(["git", "-C", str(folder), "status", "--porcelain", "--", GEN_NAME, "CSR_Protocol_Generation.py"], capture_output=True, text=True, timeout=20)
         if out.returncode == 0:
-            return out.stdout.strip() + (" (CSR_Generation.py modified)" if dirty.stdout.strip() else "")
+            return out.stdout.strip() + (" (CSR generator source modified)" if dirty.stdout.strip() else "")
     except (OSError, subprocess.SubprocessError):
         pass
     return "unknown (not a git folder)"
 
 
+def generator_version(folder):
+    """(major, minor) of CSR_Generation.py, or None."""
+    try:
+        m = VERSION_RE.search((Path(folder) / GEN_NAME).read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
 def locate(explicit, start_dirs):
-    """Return the folder that holds CSR_Generation.py, or None."""
-    candidates = []
+    """Prefer an explicit generator; otherwise select the newest discoverable version."""
     if explicit:
-        candidates.append(Path(explicit))
+        preferred = Path(explicit)
+        if preferred.is_file() and preferred.name == GEN_NAME:
+            return preferred.parent
+        if (preferred / GEN_NAME).is_file():
+            return preferred
+        return None
     if os.environ.get("VLSIT_CSR_GENERATOR"):
-        candidates.append(Path(os.environ["VLSIT_CSR_GENERATOR"]))
+        preferred = Path(os.environ["VLSIT_CSR_GENERATOR"])
+        if preferred.is_file() and preferred.name == GEN_NAME:
+            return preferred.parent
+        if (preferred / GEN_NAME).is_file():
+            return preferred
+    candidates = []
     for start in start_dirs:
         start = Path(start).resolve()
         for folder in [start] + list(start.parents):
             candidates.append(folder / GEN_DIR)
             candidates.append(folder)
+    found = {}
     for c in candidates:
         if c.is_file() and c.name == GEN_NAME:
-            return c.parent
+            c = c.parent
         if (c / GEN_NAME).is_file():
-            return c
-    return None
+            resolved = c.resolve()
+            found[str(resolved).casefold()] = resolved
+    if not found:
+        return None
+    return max(found.values(), key=lambda folder: generator_version(folder) or (-1, -1))
 
 
 def find_or_fail(args, extra_dirs=()):
@@ -129,19 +156,20 @@ def read_sheet(xlsx, sheet):
     ws = wb[sheet]
     cfg, regs, cur, in_regs = {}, [], None, False
     for row in range(1, ws.max_row + 1):
-        vals = [ws.cell(row, c).value for c in range(1, 8)]
+        vals = [ws.cell(row, c).value for c in range(1, 12)]
         label = "" if vals[0] is None else str(vals[0])
         if not in_regs:
-            for key in ("Module Name", "Protocol", "Data Width", "Address Width", "Asynchronous"):
+            for key in ("Module Name", "Protocol", "Data Width", "Address Width", "Asynchronous", "Register Event Sideband"):
                 if key in label:
                     cfg[key] = vals[1]
             if "REGISTER" in label:
                 in_regs = True
             continue
         if vals[0] is not None:
-            cur = {"name": str(vals[0]), "offset": vals[1], "fields": [], "row": row, "desc": vals[6]}
+            cur = {"name": str(vals[0]), "offset": vals[1], "fields": [], "row": row, "desc": vals[6],
+                   "repeat": {"mode": vals[7], "count": vals[8], "stride": vals[9], "max": vals[10]}}
             regs.append(cur)
-        elif any(v is not None for v in vals):
+        elif any(v is not None for v in vals[:7]):
             if cur is None:
                 raise ValueError("row %d: field row before any register" % row)
             cur["fields"].append({"name": vals[2], "bits": vals[3], "type": vals[4], "reset": vals[5], "row": row, "desc": vals[6]})
@@ -217,6 +245,39 @@ def convention_findings(cfg, regs):
     return out
 
 
+def repeat_of(reg):
+    """(mode, count, stride, max) of a register as numbers, or an error text."""
+    r = reg.get("repeat") or {}
+    mode = str(r.get("mode") or "NONE").strip().upper()
+    if mode not in ("NONE", "FIXED", "PARAMETERIZED"):
+        return "register %s: REPEAT MODE must be NONE, FIXED or PARAMETERIZED" % reg["name"]
+    def num(v):
+        return None if v in (None, "") else to_int(v)
+    try:
+        count, stride, mx = num(r.get("count")), num(r.get("stride")), num(r.get("max"))
+    except ValueError:
+        return "register %s: COUNT, OFFSET STRIDE and MAX COUNT must be numbers" % reg["name"]
+    if mode == "NONE":
+        if any(v is not None for v in (count, stride, mx)):
+            return "register %s: repeat data given with REPEAT MODE NONE" % reg["name"]
+        return ("NONE", 1, 4, 1)
+    if count is None or count < 1:
+        return "register %s: COUNT / DEFAULT must be at least 1" % reg["name"]
+    if mode == "FIXED":
+        if mx is not None:
+            return "register %s: FIXED mode must leave MAX COUNT blank" % reg["name"]
+        if stride is None and count > 1:
+            return "register %s: FIXED mode with count > 1 needs OFFSET STRIDE" % reg["name"]
+    else:
+        if stride is None or mx is None:
+            return "register %s: PARAMETERIZED mode needs COUNT / DEFAULT, OFFSET STRIDE and MAX COUNT" % reg["name"]
+        if not 1 <= count <= mx:
+            return "register %s: 1 <= COUNT / DEFAULT <= MAX COUNT is required" % reg["name"]
+    if stride is not None and (stride < 4 or stride % 4):
+        return "register %s: OFFSET STRIDE must be a multiple of 4 and at least 4" % reg["name"]
+    return (mode, count, stride if stride is not None else 4, mx if mx is not None else count)
+
+
 def check_map(cfg, regs, sheet):
     errors = []
     for key in ("Module Name", "Protocol", "Data Width", "Address Width", "Asynchronous"):
@@ -246,14 +307,25 @@ def check_map(cfg, regs, sheet):
         seen.add(n)
         off = reg["offset"]
         if not isinstance(off, str) or not re.fullmatch(r"0x[0-9A-Fa-f]+", off.strip()):
-            errors.append("register %s: offset %r must be a text like 0x4 (the generator cuts the first two characters)" % (n, off))
+            errors.append("register %s: offset %r must be a text like 0x4 (VLSIT workbook convention)" % (n, off))
             continue
         v = to_int(off)
         if v % 4 or v >= 1 << 16:
             errors.append("register %s: offset %s must be 4-byte aligned and below 0x10000" % (n, off))
-        if v in offs:
-            errors.append("register %s: offset %s already used by %s" % (n, off, offs[v]))
-        offs[v] = n
+        rp = repeat_of(reg)
+        if isinstance(rp, str):
+            errors.append(rp)
+            rp = ("NONE", 1, 4, 1)
+        mode, count, stride, mx = rp
+        slots = mx if mode == "PARAMETERIZED" else count
+        for i in range(slots):
+            a = v + i * stride
+            if a >= 1 << 16:
+                errors.append("register %s: address 0x%X exceeds the 16-bit address space" % (n, a))
+                break
+            if a in offs and offs[a] != n:
+                errors.append("register %s: address 0x%X already used by %s" % (n, a, offs[a]))
+            offs[a] = n
         covered, fn = {}, set()
         for f in reg["fields"]:
             fname = f["name"]
@@ -287,26 +359,46 @@ def check_map(cfg, regs, sheet):
     return errors
 
 
-def expected_ports(cfg, regs):
-    asyn = str(cfg["Asynchronous"]).strip() == "1"
-    ports = {"i_clk_apb": 1, "i_rst_n_apb": 1, "i_apb_paddr": 16, "i_protect_en": 1, "i_slverr_en": 1, "i_apb_pprot": 3,
-             "i_apb_pwdata": 32, "i_apb_pwrite": 1, "i_apb_penable": 1, "i_apb_psel": 1, "i_apb_pstrb": 4,
-             "o_apb_pslverr": 1, "o_apb_pready": 1, "o_apb_prdata": 32}
-    if asyn:
-        ports.update({"i_clk_reg": 1, "i_rst_n_reg": 1})
+def wo_clear_prefix(version):
+    """Name of the hardware clear input of a wo field: i_hw_clr_ from generator 3.3, i_hw_clear_ before."""
+    return "i_hw_clr_" if version is None or version >= (3, 3) else "i_hw_clear_"
+
+
+def has_event_ports(cfg, version):
+    """Generator 2.5 to 2.x always builds o_reg_*; 3.x builds them when the workbook key is 1."""
+    if version is not None and version[0] == 2:
+        return version[1] >= 5
+    return str(cfg.get("Register Event Sideband", 0)).strip().lower() in {"1", "1.0", "true", "yes"}
+
+
+def expected_ports(cfg, regs, version=None):
+    ports = {"i_clk_apb": 1, "i_rst_n_apb": 1, "i_clk_reg": 1, "i_rst_n_reg": 1, "i_apb_paddr": 16, "i_protect_en": 1,
+             "i_slverr_en": 1, "i_apb_pprot": 3, "i_apb_pwdata": 32, "i_apb_pwrite": 1, "i_apb_penable": 1, "i_apb_psel": 1,
+             "i_apb_pstrb": 4, "o_apb_pslverr": 1, "o_apb_pready": 1, "o_apb_prdata": 32}
+    if has_event_ports(cfg, version):
+        ports.update({"o_reg_rd_en": 1, "o_reg_rd_addr": 16, "o_reg_wr_en": 1, "o_reg_wr_addr": 16})
     for reg in regs:
-        for f in reg["fields"]:
-            if f["name"] == "reserved":
-                continue
-            hi, lo = parse_bits(f["bits"])
-            w, base = hi - lo + 1, "%s_%s" % (reg["name"], f["name"])
-            if f["type"] == "ro":
-                ports["i_" + base] = w
-            else:
-                ports["o_" + base] = w
-                if f["type"] in ("rwi", "w1c"):
-                    ports["i_hw_wdata_" + base] = w
-                    ports["i_hw_we_" + base] = 1
+        rp = repeat_of(reg)
+        mode, count = (rp[0], rp[1]) if not isinstance(rp, str) else ("NONE", 1)
+        names = ["%s_%d" % (reg["name"], i) for i in range(count)] if mode == "FIXED" else [reg["name"]]
+        for rname in names:
+            for f in reg["fields"]:
+                if f["name"] == "reserved":
+                    continue
+                hi, lo = parse_bits(f["bits"])
+                w, base = hi - lo + 1, "%s_%s" % (rname, f["name"])
+                if mode == "PARAMETERIZED":
+                    w = None        # packed array [PARA_<BASE>_COUNT-1:0]; the width depends on the elaboration parameter
+                if f["type"] == "ro":
+                    ports["i_" + base] = w
+                elif f["type"] == "wo":
+                    ports["o_" + base] = w
+                    ports[wo_clear_prefix(version) + base] = 1 if w is not None else None
+                else:
+                    ports["o_" + base] = w
+                    if f["type"] in HW_TYPES:
+                        ports["i_hw_wdata_" + base] = w
+                        ports["i_hw_we_" + base] = 1 if w is not None else None
     return ports
 
 
@@ -317,17 +409,25 @@ def module_ports(sv_text, module):
         return None
     ports = {}
     consts = {"LPARA_ADDR_W": 16, "LPARA_DATA_W": 32, "LPARA_STRB_W": 4}
-    for p in re.finditer(r"(?m)^\s*(?:input|output)\s+(?:wire|logic)\s*(?:\[([^\]]+)\])?\s*(\w+)\s*,?\s*$", m.group(1)):
-        rng = p.group(1)
-        if rng is None:
-            width = 1
-        elif rng.startswith("LPARA_"):
-            width = consts[rng.split("-")[0]]
-        else:
-            width = int(rng.split(":")[0]) + 1
+    for p in re.finditer(r"(?m)^\s*(?:input|output)\s+(?:wire|logic)\s*((?:\[[^\]]+\])*)\s*(\w+)\s*,?\s*$", m.group(1)):
+        dims = re.findall(r"\[([^\]]+)\]", p.group(1))
+        width = 1
+        for rng in dims:
+            if rng.startswith("LPARA_"):
+                width *= consts[rng.split("-")[0]]
+            elif re.fullmatch(r"\d+:0", rng):
+                width *= int(rng.split(":")[0]) + 1
+            else:
+                width = None            # depends on an elaboration parameter (PARAMETERIZED group)
+                break
         ports[p.group(2)] = width
     return ports
 
+
+# The generator names its synchronizer module m_csr_sync (a constant of CSR_Generation.py). The design rule
+# wants the prefix m_vlsit_, so the generated module is renamed here and the adapter carries the new name.
+SYNC_GEN = "m_csr_sync"
+SYNC_NAME = "m_vlsit_csr_sync"
 
 ADAPTER = '''/*
  * Project      : {project}
@@ -337,7 +437,7 @@ ADAPTER = '''/*
  * Date         : {date}
  * Description  : Adapter of APB-CSR-Generator to the library. It keeps the module name, the
  *                parameter and the port names that the generated CSR module instantiates
- *                (m_csr_sync with PARA_LEVELS, i_clk_dst, i_rst_n_dst, i_d, o_q) and forwards
+ *                (m_vlsit_csr_sync with PARA_LEVELS, i_clk_dst, i_rst_n_dst, i_d, o_q) and forwards
  *                them to the library wrapper {lib} (one synchronizer cell,
  *                2 to 4 stages). It replaces the placeholder model of the generator.
  *                Written by vlsit_csr_generate.py; do not edit by hand.
@@ -345,7 +445,7 @@ ADAPTER = '''/*
  */
 `timescale 1ns/1ps
 
-module m_csr_sync #(
+module m_vlsit_csr_sync #(
   // Parameter Description: number of synchronizer stages that the generated CSR module asks for.
   // Parameter values: 2, 3 or 4; default is 2.
   // Parameter unit: stage
@@ -394,8 +494,11 @@ def action_ports(args):
             print("ERROR: " + e)
         return 1
     print("| Port | Width |\n|---|---:|")
-    for n, w in expected_ports(cfg, regs).items():
-        print("| %s | %d |" % (n, w))
+    gen = locate(getattr(args, "generator", None), [Path(args.workbook).parent])
+    version = generator_version(gen) if gen else None
+    print("generator version used for the port names: %s" % ("%d.%d" % version if version else "none found, 3.3 naming assumed"))
+    for n, w in expected_ports(cfg, regs, version).items():
+        print("| %s | %s |" % (n, "parameterized" if w is None else w))
     return 0
 
 
@@ -409,6 +512,12 @@ def action_generate(args):
     gen = find_or_fail(args, [wb_path.parent])
     if gen is None:
         return 2
+    ver = generator_version(gen)
+    if ver is None or ver < MIN_VERSION:
+        print("ERROR: the generator version is %s; this script needs %d.%d or newer (new field types, repeated registers,"
+              " one module for both clock architectures). Update the submodule APB-CSR-Generator." % (
+                  ".".join(map(str, ver)) if ver else "unknown", *MIN_VERSION))
+        return 1
     try:
         cfg, regs = read_sheet(wb_path, args.sheet)
     except ValueError as exc:
@@ -419,6 +528,19 @@ def action_generate(args):
         for e in errors:
             print("ERROR: " + e)
         print("FAIL: fix the workbook before generating")
+        return 1
+    version = ver
+    event_sideband = str(cfg.get("Register Event Sideband", 0)).strip().lower() in {"1", "1.0", "true", "yes"}
+    if version[0] == 2:
+        event_sideband = False   # generator 2.x builds the event ports without a workbook key
+    has_wo = any(f["type"] == "wo" for reg in regs for f in reg["fields"])
+    supports_event_sideband = (version[0] == 2 and version[1] >= 5) or version[0] >= 3
+    supports_wo_clear = (version[0] == 2 and version[1] >= 7) or (version[0] >= 3 and version >= (3, 2))
+    if event_sideband and not supports_event_sideband:
+        print("ERROR: Register Event Sideband requires generator 2.5+ (embedded) or 3.0+ (canonical)")
+        return 1
+    if has_wo and not supports_wo_clear:
+        print("ERROR: `wo` hardware clear requires generator 2.7+ (embedded) or 3.2+ (canonical)")
         return 1
     notes = convention_findings(cfg, regs)
     for note in notes:
@@ -451,30 +573,34 @@ def action_generate(args):
         if "Design Rule v2" not in text[:1500]:
             print("ERROR: the generator is older than version 2.0 (its RTL does not follow the RTL rule file); update the submodule")
             return 1
-        got, want = module_ports(text, module), expected_ports(cfg, regs)
+        got, want = module_ports(text, module), expected_ports(cfg, regs, ver)
         if got is None:
             print("ERROR: could not read the port list of the generated module")
             return 1
         missing = sorted(set(want) - set(got))
         extra = sorted(set(got) - set(want))
-        wrong = sorted(n for n in want if n in got and got[n] != want[n])
+        wrong = sorted(n for n in want if n in got and want[n] is not None and got[n] is not None and got[n] != want[n])
         if missing or extra or wrong:
             print("ERROR: generated ports differ from the workbook: missing %s, extra %s, width %s" % (missing, extra, wrong))
             return 1
         out.mkdir(parents=True, exist_ok=True)
-        (out / (module + ".sv")).write_bytes(sv.read_bytes())
+        renamed = re.sub(r"\b%s\b" % SYNC_GEN, SYNC_NAME, text)
+        (out / (module + ".sv")).write_bytes(renamed.encode("utf-8"))
+        stale = out / (SYNC_GEN + ".sv")
+        if stale.is_file():
+            stale.unlink()
         dbg = Path(work) / "Debug" / "debug.json"
         if dbg.is_file():
             (out / "debug.json").write_bytes(dbg.read_bytes())
     files = [module + ".sv"]
-    if asyn:
-        (out / "m_csr_sync.sv").write_text(ADAPTER.format(project=args.project, author=args.author, lib=LIB_WRAPPER,
-                                                           date=datetime.date.today().isoformat()), encoding="utf-8")
-        files.append("m_csr_sync.sv")
+    # The renamed module is instantiated by the generate branch of the generated module in both modes, so the
+    # adapter is always written; with PARA_ASYNCHRONOUS = 0 it stays unused but resolves the name.
+    (out / (SYNC_NAME + ".sv")).write_text(ADAPTER.format(project=args.project, author=args.author, lib=LIB_WRAPPER,
+                                                       date=datetime.date.today().isoformat()), encoding="utf-8")
+    files.append(SYNC_NAME + ".sv")
     lines = ["// filelist_csr.f - generated CSR block (paths relative to this file's folder)"]
-    if asyn:
-        lines.append("// needs the library wrapper %s.sv (common_rtl/000_Common/rtl_lib) and its cells before these files" % LIB_WRAPPER)
-        lines.append("m_csr_sync.sv")
+    lines.append("// needs the library wrapper %s.sv (common_rtl/000_Common/rtl_lib) and its cells before these files" % LIB_WRAPPER)
+    lines.append(SYNC_NAME + ".sv")
     lines.append(module + ".sv")
     (out / "filelist_csr.f").write_text("\n".join(lines) + "\n", encoding="utf-8")
     rows = ["| %s | %s |" % (n, sha256(out / n)) for n in files]
@@ -487,14 +613,17 @@ def action_generate(args):
            "| Workbook SHA-256 | %s |" % sha256(wb_path),
            "| Sheet | %s |" % args.sheet,
            "| Module | %s |" % module,
-           "| Asynchronous | %s |" % ("1 (i_bus_clk and i_reg_clk)" if asyn else "0 (i_bus_clk only)"),
+           "| Synchronizer module | %s (the generator calls it %s; renamed for the m_vlsit_ prefix) |" % (SYNC_NAME, SYNC_GEN),
+           "| Generator version | %d.%d |" % ver,
+           "| PARA_ASYNCHRONOUS default | %s |" % ("1 (register clock i_clk_reg)" if asyn else "0 (register clock = i_clk_apb)"),
            "| Registers | %d |" % len(regs),
            "| Generated | %s |" % datetime.datetime.now().isoformat(timespec="seconds"),
            "| Ports | %d (checked against the workbook) |" % len(want), "",
            "| File | SHA-256 |", "|---|---|"] + rows + [""]
     (out / MANIFEST).write_text("\n".join(man), encoding="utf-8")
     print("OK: %s written to %s (%d registers, %d ports, asynchronous %s)" % (", ".join(files), out, len(regs), len(want), int(asyn)))
-    print("next: add filelist_csr.f to the design filelist, instantiate %s in the top module, run the lint (R-014)" % module)
+    print("next: add filelist_csr.f to the design filelist, instantiate %s in the top module (set PARA_ASYNCHRONOUS and every"
+          " PARA_<BASE>_COUNT; tie i_clk_reg and i_rst_n_reg to the APB clock and reset when it is 0), run the lint (R-014)" % module)
     return 0
 
 

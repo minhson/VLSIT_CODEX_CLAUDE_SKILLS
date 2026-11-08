@@ -1,6 +1,7 @@
 ---
 name: vlsit-rtl-hierarchy-diagram
 description: Analyze existing Verilog or SystemVerilog RTL to trace module hierarchy, functional relationships, and protocol interfaces, then create a source-grounded multi-page draw.io diagram using only the bundled VLSIT symbol library. Use when asked to inspect or map a design from its top module to its submodules.
+compatibility: Python 3.8 or later; offline, using the standard library for RTL analysis and draw.io generation. openpyxl is optional for Excel or CSV input. No packages are installed without user approval.
 ---
 
 # VLSIT RTL Hierarchy Analysis and draw.io Diagram
@@ -8,9 +9,10 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 ## Operating contract
 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (RHD-xxx) are mandatory and rank above everything else; this file only orders the work.
+Precedence: `rule.md` overrides this file, and this file overrides the reference files. Reply to the user in the language they use.
 2. References ([reference/](reference/)) explain terms, templates, and examples. Follow them for detail, but when a reference differs from a rule, follow the rule and report the difference.
 3. Scripts ([scripts/README.md](scripts/README.md)) do the repeatable work so that tokens are spent on analysis, not on drawing or counting. Python 3 with the standard library only. Excel or CSV input (RHD-105): analyze it with `scripts/vlsit_analyze_excel.py` (needs `openpyxl`); report any script problem and propose an update to the script.
-4. Prerequisite (RHD-103): run `python --version`. If Python is missing, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
+4. Prerequisite (RHD-103): locate Python first with `scripts/vlsit_find_python.ps1` on Windows or `scripts/vlsit_find_python.sh` on Linux and macOS. Use the printed executable path for subsequent script calls (examples that say `python` use it as shorthand). If no Python 3 is found, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.
 5. At the end of every run apply the self-improvement rules RHD-090..096.
 
 ## Workflow (strictly in this order, RHD-070)
@@ -26,6 +28,7 @@ description: Analyze existing Verilog or SystemVerilog RTL to trace module hiera
 | 7 | Build the spec and generate the diagram; optionally search layouts. | RHD-020..025, 040..059, 079, 084..089, 097..102 | `reference/vlsit_diagram_spec.md`, `scripts/vlsit_drawio_frame_diagram.py`, `scripts/vlsit_layout_search.py`, `reference/vlsit_sizing_guide.md`, `reference/vlsit_library_usage.md` |
 | 8 | Validate and report: library validator, geometry check, preview when possible. | RHD-060..063 | `python scripts/vlsit_library_symbols.py validate --diagram FILE`, `python scripts/vlsit_drawio_geometry_check.py FILE --allow-shared-start` |
 | 9 | Improve: add scripts, refine reference files, log in `reference/vlsit_improvement_log.md`, ask the user about proposed interface groups and rule changes. | RHD-078, 090..096 | |
+| 10 | Rule audit: check the deliverables against every applicable RHD rule ID, record evidence and mark PASS, FAIL, NOT RUN, or NOT APPLICABLE. | All applicable RHD rules | |
 
 ## Folder map
 

@@ -8,7 +8,7 @@
 """Create, check and edit an ASIC IP design specification written in the VLSIT template.
 
 Actions :
-  env                              report Python, openpyxl, PyMuPDF and LaTeX availability (read-only)
+  env                              report Python, optional packages, Pandoc, Typst and LaTeX availability (read-only)
   init NAME --out FILE [--id ID]   copy the bundled template, fill the title, ip_name and document_id, and add
                                    the "Signal type" column to 6.2 and the waveform plan table to 10.3
   check FILE [--json] [--naming default|user]
@@ -33,7 +33,7 @@ Checks  : all 22 sections present in order with the template titles; leftover te
 Exit    : 0 success, 1 findings or error, 3 prerequisite missing.
 Standard library only; text is read and written as UTF-8.
 Examples:
-  vlsit_spec_tool.py init "APB to TL-UL Bridge" --out apb2tlul_Design_Specification.md
+  vlsit_spec_tool.py init "APB to TL-UL Bridge" --out VLSIT_APB_TLUL_BRIDGE_HDS.md
   vlsit_spec_tool.py mark-not-required spec.md 7.4 --reason "no power domains in this IP"
   vlsit_spec_tool.py check spec.md
 """
@@ -76,6 +76,29 @@ def read(path):
     return Path(path).read_text(encoding="utf-8")
 
 
+def find_tool(name):
+    """Find a tool on PATH or in the default per-user Windows install location."""
+    found = shutil.which(name)
+    if found or os.name != "nt":
+        return found
+    local_roots = []
+    if os.environ.get("LOCALAPPDATA"):
+        local_roots.append(Path(os.environ["LOCALAPPDATA"]))
+    profile_local = Path.home() / "AppData" / "Local"
+    if profile_local not in local_roots:
+        local_roots.append(profile_local)
+    candidates = []
+    if name == "pandoc":
+        candidates.extend(local / "Pandoc" / "pandoc.exe" for local in local_roots)
+    elif name == "typst":
+        for local in local_roots:
+            package_root = local / "Microsoft" / "WinGet" / "Packages"
+            if package_root.is_dir():
+                for package in package_root.glob("Typst.Typst_*"):
+                    candidates.extend(package.glob("typst-*/typst.exe"))
+    return next((str(path) for path in candidates if path.is_file()), None)
+
+
 def split_sections(text):
     """Return a list of (number, title, start_line, end_line) for '## N. Title' headings (outside code)."""
     lines, out, in_code = text.splitlines(), [], False
@@ -105,8 +128,10 @@ def action_env(_a):
         found = importlib.util.find_spec(mod) is not None or (mod == "pymupdf" and importlib.util.find_spec("fitz") is not None)
         print("%s: %s" % (label, "found" if found else "MISSING (ask the user before installing)"))
     local = Path(os.environ.get("LOCALAPPDATA", "")) / "tectonic" / "tectonic.exe"
+    for tool, purpose in (("pandoc", "DOCX/PDF export"), ("typst", "recommended PDF engine")):
+        print("%s (%s): %s" % (tool, purpose, find_tool(tool) or "MISSING (optional; ask before installing)"))
     tex = [c for c in ("tectonic", "pdflatex", "xelatex", "lualatex") if shutil.which(c) or (c == "tectonic" and local.is_file())]
-    print("latex: %s" % (", ".join(tex) if tex else "MISSING (ask the user: install tectonic or MiKTeX, or use draw.io)"))
+    print("LaTeX diagram fallback: %s" % (", ".join(tex) if tex else "MISSING (optional; draw.io is the default)"))
     return 0 if ok else 3
 
 

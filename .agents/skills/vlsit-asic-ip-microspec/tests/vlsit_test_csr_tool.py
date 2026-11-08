@@ -159,5 +159,68 @@ class NamingAndDescription(unittest.TestCase):
         self.assertEqual(errors(d), [])
 
 
+class GeneratorTwoPointFour(unittest.TestCase):
+    """Field types and repeat metadata of APB-CSR-Generator 2.4."""
+
+    def with_type(self, typ):
+        d = copy.deepcopy(GOOD)
+        d["registers"][0]["fields"][0]["type"] = typ
+        return d
+
+    def test_new_types_pass_and_have_hardware_ports(self):
+        for typ in ("w0c", "w2c", "r2c"):
+            d = self.with_type(typ)
+            self.assertEqual(errors(d), [], typ)
+            names = [p[0] for p in T.field_ports(d["registers"][0], d["registers"][0]["fields"][0])]
+            self.assertTrue(any(n.startswith("i_hw_we_") for n in names), typ)
+
+    def test_unknown_type_fails(self):
+        self.assertTrue(any("type must be one of" in e for e in errors(self.with_type("w1s"))))
+
+    def repeat(self, **kw):
+        d = copy.deepcopy(GOOD)
+        d["registers"][0]["repeat"] = kw
+        return d
+
+    def test_fixed_repeat(self):
+        self.assertEqual(errors(self.repeat(mode="FIXED", count=3, stride="0x4")), [])
+        self.assertTrue(any("needs a stride" in e for e in errors(self.repeat(mode="FIXED", count=3))))
+        self.assertTrue(any("leave max blank" in e for e in errors(self.repeat(mode="FIXED", count=2, stride="0x4", max=4))))
+
+    def test_parameterized_repeat(self):
+        self.assertEqual(errors(self.repeat(mode="PARAMETERIZED", count=2, stride="0x4", max=4)), [])
+        self.assertTrue(any("needs count, stride and max" in e for e in errors(self.repeat(mode="PARAMETERIZED", count=2, stride="0x4"))))
+        self.assertTrue(any("1 <= count <= max" in e for e in errors(self.repeat(mode="PARAMETERIZED", count=5, stride="0x4", max=4))))
+
+    def test_bad_mode_and_stride(self):
+        self.assertTrue(any("repeat mode must be" in e for e in errors(self.repeat(mode="LOOP"))))
+        self.assertTrue(any("multiple of 4" in e for e in errors(self.repeat(mode="FIXED", count=2, stride="0x6"))))
+
+    def test_overlap_with_copy(self):
+        d = self.repeat(mode="FIXED", count=3, stride="0x4")
+        second = copy.deepcopy(d["registers"][0])
+        second["name"], second["offset"] = "demo_other", "0x8"
+        second.pop("repeat")
+        d["registers"].append(second)
+        self.assertTrue(any("also used by" in e for e in errors(d)))
+
+    def test_ports_of_copies(self):
+        d = self.repeat(mode="FIXED", count=2, stride="0x4")
+        import io
+        import contextlib
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "r.json"
+            f.write_text(json.dumps(d), encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(T.action_ports(type("A", (), {"json": str(f)})()), 0)
+        text = out.getvalue()
+        self.assertIn("o_demo_ctrl_0_en", text)
+        self.assertIn("o_demo_ctrl_1_en", text)
+        self.assertIn("i_clk_reg", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 # Diagram spec (input of `scripts/vlsit_drawio_frame_diagram.py`)
 
-Reference only; `rule.md` takes precedence. A complete worked example is [examples/vlsit_can_level1_spec.json](examples/vlsit_can_level1_spec.json). The spec holds the analysis results, so a new design needs only a new JSON file, not new drawing code.
+Reference only; `rule.md` takes precedence. A complete worked example is [example/vlsit_axi_bridge_diagram_spec.json](example/vlsit_axi_bridge_diagram_spec.json). The spec holds the analysis results, so a new design needs only a new JSON file, not new drawing code.
 
 | Field | Meaning |
 |---|---|

@@ -308,7 +308,7 @@ Workbook requirements:
 - Each register-map sheet contains `Table - Configuration` and `Table - Register Definition`.
 - `Table - Configuration` sets `Module Name`, `Protocol` (APB), `Data Width` (32), `Address Width` (16), `Write Strobe` (4), and `Asynchronous` (0 or 1). The protocol, widths, and strobe are fixed by the CSR template.
 - `Table - Register Definition` uses the columns REGISTER, OFFSET, BIT NAME, FIELD WIDTH, BIT TYPE, RESET VALUE, and DESCRIPTION. A register row (name, offset, reset value) is followed by one row per field (bit name, bit range such as `[31]` or `[28:27]`, bit type, reset value, description).
-- BIT TYPE is one of `rw`, `ro`, `rwi`, or `w1c`, as defined on the `Register_Description` sheet. Reserved bits use the bit name `reserved`.
+- BIT TYPE is one of `rw`, `ro`, `rwi`, `w1c`, `w0c`, `w2c`, `r2c`, or `wo`, as defined on the `Register_Description` sheet. Reserved bits use the bit name `reserved`.
 - Every software-visible register and field shall be declared in the workbook. The CSR RTL is generated from the workbook and shall comply with REF-003.
 - Names and descriptions follow the register conventions of the specification skill: every register is `<prefix>_<function>` with fewer than 30 characters and every field name has at most 20 characters; the register description is one line `Full name. Main meaning.`; the field description gives the explanation, `Usage:`, a `Values:` block of hexadecimal value lines, `Unit:` and `Limits:` with a blank line between the parts; a reserved field has a fixed description; the enable, injection and status interrupt registers carry the same fields as the raw interrupt register.
 - The register RTL is built by APB-CSR-Generator from the workbook, never written by hand. Register and field names are lower-case identifiers, because they become port names (`o_<reg>_<field>`, `i_<reg>_<field>`, `i_hw_wdata_<reg>_<field>`, `i_hw_we_<reg>_<field>`); the fields of a register cover bits 31..0 once, and a field named `reserved` is type `ro`.
@@ -316,7 +316,20 @@ Workbook requirements:
 
 ### 11.2 Software sequences
 
-Use register and field names exactly as written in the workbook. Document initialization, enable/disable, interrupt service, error clearing, safe reconfiguration, ordering, completion polling, and updates while active.
+Use register and field names exactly as written in the workbook. Document initialization, enable/disable, interrupt service, error clearing, safe reconfiguration, ordering, completion polling, and updates while active. This subsection must contain at least one Mermaid programming/use flowchart and a matching step-by-step table even when the IP has no CSR (rule R-043); in that case explain why the CSR column is N/A and describe the normal interface-use sequence.
+
+Mark every flowchart node with a unique step ID and `[M]` or `[O]`, and use the same ID and option in the table. `M` means mandatory for the shown operating path; `O` means optional or conditional, with its selection condition shown in the flowchart. The Interface column names the master-facing protocol and action. The CSR column names the exact workbook register/field and software write/read/poll value or action, or `N/A` with a reason if there are no software-visible CSRs. The Description column explains the purpose and role of the step.
+
+```mermaid
+flowchart TD
+    S01["S01 [M] <mandatory programming/use action>"]
+```
+
+| No. | Step | Option (M/O) | Interface | CSR | Description |
+|---|---|---|---|---|---|
+| S01 | <Action from the flowchart> | M | <Master-facing protocol and action> | <Exact workbook register.field and write/read/poll value, or N/A with reason> | <Purpose and role of this step> |
+
+The table and flowchart must agree one-to-one. Use exact register/field names and values from the CSR workbook. When no software-visible CSR exists, explain that in the CSR cell and identify the IP's actual usage interface in the Interface cell. Explain the purpose of every step; do not leave a placeholder in a completed specification.
 
 ### 11.3 CSR connection to the design
 
@@ -330,7 +343,7 @@ A signal from a clock domain other than the register clock is synchronized by th
 
 ### 11.4 APB access behavior of the CSR
 
-State the behavior that the generated module gives (APB-CSR-Generator, version 1.2), or the decision that changes it (section 20).
+State the behavior that the selected APB-CSR-Generator version gives, including the `wo` read-as-zero behavior, or the decision that changes it (section 20).
 
 | Case | Behavior |
 |---|---|

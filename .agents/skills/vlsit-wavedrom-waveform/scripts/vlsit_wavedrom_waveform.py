@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Read VCD, validate WaveJSON and build an offline WaveDrom HTML viewer.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Waveform helper for the bundled offline WaveDrom: VCD reading, WaveJSON check, HTML viewer.
 
 Actions:

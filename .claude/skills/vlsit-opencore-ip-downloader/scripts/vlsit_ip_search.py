@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Search public RTL repositories and score evidence for selected IP.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Search public RTL repositories for IP that is proven on silicon or FPGA, and score the evidence.
 
 Purpose : this skill and vlsit-asic-ip-microspec study IP with evidence of ASIC tapeout or FPGA validation, a testbench and

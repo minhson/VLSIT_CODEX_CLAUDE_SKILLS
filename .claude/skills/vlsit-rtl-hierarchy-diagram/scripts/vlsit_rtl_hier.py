@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: List RTL modules, ports and module instantiations in the hierarchy.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """List Verilog/SystemVerilog modules, the instance tree of a top module, and module ports.
 
 Purpose : speeds up analysis stage 1 (RHD-030..033) and the port part of stage 3: module definitions,

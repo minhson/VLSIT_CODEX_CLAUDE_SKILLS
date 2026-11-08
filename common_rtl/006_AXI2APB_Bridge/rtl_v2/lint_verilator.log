@@ -1,5 +1,5 @@
 $ C:\Tools\oss-cad-suite\bin\verilator_bin.exe --lint-only -Wall --top-module m_axi2apb_bridge m_axi2apb_apb_ctrl.sv m_axi2apb_rd_seq.sv m_axi2apb_wr_seq.sv m_axi2apb_bridge.sv
-(cwd C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\006_AXI2APB_Bridge\rtl_v2)
+(cwd <VLSIT_RTL_GENERATOR_REPO>\common_rtl\006_AXI2APB_Bridge\rtl_v2)
 
 %Warning-UNUSEDSIGNAL: m_axi2apb_bridge.sv:35:36: Signal is not used: 'i_axi_wlast'
                                                 : ... note: In instance 'm_axi2apb_bridge'

@@ -1,6 +1,6 @@
 """Generate the waveforms of AsyncAPBBridge_Design_Specification.md section 10.3 from the prototype.
 
-Needs iverilog and vvp in PATH (OSS CAD Suite bin and lib) and the skill script vlsit_waveform_svg.py.
+Needs iverilog and vvp in PATH (OSS CAD Suite bin and lib) and the bundled skill script vlsit_waveform_svg.py. Set VLSIT_WAVEFORM_SVG to override its location.
 Usage: python gen_waves.py [WF-xxx ...]   (no argument: all). Writes waveforms/<name>.json and <name>.svg and
 waveforms/apbcdc_wave_tables.txt (measured latencies quoted by the specification).
 """
@@ -14,8 +14,24 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.dirname(HERE)
 BUILD = os.path.join(HERE, "build")
 os.makedirs(BUILD, exist_ok=True)
-SVG = os.environ.get("VLSIT_WAVEFORM_SVG",
-                     r"C:\Users\PC\.claude\skills\vlsit-asic-ip-microspec\scripts\vlsit_waveform_svg.py")
+
+
+def find_waveform_renderer():
+    override = os.environ.get("VLSIT_WAVEFORM_SVG")
+    if override:
+        if os.path.isfile(override):
+            return os.path.abspath(override)
+        raise FileNotFoundError("VLSIT_WAVEFORM_SVG does not name an existing file")
+    repo_root = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
+    for platform in (".agents", ".claude"):
+        candidate = os.path.join(repo_root, platform, "skills", "vlsit-asic-ip-microspec",
+                                 "scripts", "vlsit_waveform_svg.py")
+        if os.path.isfile(candidate):
+            return candidate
+    raise FileNotFoundError("Cannot find vlsit_waveform_svg.py; set VLSIT_WAVEFORM_SVG to its path")
+
+
+SVG = find_waveform_renderer()
 PY = sys.executable
 
 KEYS = ["clk_mst", "clk_slv", "rst_n_mst", "rst_n_slv", "m_psel", "m_penable", "m_pwrite", "m_pwakeup", "m_paddr",

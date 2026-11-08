@@ -1,0 +1,114 @@
+{
+ "signal": [
+  {
+   "name": "i_clk_apb",
+   "wave": "p..........."
+  },
+  [
+   "APB4 (subordinate)",
+   {
+    "name": "i_apb_psel",
+    "wave": "01.....0...."
+   },
+   {
+    "name": "i_apb_penable",
+    "wave": "0.1....0...."
+   },
+   {
+    "name": "i_apb_pwrite",
+    "wave": "x1.....x...."
+   },
+   {
+    "name": "i_apb_paddr",
+    "wave": "x=.....x....",
+    "data": [
+     "A0"
+    ]
+   },
+   {
+    "name": "i_apb_pwdata",
+    "wave": "x=.....x....",
+    "data": [
+     "D0"
+    ]
+   }
+  ],
+  [
+   "state",
+   {
+    "name": "reg_fsm_bridge_current_state",
+    "wave": "=.==..==..=.",
+    "data": [
+     "IDLE",
+     "SEND",
+     "WAIT",
+     "RESP",
+     "DRAIN",
+     "IDLE"
+    ]
+   },
+   {
+    "name": "reg_tmo_cnt",
+    "wave": "0..===0.....",
+    "data": [
+     "1",
+     "2",
+     "3"
+    ]
+   }
+  ],
+  [
+   "TL-UL A channel (host)",
+   {
+    "name": "o_tl_a_valid",
+    "wave": "0.10........"
+   },
+   {
+    "name": "i_tl_a_ready",
+    "wave": "01.0........"
+   },
+   {
+    "name": "o_tl_a_opcode",
+    "wave": "x.=x........",
+    "data": [
+     "PutFull"
+    ]
+   }
+  ],
+  [
+   "TL-UL D channel (host)",
+   {
+    "name": "i_tl_d_valid",
+    "wave": "0........10."
+   },
+   {
+    "name": "o_tl_d_ready",
+    "wave": "0.1...01..0."
+   },
+   {
+    "name": "i_tl_d_opcode",
+    "wave": "x........=x.",
+    "data": [
+     "Ack"
+    ]
+   }
+  ],
+  [
+   "APB4 response",
+   {
+    "name": "o_apb_pready",
+    "wave": "0.....10...."
+   },
+   {
+    "name": "o_apb_pslverr",
+    "wave": "0.....10...."
+   }
+  ]
+ ],
+ "head": {
+  "text": "Timeout (PARA_TIMEOUT_CNT = 3): PSLVERR, then the late response is drained"
+ },
+ "foot": {
+  "text": "the device answers 6 cycles after acceptance; the bridge returns PSLVERR at the timeout and discards the late response in DRAIN"
+ }
+}

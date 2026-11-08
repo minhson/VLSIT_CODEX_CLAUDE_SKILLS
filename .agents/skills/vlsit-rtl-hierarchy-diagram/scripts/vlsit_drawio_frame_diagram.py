@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Generate a source-grounded frame diagram in draw.io XML.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Generate the frame-style block diagram (draw.io, library symbols only) from a JSON spec.
 
 Purpose : turns the analysis tables (blocks, interfaces, external pins, clock/reset net, descriptions) into

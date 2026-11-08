@@ -13,7 +13,7 @@ This folder contains 18 SystemVerilog modules generated from the resolved specif
 Use the filelist in the selected profile folder. The lists include the FIFO and common-cell dependencies and define `VLSIT_SYNTHESIS`. Example, from `axi4_base`:
 
 ```powershell
-python "C:\Users\PC\.codex\skills\vlsit-rtl-generator\scripts\vlsit_lint_rtl.py" lint filelist.f --top m_vlsit_axi_async_top --tool verilator
+python ".agents\skills\vlsit-rtl-generator\scripts\vlsit_lint_rtl.py" lint filelist.f --top m_vlsit_axi_async_top --tool verilator
 ```
 
 Verilator lint completed on all three default tops with 0 errors. Representative legal parameter variants also linted with 0 errors: maximum AXI4 widths plus SRAM/cell options, custom widths for all five USER fields, and minimum AXI3 widths/depth. Each run reports 25 `PINCONNECTEMPTY` warnings because the specification leaves unused FIFO status outputs unconnected. The RTL rule checker currently flags untyped inputs as `FIL-05/TYP-02`; these declarations follow the designer-confirmed rule. Details and manual audit results are in [generation_report.md](generation_notes/generation_report.md). The raw checker output is in [rtl_rule_report.md](generation_notes/rtl_rule_report.md).

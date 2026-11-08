@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Search diagram layouts and rank them by crossings and dimensions.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Run the diagram generator over many parameter sets and rank the results (RHD-097).
 
 Purpose : progressive search for the arrangement with the fewest crossings, then the smallest maximum

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Inspect, clone and validate symbols from the bundled draw.io library.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Inspect, clone, and validate symbols from the bundled VLSIT draw.io library."""
 
 import argparse

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Check draw.io diagram geometry and connector layout constraints.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Geometric review of a generated multi-page .drawio file (no rendering needed).
 
 Purpose : checks the drawing rules that vlsit_library_symbols.py does not cover: connector through a block,

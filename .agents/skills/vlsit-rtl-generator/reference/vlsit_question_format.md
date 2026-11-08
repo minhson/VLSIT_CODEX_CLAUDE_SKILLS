@@ -30,4 +30,4 @@ Ask when the specification or the request leaves a value or behavior open and th
 
 ## After the answers
 
-Write each answer next to the REQ-ID or section it settles (in the RTL header comment or in the report), and tell the designer which module and signal it created or changed. If the answer contradicts the rule file, say so and ask again; do not create a local exception.
+Write each answer next to the REQ-ID or section it settles (in the RTL header comment or in the report), and tell the designer which module and signal it created or changed. When the answer chooses how a function is implemented, also record it in the specification with an example and a waveform or diagram (R-046, [vlsit_spec_feedback.md](vlsit_spec_feedback.md)). If the answer contradicts the rule file, say so and ask again; do not create a local exception.

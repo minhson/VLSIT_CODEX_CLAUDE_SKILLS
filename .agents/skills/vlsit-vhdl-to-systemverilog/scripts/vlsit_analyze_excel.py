@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Analyze Excel and CSV workbooks read-only and emit a compact structure summary.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Compact, read-only Excel/CSV analyzer for AI-assisted workbook updates.
 
 Formats: .xlsx, .xlsm, .xltx, .xltm, .xls, .csv

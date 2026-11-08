@@ -474,7 +474,7 @@ def mask_sim_branches(raw, f, name):
     return "\n".join(out), regions
 
 
-PORT_LINE = re.compile(r"^(\s*)(input|output|inout)(\s+)(wire|logic)(\s+)(\[[^\]]*\])?(\s*)([A-Za-z_]\w*)\s*(,?)\s*$")
+PORT_LINE = re.compile(r"^(\s*)(input|output|inout)(\s+)(wire|logic)(\s+)((?:\[[^\]]*\])+)?(\s*)([A-Za-z_]\w*)\s*(,?)\s*$")
 
 
 def check_port_layout(raw, code, name, f):

@@ -409,7 +409,44 @@ There is no arbitration and no buffer: one request is outstanding. The initiatio
 
 ## 11. Register and programming model
 
-**Not required (confirmed by user, 2026-10-18):** the bridge has no software-visible registers. Its configuration is by parameters (section 8) and its only status is PSLVERR on each transfer. No CSR workbook is delivered, and REF-005 is not used.
+### 11.1 CSR source, generator and clocks
+
+**Not required (confirmed by user, 2026-10-18):** the bridge has no software-visible registers or CSR clock. Configuration is fixed by the integration parameters in section 8; no CSR workbook is delivered, and REF-005 is not used.
+
+### 11.2 Software sequences
+
+The bridge has no software-programmed registers. The APB manager uses the bridge by issuing read or write transactions; the bridge converts each accepted transfer to TL-UL and returns the result over APB.
+
+```mermaid
+flowchart TD
+    S01["S01 [M] APB manager presents setup phase"] --> S02{"S02 [M] PWRITE selects read or write"}
+    S02 -->|Write| S03["S03 [O] Provide PWDATA and supported PSTRB"]
+    S02 -->|Read| S04["S04 [O] Select read transaction"]
+    S03 --> S05["S05 [M] Assert PENABLE and hold request until PREADY"]
+    S04 --> S05
+    S05 --> S06["S06 [M] Bridge issues mapped TL-UL request"]
+    S06 --> S07["S07 [M] Bridge validates TL-UL response or reports error/timeout"]
+    S07 --> S08["S08 [M] APB manager samples PRDATA and PSLVERR when PREADY"]
+```
+
+| No. | Step | Option (M/O) | Interface | CSR | Description |
+|---|---|---|---|---|---|
+| S01 | Present address, direction and control in the APB setup phase | M | APB4 manager drives PSEL, PADDR and PWRITE with PENABLE low | N/A — no software-visible CSR; the bridge is transaction-driven | Starts a bus transfer and gives the bridge its address and operation. |
+| S02 | Select the read or write transaction path | M | APB4 PWRITE selects the operation | N/A — no software-visible CSR; the bridge is transaction-driven | Routes the transfer to the path matching the manager's requested direction. |
+| S03 | Provide write data and a supported byte strobe | O | APB4 manager drives PWDATA and PSTRB for writes | N/A — no software-visible CSR; the bridge is transaction-driven | Supplies write payload only when the selected path is a write. |
+| S04 | Select a read transaction | O | APB4 manager sets PWRITE low; no write payload is sent | N/A — no software-visible CSR; the bridge is transaction-driven | Uses the read path when the selected transfer retrieves data. |
+| S05 | Enter the APB access phase and hold the request until completion | M | APB4 manager asserts PENABLE and holds request controls until PREADY | N/A — no software-visible CSR; the bridge is transaction-driven | Keeps the APB request stable while the bridge obtains a TL-UL response. |
+| S06 | Issue the mapped TL-UL request | M | Bridge drives TL-UL A-channel request and observes A_READY | N/A — no software-visible CSR; the bridge is transaction-driven | Converts the APB request to the configured TL-UL transaction. |
+| S07 | Receive and validate the TL-UL response | M | Bridge accepts TL-UL D-channel response; applies error and timeout rules | N/A — no software-visible CSR; the bridge is transaction-driven | Determines returned data and whether the APB response reports an error. |
+| S08 | Complete the APB transaction | M | APB4 manager samples PREADY, PRDATA and PSLVERR | N/A — no software-visible CSR; the bridge is transaction-driven | Ends the transfer and lets the manager accept read data or handle PSLVERR. |
+
+### 11.3 CSR connection to the design
+
+**Not required (confirmed by user, 2026-10-18):** no CSR fields exist to connect; the bridge function is defined by the interfaces in section 6 and integration parameters in section 8.
+
+### 11.4 APB access behavior of the CSR
+
+**Not required (confirmed by user, 2026-10-18):** the bridge has no CSR target interface. APB transaction behavior at its functional port is specified in section 6.3.
 
 ## 12. Error handling and recovery
 

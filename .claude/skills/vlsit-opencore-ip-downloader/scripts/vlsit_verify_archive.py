@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Check archive integrity and member-path safety before extraction.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Check a downloaded .zip/.tar* archive before extraction and record its SHA-256.
 
 Checks: archive integrity, unsafe member paths (absolute, drive-letter, '..'),

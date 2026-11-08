@@ -1,5 +1,5 @@
 $ C:\Tools\oss-cad-suite\bin\verilator_bin.exe --lint-only -Wall --top-module m_ahb2axi_top m_ahb2axi_ahb_if.sv m_ahb2axi_axi_if.sv ../../002_SyncFIFO/rtl/m_vlsit_sfifo_mem.sv ../../002_SyncFIFO/rtl/m_vlsit_sfifo_rd.sv ../../002_SyncFIFO/rtl/m_vlsit_sfifo_wr.sv ../../002_SyncFIFO/rtl/m_vlsit_sfifo_top.sv m_ahb2axi_ctrl.sv m_ahb2axi_top.sv
-(cwd C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\005_AHB2AXI_Bridge\rtl)
+(cwd <VLSIT_RTL_GENERATOR_REPO>\common_rtl\005_AHB2AXI_Bridge\rtl)
 
 %Warning-PINCONNECTEMPTY: m_ahb2axi_ctrl.sv:1044:6: Instance pin connected by name with empty reference: 'o_full_thr'
  1044 |     .o_full_thr     (),

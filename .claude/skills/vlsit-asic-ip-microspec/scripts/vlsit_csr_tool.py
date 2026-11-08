@@ -22,10 +22,14 @@ Input   : JSON {"module": "m_vlsit_csr_<function>", "prefix": "design", "async":
           "offset": "0x0", "description": "...", "fields": [{"name": "en", "bits": "[0]", "type": "rw",
           "reset": "0x0", "description": "..."}]}]}. Protocol APB, data width 32, address width 16, write strobe 4 are fixed
           by the workbook (cells B4:B7).
-Rules   : types rw, ro, rwi, w1c; offsets unique, 4-byte aligned, below 2^16; fields of one register tile
+Repeat  : a register may carry "repeat": {"mode": "FIXED", "count": 3, "stride": "0x4"} (N named copies <name>_0 ..) or
+          {"mode": "PARAMETERIZED", "count": 2, "stride": "0x4", "max": 4} (one bank, elaboration parameter
+          PARA_<NAME>_COUNT); fill writes them in columns H to K (REPEAT MODE, COUNT / DEFAULT, OFFSET STRIDE, MAX COUNT).
+Rules   : types rw, ro, rwi, w1c, w0c, w2c, r2c and wo (write-only; hardware clear input i_hw_clear_ in generator 2.7 to 3.2, i_hw_clr_ from 3.3); offsets unique, 4-byte aligned, below 2^16; fields of one register tile
           bits 31..0 without gap or overlap (--auto-reserved adds 'reserved' ro fields for gaps); reset
           fits the field width; register and field names are lower-case identifiers (they become port and
-          localparam names of APB-CSR-Generator); a field named 'reserved' is type ro; a generated port name
+          localparam names of APB-CSR-Generator); a field named 'reserved' is type ro; the address range of every
+          register, including its copies up to MAX COUNT, does not overlap another register; a generated port name
           longer than 30 characters, or a name that spells out a NAM-08 word (status, enable ...), is a warning.
 Module name (R-036): m_vlsit_csr_<function>; when a design has several register sets, validate takes all their
           JSON files and reports two files with the same module name.
@@ -56,7 +60,10 @@ except ImportError:
 
 ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE = ROOT / "reference" / "templates" / "VLSIT_CSR_Specification_Template.xlsx"
-TYPES = {"rw", "ro", "rwi", "w1c"}
+TYPES = {"rw", "ro", "rwi", "w1c", "w0c", "w2c", "r2c", "wo"}
+HW_TYPES = {"rwi", "w1c", "w0c", "w2c", "r2c"}   # types with i_hw_we_ and i_hw_wdata_ ports
+REPEAT_MODES = {"NONE", "FIXED", "PARAMETERIZED"}
+REPEAT_HEADERS = ["REPEAT MODE", "COUNT / DEFAULT", "OFFSET STRIDE", "MAX COUNT"]
 NAME_RE = re.compile(r"[a-z][a-z0-9_]*")
 MAX_NAME = 30             # NAM-07 of the RTL design rule
 MAX_FIELD_NAME = 20       # R-032
@@ -167,6 +174,74 @@ def interrupt_set_errors(doc):
     return errs
 
 
+def repeat_info(reg):
+    """Normalized repeat description of a register: (mode, count, stride, max_count)."""
+    r = reg.get("repeat") or {}
+    mode = str(r.get("mode", "NONE")).upper()
+    count = int(r["count"]) if r.get("count") not in (None, "") else 1
+    stride = to_int(r["stride"]) if r.get("stride") not in (None, "") else 4
+    mx = int(r["max"]) if r.get("max") not in (None, "") else count
+    return mode, count, stride, mx
+
+
+def repeat_errors(reg):
+    """Rules of the generator for the repeat metadata of one register."""
+    errs, name, r = [], reg.get("name", "?"), reg.get("repeat")
+    if not r:
+        return errs
+    mode = str(r.get("mode", "NONE")).upper()
+    if mode not in REPEAT_MODES:
+        return ["%s: repeat mode must be NONE, FIXED or PARAMETERIZED" % name]
+    if mode == "NONE":
+        return ["%s: repeat data given with mode NONE" % name] if any(r.get(k) not in (None, "") for k in ("count", "stride", "max")) else errs
+    try:
+        count = int(r.get("count"))
+    except (TypeError, ValueError):
+        return ["%s: %s mode needs an integer count" % (name, mode)]
+    if count < 1:
+        errs.append("%s: count must be at least 1" % name)
+    try:
+        stride = to_int(r["stride"]) if r.get("stride") not in (None, "") else None
+    except ValueError:
+        return errs + ["%s: bad stride" % name]
+    if mode == "FIXED":
+        if r.get("max") not in (None, ""):
+            errs.append("%s: FIXED mode must leave max blank" % name)
+        if stride is None and count > 1:
+            errs.append("%s: FIXED mode with count > 1 needs a stride" % name)
+    else:
+        if stride is None or r.get("max") in (None, ""):
+            return errs + ["%s: PARAMETERIZED mode needs count, stride and max" % name]
+        if not 1 <= count <= int(r["max"]):
+            errs.append("%s: 1 <= count <= max is required" % name)
+    if stride is not None and (stride < 4 or stride % 4):
+        errs.append("%s: stride must be a multiple of 4 bytes and at least 4" % name)
+    if mode == "FIXED" and len("%s_%d" % (name, max(count, 1) - 1)) > MAX_REG_NAME:
+        errs.append("%s: the copy name %s_%d has more than %d characters (R-032)" % (name, name, count - 1, MAX_REG_NAME))
+    return errs
+
+
+def address_overlap_errors(doc):
+    """No register, copy or parameterized entry (up to MAX COUNT) shares a word with another."""
+    errs, taken = [], {}
+    for reg in doc.get("registers", []):
+        try:
+            base = to_int(reg["offset"])
+            mode, count, stride, mx = repeat_info(reg)
+        except (KeyError, ValueError, TypeError):
+            continue
+        n = mx if mode == "PARAMETERIZED" else count if mode == "FIXED" else 1
+        for i in range(n):
+            addr = base + i * (stride if mode != "NONE" else 4)
+            if addr >= 1 << 16:
+                errs.append("%s: address 0x%X exceeds the 16-bit address space" % (reg.get("name"), addr))
+                break
+            if addr in taken and taken[addr] != reg.get("name"):
+                errs.append("%s: address 0x%X is also used by %s" % (reg.get("name"), addr, taken[addr]))
+            taken[addr] = reg.get("name")
+    return errs
+
+
 def check(doc, auto_reserved=False):
     errors, seen_names, offsets = [], set(), {}
     if not MODULE_RE.fullmatch(str(doc.get("module", ""))):
@@ -187,6 +262,7 @@ def check(doc, auto_reserved=False):
         if len(str(name)) > MAX_REG_NAME:
             errors.append("register name %s has %d characters; it must have fewer than 30 (R-032)" % (name, len(name)))
         errors += description_errors(reg)
+        errors += repeat_errors(reg)
         if name in seen_names:
             errors.append("duplicate register name %s" % name)
         seen_names.add(name)
@@ -231,6 +307,7 @@ def check(doc, auto_reserved=False):
         gaps = [b for b in range(32) if b not in covered]
         if gaps and not auto_reserved:
             errors.append("%s: bits %s are not covered; add a reserved field or use --auto-reserved" % (name, gaps))
+    errors += address_overlap_errors(doc)
     return errors
 
 
@@ -262,6 +339,20 @@ def register_reset(fields):
     return "0x%08X" % value
 
 
+GEN_VERSION = (3, 3)   # default generator version used for port names; override with --gen-version
+
+
+def clear_prefix():
+    return "i_hw_clr_" if GEN_VERSION >= (3, 3) else "i_hw_clear_"
+
+
+def event_ports(doc):
+    """Generator 2.5 to 2.x always builds o_reg_*; 3.x builds them when the JSON key event_sideband is 1."""
+    if GEN_VERSION[0] == 2:
+        return GEN_VERSION[1] >= 5
+    return doc.get("event_sideband", 0) == 1
+
+
 def field_ports(reg, f):
     """Ports that APB-CSR-Generator builds for one field: list of (name, direction, width)."""
     hi, lo = parse_bits(f["bits"])
@@ -271,8 +362,10 @@ def field_ports(reg, f):
     if f["type"] == "ro":
         return [("i_" + base, "input", width)]
     ports = [("o_" + base, "output", width)]
-    if f["type"] in ("rwi", "w1c"):
+    if f["type"] in HW_TYPES:
         ports += [("i_hw_wdata_" + base, "input", width), ("i_hw_we_" + base, "input", 1)]
+    if f["type"] == "wo":
+        ports += [(clear_prefix() + base, "input", 1)]
     return ports
 
 
@@ -333,7 +426,7 @@ def action_validate(a):
     return 1 if errors else 0
 
 
-def format_sheet(ws, last_row):
+def format_sheet(ws, last_row, ncols=7):
     """R-035: black, white and purple; each column 6 times narrower than the description column; wrapped body cells
     with a row height that fits the lines; header text on one line."""
     thin = Side(style="thin", color=BLACK)
@@ -342,10 +435,11 @@ def format_sheet(ws, last_row):
     widths = [len(str(ws.cell(r, c).value or "")) for r in list(cfg_rows) + list(reg_rows) for c in (1, 2, 3, 4, 5, 6)
               if "\n" not in str(ws.cell(r, c).value or "") and not (r in cfg_rows and c == 3)]
     narrow = min(48, -(-int((max([12] + widths) + 2) * FONT_SIZE * 1.1) // 11))
-    cols = "ABCDEFG"
+    cols = "ABCDEFGHIJK"
     for i, col in enumerate(cols):
         ws.column_dimensions[col].width = narrow * (DESC_FACTOR if col == "G" else 1)
-    ws.column_dimensions["H"].width = narrow
+    for col in "HIJK":
+        ws.column_dimensions[col].width = narrow
     font = lambda **k: Font(**{"name": "Calibri", "size": FONT_SIZE, "color": BLACK, **k})
     for title in ("A1", "A%d" % (FIRST_ROW - 2)):
         ws[title].font, ws[title].fill, ws[title].alignment = font(bold=True, color=PURPLE, size=FONT_SIZE + 1), PatternFill(), Alignment(wrap_text=False)
@@ -378,11 +472,11 @@ def format_sheet(ws, last_row):
             text = str(ws.cell(r, 3).value or "")
             lines = sum(max(1, -(-len(part) // per)) for part in text.split("\n"))
             ws.row_dimensions[r].height = LINE_H * lines + 3
-    style_row(FIRST_ROW - 1, 7, header=True)
+    style_row(FIRST_ROW - 1, ncols, header=True)
     for r in range(FIRST_ROW, last_row + 1):
-        style_row(r, 7, tint=ws.cell(r, 1).value not in (None, ""))
+        style_row(r, ncols, tint=ws.cell(r, 1).value not in (None, ""))
     for r in [1, FIRST_ROW - 2] + list(range(9, FIRST_ROW - 2)):   # blank rows keep no template color; rows below the map are never created (the generator reads every row)
-        for c in range(1, 9):
+        for c in range(1, 12):
             ws.cell(r, c).fill, ws.cell(r, c).border = PatternFill(), Border()
     ws.sheet_view.showGridLines = False
 
@@ -421,6 +515,13 @@ def action_fill(a):
         for c in range(1, 8):
             ws.cell(row, c).value = None
     ws["B3"], ws["B8"] = doc["module"], str(doc.get("async", 0))
+    use_repeat = any(reg.get("repeat") for reg in doc["registers"])
+    ncols = 11 if use_repeat else 7
+    if use_repeat:
+        for k, h in enumerate(REPEAT_HEADERS):
+            c = 8 + k
+            ws.cell(FIRST_ROW - 1, c).value = h
+            ws.cell(FIRST_ROW - 1, c)._style = copy.copy(ws.cell(FIRST_ROW - 1, 6)._style)
     row = FIRST_ROW
     for reg in sorted(doc["registers"], key=lambda r: to_int(r["offset"])):
         fields = with_reserved(reg) if a.auto_reserved else sorted(reg["fields"], key=lambda f: -parse_bits(f["bits"])[0])
@@ -428,18 +529,28 @@ def action_fill(a):
         values = [reg["name"], "0x%X" % to_int(reg["offset"]), None, None, None, register_reset(fields), reg.get("description", "")]
         for c, v in enumerate(values, 1):
             ws.cell(row, c).value, ws.cell(row, c)._style = v, copy.copy(reg_style[c - 1])
+        if use_repeat:
+            r = reg.get("repeat") or {}
+            mode = str(r.get("mode", "NONE")).upper() if r else None
+            extra = [mode, r.get("count"), ("0x%X" % to_int(r["stride"])) if r.get("stride") not in (None, "") else None,
+                     r.get("max")] if r else [None] * 4
+            for k, v in enumerate(extra):
+                ws.cell(row, 8 + k).value, ws.cell(row, 8 + k)._style = v, copy.copy(reg_style[5])
         wrap(ws.cell(row, 7))
         row += 1
         for f in fields:
             vals = [None, None, f["name"], f["bits"], f["type"], f.get("reset", "0x0"), f.get("description", "")]
             for c, v in enumerate(vals, 1):
                 ws.cell(row, c).value, ws.cell(row, c)._style = v, copy.copy(fld_style[c - 1])
+            if use_repeat:
+                for k in range(4):
+                    ws.cell(row, 8 + k)._style = copy.copy(fld_style[5])
             wrap(ws.cell(row, 7))
             row += 1
     if ws.max_row >= row:
         # the generator reads every row up to max_row; styled empty rows of the template sample would crash it
         ws.delete_rows(row, ws.max_row - row + 1)
-    format_sheet(ws, row - 1)
+    format_sheet(ws, row - 1, ncols)
     out.parent.mkdir(parents=True, exist_ok=True)
     wb.save(out)
     print("OK: wrote %s (sheet %s, %d registers, %d rows)" % (out, ws.title, len(doc["registers"]), row - FIRST_ROW))
@@ -453,9 +564,12 @@ def action_dump(a):
     cfg = {str(ws.cell(r, 1).value): ws.cell(r, 2).value for r in range(3, 9)}
     print("Module: %s; protocol %s; data width %s; address width %s; asynchronous %s\n" % (
         cfg.get("Module Name"), cfg.get("Protocol"), cfg.get("Data Width"), cfg.get("Address Width"), cfg.get("Asynchronous")))
-    print("| Register | Offset | Field | Bits | Type | Reset | Description |\n|---|---|---|---|---|---|---|")
+    use_repeat = any(ws.cell(FIRST_ROW - 1, c).value == "REPEAT MODE" for c in range(8, 12))
+    n = 11 if use_repeat else 7
+    head = "| Register | Offset | Field | Bits | Type | Reset | Description |" + (" Repeat mode | Count | Stride | Max |" if use_repeat else "")
+    print(head + "\n" + "|---" * n + "|")
     for r in range(FIRST_ROW, ws.max_row + 1):
-        vals = [ws.cell(r, c).value for c in range(1, 8)]
+        vals = [ws.cell(r, c).value for c in range(1, n + 1)]
         if any(v is not None for v in vals):
             print("| " + " | ".join("" if v is None else str(v).replace("\n", " ").replace("|", "\\|") for v in vals) + " |")
     return 0
@@ -471,9 +585,9 @@ def action_ports(a):
         return 1
     asyn = doc.get("async", 0) == 1
     regclk = "i_clk_reg" if asyn else "i_clk_apb"
-    rows = [("i_clk_apb", "input", 1, "APB clock", "-"), ("i_rst_n_apb", "input", 1, "APB reset, active low", "-")]
-    if asyn:
-        rows += [("i_clk_reg", "input", 1, "Register clock", "-"), ("i_rst_n_reg", "input", 1, "Register reset, active low", "-")]
+    rows = [("i_clk_apb", "input", 1, "APB clock", "-"), ("i_rst_n_apb", "input", 1, "APB reset, active low", "-"),
+            ("i_clk_reg", "input", 1, "Register clock (tie to i_clk_apb when PARA_ASYNCHRONOUS = 0)", "-"),
+            ("i_rst_n_reg", "input", 1, "Register reset, active low (tie to i_rst_n_apb when PARA_ASYNCHRONOUS = 0)", "-")]
     rows += [("i_apb_paddr", "input", 16, "APB address", "-"), ("i_apb_pwdata", "input", 32, "APB write data", "-"),
              ("i_apb_pwrite", "input", 1, "APB write", "-"), ("i_apb_penable", "input", 1, "APB enable", "-"),
              ("i_apb_psel", "input", 1, "APB select", "-"), ("i_apb_pstrb", "input", 4, "APB byte strobes", "-"),
@@ -482,12 +596,27 @@ def action_ports(a):
              ("i_slverr_en", "input", 1, "1 = PSLVERR checks on", "-"),
              ("o_apb_pready", "output", 1, "APB ready", "-"), ("o_apb_pslverr", "output", 1, "APB error", "-"),
              ("o_apb_prdata", "output", 32, "APB read data", "-")]
-    kind = {"ro": "status in", "rw": "control out", "rwi": "control out, hardware load", "w1c": "status/event, hardware load"}
+    if event_ports(doc):
+        rows += [("o_reg_rd_en", "output", 1, "Pulse for a successful register read, in the register clock domain", regclk),
+                 ("o_reg_rd_addr", "output", 16, "Address of the successful register read", regclk),
+                 ("o_reg_wr_en", "output", 1, "Pulse for a successful write to a writable register", regclk),
+                 ("o_reg_wr_addr", "output", 16, "Address of the successful register write", regclk)]
+    kind = {"ro": "status in", "rw": "control out", "rwi": "control out, hardware load", "w1c": "status/event, hardware load",
+            "w0c": "event cleared by a written 0, hardware load", "w2c": "event cleared by any write, hardware load",
+            "r2c": "event cleared by a read, hardware load",
+            "wo": "write-only control out (reads return 0), hardware clear input"}
     for reg in sorted(doc["registers"], key=lambda r: to_int(r["offset"])):
-        for f in reg["fields"]:
-            for n, d, w in field_ports(reg, f):
-                role = "hardware value" if n.startswith("i_hw_wdata") else "hardware load enable" if n.startswith("i_hw_we") else kind[f["type"]]
-                rows.append((n, d, w, "%s.%s (%s)" % (reg["name"], f["name"], role), regclk))
+        mode, count, _, mx = repeat_info(reg)
+        copies = [reg["name"] + "_%d" % i for i in range(count)] if mode == "FIXED" else [reg["name"]]
+        for cname in copies:
+            for f in reg["fields"]:
+                for n, d, w in field_ports(dict(reg, name=cname), f):
+                    role = ("hardware value" if n.startswith("i_hw_wdata") else "hardware load enable" if n.startswith("i_hw_we")
+                            else "synchronous hardware clear (overrides a software write)" if n.startswith(("i_hw_clear", "i_hw_clr")) else kind[f["type"]])
+                    if mode == "PARAMETERIZED":
+                        n, w = n, w
+                        role += "; packed array [PARA_%s_COUNT-1:0] (default %d, max %d)" % (reg["name"].upper(), count, mx)
+                    rows.append((n, d, w, "%s.%s (%s)" % (cname, f["name"], role), regclk))
     print("Module %s (%s); register clock %s\n" % (doc["module"], "asynchronous" if asyn else "single clock", regclk))
     print("| Port | Direction | Width | Meaning | Clock domain of the signal |\n|---|---|---:|---|---|")
     for n, d, w, m, c in rows:
@@ -515,7 +644,13 @@ def main():
     sub.add_parser("template")
     pt = sub.add_parser("ports")
     pt.add_argument("json")
+    pt.add_argument("--gen-version", default="3.3",
+                    help="APB-CSR-Generator version that names the ports (default 3.3: i_hw_clr_, o_reg_* only with event_sideband = 1 "
+                         "in the JSON; 2.5 to 2.x: i_hw_clear_ and o_reg_* always)")
     a = parser.parse_args()
+    if a.action == "ports":
+        global GEN_VERSION
+        GEN_VERSION = tuple(int(x) for x in a.gen_version.split("."))[:2]
     if a.action == "template":
         print(json.dumps(SAMPLE, indent=2))
         return 0

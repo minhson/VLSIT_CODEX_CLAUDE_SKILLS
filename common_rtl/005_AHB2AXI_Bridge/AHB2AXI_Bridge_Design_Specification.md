@@ -94,8 +94,8 @@ IP chuyển giao dịch Full AHB5 Subordinate sang AXI4 Manager trong một mi�
 
 | Ref ID | Document and revision | Applicable clauses | Authority / notes |
 |---|---|---|---|
-| REF-001 | Arm AMBA AHB Protocol Specification, IHI 0033 Version C; local converted reference: `C:\HQuan\_tmp_vlsit_ahb_axi_bridge\local_skill\reference\md_doc\vlsit_amba_ahb_ihi0033c.md` | §§2.2–2.3, 3.1, 3.6–3.10, 5.1, 7, 8, 11, 12 | AHB protocol authority. The Arm AMBA licence applies; redistribution is not confirmed. Official source: https://support.arm.com/documentation/ihi0033/c/. |
-| REF-002 | Arm AMBA AXI and ACE Protocol Specification, IHI 0022 Issue H.c; local converted reference: `C:\HQuan\_tmp_vlsit_ahb_axi_bridge\local_skill\reference\md_doc\vlsit_amba_axi_ihi0022hc.md` | Part A §§A2–A5, A7–A8 | AXI4 protocol authority. AXI4 clauses only; AXI5/ACE are out of scope. Arm AMBA licence applies; redistribution is not confirmed. Official source: https://support.arm.com/documentation/ihi0022/hc/. |
+| REF-001 | Arm AMBA AHB Protocol Specification, IHI 0033 Version C; converted reference: `vlsit_amba_ahb_ihi0033c.md` (not redistributed) | §§2.2–2.3, 3.1, 3.6–3.10, 5.1, 7, 8, 11, 12 | AHB protocol authority. The Arm AMBA licence applies; redistribution is not confirmed. Official source: https://support.arm.com/documentation/ihi0033/c/. |
+| REF-002 | Arm AMBA AXI and ACE Protocol Specification, IHI 0022 Issue H.c; converted reference: `vlsit_amba_axi_ihi0022hc.md` (not redistributed) | Part A §§A2–A5, A7–A8 | AXI4 protocol authority. AXI4 clauses only; AXI5/ACE are out of scope. Arm AMBA licence applies; redistribution is not confirmed. Official source: https://support.arm.com/documentation/ihi0022/hc/. |
 | REF-003 | VLSIT RTL Design Rules v2, `VLSIT_RTL_Generator_AI_Model/spec_template/VLSIT_RTL_Design_Rule.md` | Naming, hierarchy, single-clock, reset and synthesis rules | Mandatory RTL baseline selected by the designer. |
 | REF-004 | Existing VLSIT `common_rtl/002_SyncFIFO/SyncFIFO_Design_Specification.md` | Synchronous FIFO interface, depth and reset behavior | Internal architectural dependency; both FIFO clock sides are tied to the shared bridge clock. |
 | REF-005 | IEEE 1800-2017 SystemVerilog | Synthesizable subset | Subject to REF-003 and the selected synthesis frontend. |
@@ -687,7 +687,7 @@ No product-behavior choice remains open. The clock frequency is intentionally TB
 ### 20.4 Dependencies
 
 - `002_SyncFIFO` RTL/spec and target-library single-clock memory mapping.
-- Arm IHI 0033 Version C and IHI 0022 Issue H.c local converted references under `C:\HQuan\_tmp_vlsit_ahb_axi_bridge\local_skill\reference\md_doc`; licence restricts redistribution.
+- Arm IHI 0033 Version C and IHI 0022 Issue H.c converted references are maintained separately and are not redistributed; their licence restricts redistribution.
 - System reset controller and AXI endpoint must follow the shared reset contract.
 - SoC single-clock timing/STA, synthesis, DFT and verification environments.
 

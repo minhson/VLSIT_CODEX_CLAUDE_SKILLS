@@ -1,0 +1,143 @@
+{
+ "signal": [
+  {
+   "name": "i_clk_apb",
+   "wave": "p......"
+  },
+  [
+   "APB4 (subordinate)",
+   {
+    "name": "i_apb_psel",
+    "wave": "01...0."
+   },
+   {
+    "name": "i_apb_penable",
+    "wave": "0.1..0."
+   },
+   {
+    "name": "i_apb_pwrite",
+    "wave": "x1...x."
+   },
+   {
+    "name": "i_apb_paddr",
+    "wave": "x=...x.",
+    "data": [
+     "A0"
+    ]
+   },
+   {
+    "name": "i_apb_pstrb",
+    "wave": "x=...x.",
+    "data": [
+     "1111"
+    ]
+   },
+   {
+    "name": "i_apb_pwdata",
+    "wave": "x=...x.",
+    "data": [
+     "D0"
+    ]
+   }
+  ],
+  [
+   "state",
+   {
+    "name": "reg_fsm_bridge_current_state",
+    "wave": "=.====.",
+    "data": [
+     "IDLE",
+     "SEND",
+     "WAIT",
+     "RESP",
+     "IDLE"
+    ]
+   }
+  ],
+  [
+   "TL-UL A channel (host)",
+   {
+    "name": "o_tl_a_valid",
+    "wave": "0.10..."
+   },
+   {
+    "name": "i_tl_a_ready",
+    "wave": "01.0..."
+   },
+   {
+    "name": "o_tl_a_opcode",
+    "wave": "x.=x...",
+    "data": [
+     "PutFull"
+    ]
+   },
+   {
+    "name": "o_tl_a_size",
+    "wave": "x.=x...",
+    "data": [
+     "2"
+    ]
+   },
+   {
+    "name": "o_tl_a_address",
+    "wave": "x.=x...",
+    "data": [
+     "A0"
+    ]
+   },
+   {
+    "name": "o_tl_a_mask",
+    "wave": "x.=x...",
+    "data": [
+     "1111"
+    ]
+   },
+   {
+    "name": "o_tl_a_data",
+    "wave": "x.=x...",
+    "data": [
+     "D0"
+    ]
+   }
+  ],
+  [
+   "TL-UL D channel (host)",
+   {
+    "name": "i_tl_d_valid",
+    "wave": "0..10.."
+   },
+   {
+    "name": "o_tl_d_ready",
+    "wave": "0.1.0.."
+   },
+   {
+    "name": "i_tl_d_opcode",
+    "wave": "x..=x..",
+    "data": [
+     "Ack"
+    ]
+   },
+   {
+    "name": "i_tl_d_error",
+    "wave": "x..1x.."
+   }
+  ],
+  [
+   "APB4 response",
+   {
+    "name": "o_apb_pready",
+    "wave": "0...10."
+   },
+   {
+    "name": "o_apb_pslverr",
+    "wave": "0...10."
+   }
+  ]
+ ],
+ "head": {
+  "text": "TL-UL error response becomes PSLVERR"
+ },
+ "foot": {
+  "text": "d_error=1 on the D channel; PSLVERR is high in the PREADY cycle"
+ }
+}

@@ -1,4 +1,4 @@
-# VLSIT RTL Specification Change Implementer — Claude Code
+# VLSIT RTL Specification Change Implementer
 
 ## Purpose / Mục đích
 
@@ -20,21 +20,17 @@ Bắt buộc có thư mục RTL. Specification cũ là tùy chọn. Cung cấp f
 
 ## Use / Cách gọi
 
-    /vlsit-rtl-spec-change-implementer Analyze <RTL_SOURCE_DIRECTORY> for the described feature. Old spec: none. Prepare a technical plan in English and wait for sign-off.
+    Claude Code: /vlsit-rtl-spec-change-implementer Analyze <RTL_SOURCE_DIRECTORY> for the described feature. Old spec: none. Prepare a technical plan in English and wait for sign-off.
+    Codex: $vlsit-rtl-spec-change-implementer Analyze <RTL_SOURCE_DIRECTORY> for the described feature. Old spec: none. Prepare a technical plan in English and wait for sign-off.
+    DeepSeek Harness: /vlsit-rtl-spec-change-implementer Analyze <RTL_SOURCE_DIRECTORY> for the described feature. Old spec: none. Prepare a technical plan in English and wait for sign-off.
 
 Instructions: [SKILL.md](SKILL.md)
 
-## Installation options / Các cách cài đặt
+## Install / Cài đặt
 
-1. **Use this repository / Dùng repository này:** Open this repository in Claude Code; its .claude/skills folder is project-scoped and can be shared with the team. / Mở repository này trong Claude Code; skill trong .claude/skills áp dụng cho project và có thể chia sẻ với nhóm.
-2. **Manual project copy / Chép thủ công vào project:** Copy this entire folder to the target project at .claude/skills/vlsit-rtl-spec-change-implementer. / Chép toàn bộ thư mục này vào .claude/skills/vlsit-rtl-spec-change-implementer trong project đích.
-3. **Personal installation / Cài cho tài khoản cá nhân:** Copy the folder to $HOME/.claude/skills/vlsit-rtl-spec-change-implementer to make it available across local projects. / Chép thư mục vào $HOME/.claude/skills/vlsit-rtl-spec-change-implementer để dùng trong các project cục bộ.
-4. **One-session loading / Nạp cho một phiên:** Start Claude Code with claude --add-dir "<path to this repository>" when working outside this repository. / Khi làm việc ngoài repository này, khởi chạy Claude Code với claude --add-dir "<đường dẫn tới repository>".
-5. **Plugin installation / Cài plugin:** This skill can be installed as a plugin only after it is packaged with a Claude Code plugin manifest and marketplace or loaded plugin directory. This repository is not packaged as a plugin yet. / Chỉ có thể cài skill dạng plugin sau khi đóng gói kèm manifest Claude Code và marketplace hoặc thư mục plugin. Repository này chưa được đóng gói thành plugin.
+Copy the entire skill folder. For project scope, use `<project>/.claude/skills/vlsit-rtl-spec-change-implementer/` in Claude Code or `<project>/.agents/skills/vlsit-rtl-spec-change-implementer/` in Codex, or `<project>/.dsh/skills/vlsit-rtl-spec-change-implementer/` in DeepSeek Harness. For personal scope, use `~/.claude/skills/vlsit-rtl-spec-change-implementer/` or `~/.agents/skills/vlsit-rtl-spec-change-implementer/` (some Codex installs use `~/.codex/skills/vlsit-rtl-spec-change-implementer/`), or `~/.dsh/skills/vlsit-rtl-spec-change-implementer/` for DeepSeek Harness. / Chép toàn bộ thư mục skill. Với phạm vi project, dùng `<project>/.claude/skills/vlsit-rtl-spec-change-implementer/` cho Claude Code hoặc `<project>/.agents/skills/vlsit-rtl-spec-change-implementer/` cho Codex. Với phạm vi tài khoản, dùng `~/.claude/skills/vlsit-rtl-spec-change-implementer/` hoặc `~/.agents/skills/vlsit-rtl-spec-change-implementer/` (một số bản Codex dùng `~/.codex/skills/vlsit-rtl-spec-change-implementer/`).
 
-Invoke with /vlsit-rtl-spec-change-implementer or describe a matching request. Claude Code may also select the skill automatically. Use /skills to confirm it loaded. See the repository README for Windows examples and plugin details.
-
-Gọi bằng /vlsit-rtl-spec-change-implementer hoặc mô tả yêu cầu phù hợp để Claude Code tự chọn. Dùng /skills để xác nhận skill đã được nạp. Xem README repository để biết ví dụ Windows và thông tin plugin.
+Windows PowerShell, one-session loading, and GitHub installation examples are in the [repository README](../../../README.md). / Ví dụ PowerShell trên Windows, nạp cho một phiên và cài từ GitHub nằm trong [README chung](../../../README.md).
 
 ## Language convention / Quy định ngôn ngữ
 

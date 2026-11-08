@@ -4,9 +4,9 @@ Status: Version 2 approved and implemented; static validation complete
 
 ## 1. Design and input summary
 
-- RTL root: `C:\HQuan\102_MyGithub\crcCalculator`.
-- Output root: `C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\003_CRC`.
-- Rule source: `C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\spec_template\VLSIT_RTL_Design_Rule.md` (v2).
+- RTL root: external source repository (local path omitted).
+- Output root: `common_rtl/003_CRC/`.
+- Rule source: the supplied VLSIT RTL Design Rule (v2; local path omitted).
 - Old specification: no separate approved design specification was supplied. The source README documents behavior, but this review treats it as descriptive context, not an independent normative specification.
 - Selected modules: `crc`, `crcInitialValue`, `crcParallel`, `crcParallelCrcW`, and `crcParallelFull`. They are five independent alternatives; no RTL module instantiates another.
 - Scope: restyle the five existing modules into one-module-per-`.sv` files under `003_CRC/rtl`, with a generated `filelist.f`. No algorithm or cycle behavior change is planned.

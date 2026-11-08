@@ -1,6 +1,6 @@
 ---
 name: vlsit-create-skill
-description: Create a new agent skill in the house format (SKILL.md workflow, rule.md with numbered rules, reference/ and scripts/ folders) loadable by both supported coding assistants. Interviews the user for the details, offers design options with advantages and disadvantages, then validates and mirrors the skill. Use when the user asks to create, build, scaffold, write, standardize or fix a skill, a SKILL.md or a rule.md, or wants to turn a repeated workflow into a reusable skill.
+description: Create a new agent skill in the house format (SKILL.md workflow, rule.md with numbered rules, reference/ and scripts/ folders) and mirror it to the repository's supported assistant skill folders. Interview the user, offer design options with advantages and disadvantages, then validate and mirror the skill. Use when the user asks to create, build, scaffold, write, standardize or fix a skill, a SKILL.md or a rule.md, or wants to turn a repeated workflow into a reusable skill.
 compatibility: Python 3.8 or later using the standard library only, and works offline. Windows PowerShell 5.1 (Windows) or POSIX sh (Linux, macOS) is used only to locate or install Python. No administrator rights are needed for the skill itself.
 ---
 
@@ -138,7 +138,7 @@ are unsure how to word a rule or how to settle a duplicate or conflict.
   first step "read rule.md", the "Find Python" step when there are scripts, and the
   last step "verify against the rules".
 - **reference/**: put background and templates here, one topic per file, and link
-  each from SKILL.md with a "read it when" note. Facts about the two tools' skill
+   each from SKILL.md with a "read it when" note. Platform-specific skill behavior
   formats are in [reference/vlsit_skill_format.md](reference/vlsit_skill_format.md).
 - **scripts/**: write every mechanical step as a Python script that uses only the
   standard library. Name every script file with the prefix `vlsit_`, start it with
@@ -163,7 +163,7 @@ more yourself, looking for exactly that.
 
 ### 10. Mirror and document
 
-Mirror to the second tool's folder, then confirm it:
+Mirror to both secondary skill folders, then confirm them:
 
 ```powershell
 <python> "<skill folder>\scripts\vlsit_skillkit.py" mirror ".claude\skills\<name>"
@@ -181,7 +181,7 @@ layout, in every language the README uses.
 2. Check the result against every rule ID in [rule.md](rule.md): the rules whose Check
    line names `validate` are covered by step 9; go through the manual ones by hand,
    including the interview and option rules (R-035 to R-039).
-3. Report to the user: the path of the new skill and of its mirror, the final
+3. Report to the user: the path of the new skill and both secondary mirrors, the final
    `validate` line and the number of rules, the design choices that were made, what
    was tested and what was not, and how the skill is used (the assistant picks it by
    its description; the README explains how to invoke it by name).
@@ -207,4 +207,4 @@ Read a file only when the step needs it.
 | `scripts/vlsit_find_python.ps1` (Windows) and `scripts/vlsit_find_python.sh` (Linux, macOS) | Step 2, and again after Python was installed; add `-Install` or `--install` only after the user agreed |
 | `scripts/vlsit_skillkit.py new` | Step 6: create the skill folder from the templates |
 | `scripts/vlsit_skillkit.py validate` | Step 9, and after any later edit of a skill |
-| `scripts/vlsit_skillkit.py mirror` | Step 10: copy the skill to the second tool's folder; add `--check` to compare only |
+| `scripts/vlsit_skillkit.py mirror` | Step 10: copy the skill to both secondary folders; add `--check` to compare only |

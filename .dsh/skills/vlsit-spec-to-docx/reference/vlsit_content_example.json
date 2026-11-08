@@ -1,0 +1,129 @@
+{
+  "_note": "Worked example of content.json. Paths are illustrative; copy the structure, not the values.",
+  "schema_version": 1,
+  "meta": {
+    "ip_name": "m_apb_tlul_bridge",
+    "title": "APB4 to TL-UL Bridge",
+    "revision": "0.1",
+    "date": "2026-11-07",
+    "source_spec": "common_rtl/007_APB2TLUL_Bridge/APB2TLUL_Bridge_Design_Specification.md",
+    "source_updated": "common_rtl/007_APB2TLUL_Bridge/APB2TLUL_Bridge_Design_Specification_updated.md",
+    "template": "reference/vlsit_spec_template.docx"
+  },
+  "sections": {
+    "overview": {
+      "status": "filled",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The bridge connects an APB4 completer port to a TL-UL manager port inside one clock domain. It accepts one APB transfer at a time and turns it into a single TileLink Uncached Lightweight (TL-UL) request, then returns the TL-UL response as the APB completion."
+        },
+        {
+          "type": "bullets",
+          "items": [
+            "One outstanding request per bridge (REQ-FUNC-001).",
+            "Full-strobe, word-aligned writes only (REQ-ERR-001, REQ-ERR-002).",
+            "Constant TL-UL source identifier configured by PARA_SRC_ID (REQ-IF-005)."
+          ]
+        }
+      ]
+    },
+    "ip_description": {
+      "status": "filled",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The IP sits between the peripheral bus fabric and the TL-UL crossbar. It owns the APB handshake, the legality check, the A-channel launch and the response mapping, and it holds no software-visible state."
+        },
+        {
+          "type": "note",
+          "text": "Scope: the bridge does not buffer more than one request, does not reorder, and does not perform partial-word writes."
+        }
+      ]
+    },
+    "limitations": {
+      "status": "filled",
+      "blocks": [
+        {
+          "type": "numbered",
+          "items": [
+            "A write with any PSTRB value other than 4'b1111 completes with PSLVERR and issues no TL-UL request.",
+            "A transfer with PADDR[1:0] not equal to 2'b00 completes with PSLVERR and issues no TL-UL request."
+          ]
+        }
+      ]
+    },
+    "control_and_status_registers": {
+      "status": "na",
+      "reason": "The IP exposes no software-visible register; configuration is elaboration-time only (DEC-CSR-001).",
+      "confirmed_by_user": true,
+      "blocks": []
+    }
+  },
+  "functions": [
+    {
+      "id": "FN-001",
+      "name": "APB request launch",
+      "figure_id": "fig-fn1",
+      "waveform_id": "fig-wf1",
+      "blocks": {
+        "overview_purpose_use_case_and_scope": [
+          {
+            "type": "paragraph",
+            "text": "A legal APB request is latched in the Setup phase and launched on channel A in the cycle after Setup ends. The function covers the request fields, the legality check, and the launch handshake."
+          }
+        ],
+        "function_description": [
+          {
+            "type": "paragraph",
+            "text": "When PSEL is high and PENABLE is low, the bridge samples PADDR, PWRITE, PSTRB and PWDATA and evaluates legality. A legal request asserts a_valid in the next cycle with a_opcode, a_address, a_mask and a_data derived from the latched APB fields. Channel A is held stable until a_ready is observed."
+          },
+          {
+            "type": "code",
+            "text": "a_opcode = PWRITE ? PutFullData : Get\na_mask   = 4'b1111\na_size   = 2'b10 (4 bytes)"
+          }
+        ]
+      }
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "IF-001",
+      "name": "APB4 completer port",
+      "blocks": {
+        "if_001_apb4_completer_port": [
+          {
+            "type": "paragraph",
+            "text": "The APB4 port carries the register access from the peripheral bus. All signals are synchronous to i_clk_core and are active-high unless the name ends in _n."
+          }
+        ]
+      }
+    }
+  ],
+  "tables": {
+    "Table 2": {
+      "replace": true,
+      "rows": [
+        ["PARA_ADDR_W", "Width of PADDR and of the TL-UL address", "32", "1 to 64", "None", "Port width"],
+        ["PARA_SRC_W", "Width of the TL-UL source identifier", "8", "1 to 8", "None", "a_source and d_source width"],
+        ["PARA_SRC_ID", "Constant source identifier of every request", "0", "0 to 2^PARA_SRC_W - 1", "Must fit PARA_SRC_W", "Value driven on a_source"]
+      ]
+    }
+  },
+  "figures": [
+    {
+      "id": "fig-fn1",
+      "path": "figures_out/m_apb_tlul_bridge_diagram.png",
+      "caption": "Figure 3. FN-001 function diagram",
+      "width_in": 6.2,
+      "section": "function_diagram"
+    },
+    {
+      "id": "fig-wf1",
+      "path": "figures_out/wf001_apb_write_ok.png",
+      "caption": "Figure 4. FN-001 nominal timing",
+      "width_in": 6.2,
+      "section": "waveform"
+    }
+  ]
+}

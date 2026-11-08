@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Generate an initial rule-to-evidence matrix from the VLSIT RTL rule document.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Create an unassessed evidence matrix from the bundled VLSIT rule document.
 
 This is a document inventory helper, not a semantic RTL compliance checker.

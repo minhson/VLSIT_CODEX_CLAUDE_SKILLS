@@ -1,0 +1,25 @@
+{
+  "title": "m_apb_tlul_bridge block diagram (single clock domain i_clk_apb)",
+  "blocks": [
+    {"id": "io_apb", "label": "APB4\nsubordinate", "x": 0.0, "y": -2.4, "kind": "io"},
+    {"id": "cap", "label": "Request\ncapture", "x": 4.8, "y": 0.0},
+    {"id": "agen", "label": "A-channel\ngenerator", "x": 10.6, "y": 0.0},
+    {"id": "io_tl", "label": "TL-UL\nhost", "x": 15.6, "y": -2.4, "kind": "io"},
+    {"id": "fsm", "label": "Bridge FSM\n(timeout cnt)", "x": 7.7, "y": -2.4},
+    {"id": "rsp", "label": "Response\nregister", "x": 4.8, "y": -4.8},
+    {"id": "rchk", "label": "D-channel\nchecker", "x": 10.6, "y": -4.8}
+  ],
+  "groups": [{"label": "i_clk_apb / i_rst_n_apb", "blocks": ["cap", "agen", "fsm", "rsp", "rchk"]}],
+  "links": [
+    {"from": "io_apb", "to": "cap", "from_side": "north", "to_side": "west", "label": "APB4 request"},
+    {"from": "cap", "to": "agen", "from_side": "east", "to_side": "west", "label": "addr, data, strb"},
+    {"from": "agen", "to": "io_tl", "from_side": "east", "to_side": "north", "label": "A channel"},
+    {"from": "io_tl", "to": "rchk", "from_side": "south", "to_side": "east", "label": "D channel"},
+    {"from": "rchk", "to": "rsp", "from_side": "west", "to_side": "east", "label": "rdata, error"},
+    {"from": "rsp", "to": "io_apb", "from_side": "west", "to_side": "south", "label": "PRDATA, PSLVERR"},
+    {"from": "fsm", "to": "cap", "from_side": "north", "to_side": "south", "style": "ctrl"},
+    {"from": "fsm", "to": "agen", "from_side": "north", "to_side": "south", "style": "ctrl"},
+    {"from": "fsm", "to": "rsp", "from_side": "south", "to_side": "north", "style": "ctrl"},
+    {"from": "fsm", "to": "rchk", "from_side": "south", "to_side": "north", "style": "ctrl"}
+  ]
+}

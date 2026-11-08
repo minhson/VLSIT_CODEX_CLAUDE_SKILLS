@@ -1,4 +1,4 @@
-# vlsit-rtl-generator (Claude copy)
+# vlsit-rtl-generator
 
 Generates synthesizable SystemVerilog design RTL from a specification written in the VLSIT ASIC IP specification template, or changes existing RTL after the designer approves a change plan. Every file follows `VLSIT_RTL_Design_Rule.md` (v2). The result is checked by a rule checker (`scripts/vlsit_rtl_check.py`) and by lint (`scripts/vlsit_lint_rtl.py`), and the final report is given by rule ID. For an IP with software-visible registers it builds the CSR block from the CSR workbook with APB-CSR-Generator (`scripts/vlsit_csr_generate.py`, submodule `APB-CSR-Generator` of `VLSIT_RTL_Generator_AI_Model`) and never writes that RTL by hand. Open points of the specification are never guessed: the skill asks the designer with options and examples.
 
@@ -21,4 +21,4 @@ Tạo RTL SystemVerilog tổng hợp được từ specification theo mẫu ASIC
 | `vlsit_lint_rtl.py` | `tools`, `filelist`, `lint`. / Tìm công cụ, tạo filelist, chạy lint. |
 | `vlsit_sim_evidence.py` | `plan`, `check`, `cdc`: waveform evidence folder of the testbench against the specification plan (R-033) and the logs of both simulation branches of a clock-domain crossing (R-034). / Kiểm thư mục waveform mô phỏng so với plan trong spec và log hai nhánh mô phỏng của design có CDC. |
 
-Invoke / Gọi: /vlsit-rtl-generator
+Claude Code: `/vlsit-rtl-generator`; Codex: `$vlsit-rtl-generator`; DeepSeek Harness: `/vlsit-rtl-generator`; or describe the task naturally. / Claude Code: `/vlsit-rtl-generator`; Codex: `$vlsit-rtl-generator`; DeepSeek Harness: `/vlsit-rtl-generator`; hoặc mô tả trực tiếp yêu cầu.

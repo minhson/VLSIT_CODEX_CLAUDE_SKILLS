@@ -16,3 +16,11 @@ __pycache__/
 # Licensed standard converted to Markdown (Arm AXI v1.0 IHI 0022B, redistribution forbidden, rule R-008)
 .agents/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_axi_amba_axi_ihi0022b_v1_0.md
 .claude/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_axi_amba_axi_ihi0022b_v1_0.md
+
+# Licensed standards converted to Markdown (Bosch CAN 2.0 and CAN FD 1.0, redistribution unknown, rule R-008)
+.agents/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_can_bosch_can_spec_2_0.md
+.claude/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_can_bosch_can_spec_2_0.md
+.agents/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_can_bosch_canfd_spec_1_0.md
+.claude/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_can_bosch_canfd_spec_1_0.md
+.agents/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_tcvn_14263_2024_mkv_block_cipher.md
+.claude/skills/vlsit-asic-ip-microspec/reference/md_doc/vlsit_tcvn_14263_2024_mkv_block_cipher.md

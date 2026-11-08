@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Function: Snapshot RTL sources and calculate the changed-code percentage.
+# Author: VLSI Technology
+# GitHub: https://github.com/nguyenquanicd/VLSIT_ASIC_SOC_AI_SKILLS
 """Snapshot an RTL tree and compute the RTL code-change percentage.
 
 Counting rule: nonblank, non-comment lines of RTL source files (.v .vh .sv .svh .vhd .vhdl).

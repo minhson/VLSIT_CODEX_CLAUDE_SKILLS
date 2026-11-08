@@ -40,4 +40,4 @@ PHASE T8 @91505000 ps
   [30] REJECT-NO-CHANGE       REQ-FUNC-010 (rejected requests change nothing)                hits=1496 fails=0
 assertion failures: 0, assertions never exercised: 0
 RESULT PASS
-C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\002_SyncFIFO\verification\tb_sfifo.sv:519: $finish called at 107065000 (1ps)
+<VLSIT_RTL_GENERATOR_REPO>\common_rtl\002_SyncFIFO\verification\tb_sfifo.sv:519: $finish called at 107065000 (1ps)

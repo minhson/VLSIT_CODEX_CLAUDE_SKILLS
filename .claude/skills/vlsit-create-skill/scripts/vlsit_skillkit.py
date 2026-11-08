@@ -17,7 +17,7 @@ Actions:
             short report. Messages carry the rule ID they enforce (R-NNN, see
             rule.md). Exit code 0 = PASS (no errors), 1 = FAIL.
   mirror    copy <repo>/.claude/skills/<name> to <repo>/.agents/skills/<name>
-            so both tools find the same skill. With --check it only reports.
+            and <repo>/.dsh/skills/<name>. With --check it only reports.
 
 validate also looks for rules in rule.md that repeat or contradict each other.
 It compares the wording of every pair: near-identical statements are ERRORs;
@@ -190,6 +190,8 @@ def get_rules(text, report):
     rules = []
     current = None
     in_fence = False
+    heading_style = False
+    domain_style = False
     for number, line in enumerate(text.splitlines(), start=1):
         if re.match(r"^\s*```", line):
             in_fence = not in_fence
@@ -202,13 +204,30 @@ def get_rules(text, report):
                 current = None
             match = re.match(r"^###\s+(R-\d{3})(?:\s+(.*))?$", line)
             if match:
-                current = {"id": match.group(1), "title": match.group(2) or "", "line": number, "body": []}
+                heading_style = True
+                current = {"id": match.group(1), "title": match.group(2) or "", "line": number, "body": [], "domain_style": False}
             elif re.match(r"^###\s", line):
                 report.add("ERROR", "R-010", "rule.md line %d: a rule heading must look like '### R-001 Title', got '%s'" % (number, line))
-        elif current is not None:
-            current["body"].append(line)
+        else:
+            domain_match = re.match(r"^\s*-\s+([A-Z][A-Z0-9]{0,7}-\d{3})\s+\((MUST NOT|MUST|SHOULD|MAY)\):\s*(\S.*)$", line)
+            if domain_match:
+                if current:
+                    rules.append(current)
+                    current = None
+                domain_style = True
+                rules.append({
+                    "id": domain_match.group(1),
+                    "title": "",
+                    "line": number,
+                    "body": [domain_match.group(2) + " " + domain_match.group(3)],
+                    "domain_style": True,
+                })
+            elif current is not None:
+                current["body"].append(line)
     if current:
         rules.append(current)
+    if heading_style and domain_style:
+        report.add("ERROR", "R-010", "rule.md must use one rule format consistently; do not mix R-NNN headings with domain-prefixed rule entries")
     return rules
 
 
@@ -223,11 +242,19 @@ def check_rules(report, text):
         return None
     seen = {}
     parsed = []
+    domain_style = any(rule.get("domain_style") for rule in rules)
     for rule in rules:
         if rule["id"] in seen:
             report.add("ERROR", "R-010", "%s is used twice (lines %d and %d)" % (rule["id"], seen[rule["id"]], rule["line"]))
         else:
             seen[rule["id"]] = rule["line"]
+        if rule.get("domain_style"):
+            statement = " ".join(line.strip() for line in rule["body"] if line.strip())
+            if not re.match(r"^(MUST NOT|MUST|SHOULD|MAY)\s+\S", statement):
+                report.add("ERROR", "R-011", "%s domain rule must start with MUST, MUST NOT, SHOULD or MAY" % rule["id"])
+                continue
+            parsed.append({"id": rule["id"], "statement": statement, "negative": statement.startswith("MUST NOT"), "tokens": tokens(statement)})
+            continue
         statement_lines = []
         has_why = has_check = False
         in_statement = True
@@ -254,6 +281,13 @@ def check_rules(report, text):
         if len(re.findall(r"\bMUST\b", bare)) > 1:
             report.add("WARN", "R-011", "%s uses MUST more than once; it may hold more than one requirement" % rule["id"])
         parsed.append({"id": rule["id"], "statement": statement, "negative": statement.startswith("MUST NOT"), "tokens": tokens(statement)})
+
+    # Established VLSIT skills may use a domain-specific rule namespace and its
+    # compact, one-line rule format. Their direct references are still checked
+    # below, while the standard-format Why/Check and lexical-overlap checks apply
+    # only to the house R-NNN heading format.
+    if domain_style:
+        return parsed
 
     # Words that occur in many rules ("skill", "rule", "script" ...) say nothing about whether two
     # rules overlap, so they are dropped before comparing. Needs a reasonably long list to be meaningful.
@@ -465,8 +499,6 @@ def run_validate(skill_path, prefix, allow):
     # SKILL.md content
     if "rule.md" not in skill:
         report.add("ERROR", "R-014", "SKILL.md never mentions rule.md")
-    if not re.search(r"(?i)\brule IDs?\b|\bby ID\b|R-\d{3}", skill):
-        report.add("WARN", "R-015", "SKILL.md has no step that verifies the result against the rules by ID")
     precedence_words = r"(wins|overrides?|precedence|prevails?|priority|first)"
     if not re.search(r"(?i)\b%s\b.{0,80}rule\.md|rule\.md.{0,80}\b%s\b" % (precedence_words, precedence_words), skill):
         report.add("WARN", "R-013", "SKILL.md does not state that rule.md overrides it and the reference files")
@@ -500,9 +532,15 @@ def run_validate(skill_path, prefix, allow):
     # rule ID citations
     if parsed is not None:
         known = {p["id"] for p in parsed}
+        if not re.search(r"(?i)\brule IDs?\b|\bby ID\b", skill) and not any(
+            re.search(r"\b" + re.escape(rule_id) + r"\b", skill) for rule_id in known
+        ):
+            report.add("WARN", "R-015", "SKILL.md has no step that verifies the result against the rules by ID")
+        namespaces = {rule_id.rsplit("-", 1)[0] for rule_id in known}
         for label, content in main_files:
-            for cited in sorted(set(re.findall(r"\bR-\d{3}\b", content))):
-                if cited not in known:
+            citations = set(re.findall(r"\b[A-Z][A-Z0-9]{0,7}-\d{3}\b", content))
+            for cited in sorted(citations):
+                if cited.rsplit("-", 1)[0] in namespaces and cited not in known:
                     report.add("ERROR", "R-010", "%s cites %s, which is not defined in rule.md" % (label, cited))
 
     # R-017 links and orphans
@@ -525,7 +563,7 @@ def run_validate(skill_path, prefix, allow):
         if not sub.is_dir():
             continue
         for item in files_under(sub):
-            if item.name == ".gitkeep":
+            if item.name == ".gitkeep" or item.suffix.lower() == ".pyc":
                 continue
             rel = relative(item, skill_dir)
             if item.name not in corpus and rel not in corpus:
@@ -676,37 +714,53 @@ def run_mirror(args):
     claude_dir = skills_dir.parent
     if skills_dir.name != "skills" or claude_dir.name != ".claude":
         raise SkillError("mirror expects <repo>/.claude/skills/<name>, got: %s" % skill_dir)
-    target = claude_dir.parent / ".agents" / "skills" / skill_dir.name
 
-    changed = []
-    for source in files_under(skill_dir):
-        rel = source.relative_to(skill_dir)
-        destination = target / rel
-        if destination.is_file() and file_hash(destination) == file_hash(source):
-            continue
-        changed.append(rel.as_posix())
-        if not args.check:
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(str(source), str(destination))
-    extra = []
-    if target.is_dir():
-        for item in files_under(target):
-            if not (skill_dir / item.relative_to(target)).is_file():
-                extra.append(item.relative_to(target).as_posix())
-    verb = "out of sync" if args.check else "copied"
-    for rel in changed:
-        print("%s: %s" % (verb, rel))
-    for rel in extra:
-        print("only in .agents (left alone, delete by hand if stale): %s" % rel)
-    if not changed and not extra:
-        print("IN SYNC: .agents/skills/%s matches .claude/skills/%s" % (skill_dir.name, skill_dir.name))
-    elif not changed:
-        print("IN SYNC apart from the extra files listed above.")
-    elif args.check:
-        print("OUT OF SYNC: %d file(s). Run mirror without --check." % len(changed))
+    repo_dir = claude_dir.parent
+    targets = [
+        (".agents", repo_dir / ".agents" / "skills" / skill_dir.name),
+        (".dsh", repo_dir / ".dsh" / "skills" / skill_dir.name),
+    ]
+    total_copied = 0
+    total_extra = 0
+    out_of_sync = False
+    for platform, target in targets:
+        changed = []
+        for source in files_under(skill_dir):
+            rel = source.relative_to(skill_dir)
+            destination = target / rel
+            if destination.is_file() and file_hash(destination) == file_hash(source):
+                continue
+            changed.append(rel.as_posix())
+            if not args.check:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(str(source), str(destination))
+        extra = []
+        if target.is_dir():
+            for item in files_under(target):
+                if not (skill_dir / item.relative_to(target)).is_file():
+                    extra.append(item.relative_to(target).as_posix())
+        total_copied += len(changed)
+        total_extra += len(extra)
+        if changed or extra:
+            out_of_sync = True
+        verb = "out of sync" if args.check else "copied"
+        for rel in changed:
+            print("%s %s: %s" % (platform, verb, rel))
+        for rel in extra:
+            print("%s only (left alone; review or remove manually): %s" % (platform, rel))
+        if not changed and not extra:
+            print("IN SYNC: %s/skills/%s matches .claude/skills/%s" % (platform, skill_dir.name, skill_dir.name))
+
+    if args.check:
+        if out_of_sync:
+            print("OUT OF SYNC: %d differing file(s), %d extra file(s). Run mirror to copy; review extra files manually." % (total_copied, total_extra))
+            return 1
+        print("IN SYNC: .agents/skills/%s and .dsh/skills/%s match .claude/skills/%s" % (skill_dir.name, skill_dir.name, skill_dir.name))
+        return 0
+    if total_extra:
+        print("MIRRORED: %d file(s) copied. Extra target files were left untouched; review them, then run mirror --check." % total_copied)
         return 1
-    else:
-        print("MIRRORED: %d file(s) copied to %s" % (len(changed), target))
+    print("MIRRORED: %d file(s) copied to .agents/skills/%s and .dsh/skills/%s" % (total_copied, skill_dir.name, skill_dir.name))
     return 0
 
 
@@ -733,7 +787,7 @@ def main(argv=None):
     p_val.add_argument("--prefix", default="vlsit-", help="required name prefix; pass an empty string to switch the check off")
     p_val.add_argument("--allow-package", action="append", default=[], metavar="NAME", help="a third-party package the user approved (repeatable)")
 
-    p_mir = sub.add_parser("mirror", help="copy a skill to .agents/skills")
+    p_mir = sub.add_parser("mirror", help="copy a skill to .agents/skills and .dsh/skills")
     p_mir.add_argument("path", help="the skill folder under .claude/skills")
     p_mir.add_argument("--check", action="store_true", help="report differences, change nothing")
 

@@ -1,6 +1,6 @@
 # VLSIT draw.io library usage
 
-The sole symbol source is [VLSIT_DRAWIO_LIB_V1.drawio.xml](../assets/VLSIT_DRAWIO_LIB_V1.drawio.xml). The bundled file is an exact copy of the user-supplied library, not a generated substitute.
+The sole symbol source is [VLSIT_DRAWIO_LIB_V1.drawio.xml](VLSIT_DRAWIO_LIB_V1.drawio.xml). The bundled file is an exact copy of the user-supplied library, not a generated substitute.
 
 - Format: mxlibrary XML containing a JSON array of 39 templates.
 - Snapshot SHA-256: D1631ACF98A920526B235E8970FEDDC9305EA2F0D6A35C6529CD220D62AFABB6.

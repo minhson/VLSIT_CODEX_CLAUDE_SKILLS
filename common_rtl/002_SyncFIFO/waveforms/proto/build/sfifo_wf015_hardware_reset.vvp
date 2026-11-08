@@ -1204,5 +1204,5 @@ T_21.1 ;
     "N/A";
     "<interactive>";
     "-";
-    "C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\002_SyncFIFO\waveforms\proto\tb_wave.sv";
-    "C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\002_SyncFIFO\waveforms\proto\sfifo_proto.sv";
+    "<VLSIT_RTL_GENERATOR_REPO>\common_rtl\002_SyncFIFO\waveforms\proto\tb_wave.sv";
+    "<VLSIT_RTL_GENERATOR_REPO>\common_rtl\002_SyncFIFO\waveforms\proto\sfifo_proto.sv";

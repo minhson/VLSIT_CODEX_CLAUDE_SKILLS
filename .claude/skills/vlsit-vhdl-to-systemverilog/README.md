@@ -1,4 +1,4 @@
-# VLSIT VHDL to SystemVerilog — Claude Code / Chuyển VHDL sang SystemVerilog
+# VLSIT VHDL to SystemVerilog / Chuyển VHDL sang SystemVerilog
 
 Convert complete VHDL RTL designs into readable, synthesizable SystemVerilog while preserving approved behavior and applying the entire bundled VLSIT rule file.
 
@@ -36,18 +36,19 @@ Outputs: rtl/, filelists/, verification/, logs/, conversion_plan.md, conversion_
 
 Replace example directory tokens with your actual input and output locations. / Thay token thư mục trong ví dụ bằng vị trí đầu vào và đầu ra thực tế.
 
-    /vlsit-vhdl-to-systemverilog Convert the complete VHDL RTL in <VHDL_SOURCE_DIRECTORY> to synthesizable SystemVerilog using the bundled VLSIT rules. Top: uart_top. Architecture: rtl. Output: <OUTPUT_DIRECTORY>. Prepare the conversion plan in scientific English and wait for Gate 1 approval. Preserve cycle behavior and report actual validation evidence.
+    Claude Code: /vlsit-vhdl-to-systemverilog Convert the complete VHDL RTL in <VHDL_SOURCE_DIRECTORY> to synthesizable SystemVerilog using the bundled VLSIT rules. Top: uart_top. Architecture: rtl. Output: <OUTPUT_DIRECTORY>. Prepare the conversion plan in scientific English and wait for Gate 1 approval. Preserve cycle behavior and report actual validation evidence.
+    Codex: $vlsit-vhdl-to-systemverilog Convert the complete VHDL RTL in <VHDL_SOURCE_DIRECTORY> to synthesizable SystemVerilog using the bundled VLSIT rules. Top: uart_top. Architecture: rtl. Output: <OUTPUT_DIRECTORY>. Prepare the conversion plan in scientific English and wait for Gate 1 approval. Preserve cycle behavior and report actual validation evidence.
+    DeepSeek Harness: /vlsit-vhdl-to-systemverilog Convert the complete VHDL RTL in <VHDL_SOURCE_DIRECTORY> to synthesizable SystemVerilog using the bundled VLSIT rules. Top: uart_top. Architecture: rtl. Output: <OUTPUT_DIRECTORY>. Prepare the conversion plan in scientific English and wait for Gate 1 approval. Preserve cycle behavior and report actual validation evidence.
 
 Instructions: [SKILL.md](SKILL.md). Semantic notes: [vlsit_vhdl_semantics.md](reference/vlsit_vhdl_semantics.md). Validation and report contract: [vlsit_validation_and_reports.md](reference/vlsit_validation_and_reports.md).
 
 Hướng dẫn: [SKILL.md](SKILL.md). Lưu ý semantics: [vlsit_vhdl_semantics.md](reference/vlsit_vhdl_semantics.md). Quy định kiểm chứng và báo cáo: [vlsit_validation_and_reports.md](reference/vlsit_validation_and_reports.md).
 
-## Installation options / Các cách cài đặt
+## Install / Cài đặt
 
-1. Open this repository in Claude Code to use its project skills. / Mở repository này trong Claude Code để dùng skill của project.
-2. Manually copy this entire folder to .claude/skills/vlsit-vhdl-to-systemverilog in the target project. / Chép thủ công toàn bộ thư mục vào .claude/skills/vlsit-vhdl-to-systemverilog của project đích.
-3. Copy the whole folder to $HOME/.claude/skills/vlsit-vhdl-to-systemverilog for personal use; see the [repository guide](../../../README.md). / Chép toàn bộ vào $HOME/.claude/skills/vlsit-vhdl-to-systemverilog để dùng cá nhân; xem [hướng dẫn repository](../../../README.md).
-4. Add this repository to a Claude Code session using the additional-directory method in the repository guide. / Thêm repository này vào phiên Claude Code bằng cách nạp thư mục bổ sung trong hướng dẫn repository.
+Copy the entire skill folder. For project scope, use `<project>/.claude/skills/vlsit-vhdl-to-systemverilog/` in Claude Code or `<project>/.agents/skills/vlsit-vhdl-to-systemverilog/` in Codex, or `<project>/.dsh/skills/vlsit-vhdl-to-systemverilog/` in DeepSeek Harness. For personal scope, use `~/.claude/skills/vlsit-vhdl-to-systemverilog/` or `~/.agents/skills/vlsit-vhdl-to-systemverilog/` (some Codex installs use `~/.codex/skills/vlsit-vhdl-to-systemverilog/`), or `~/.dsh/skills/vlsit-vhdl-to-systemverilog/` for DeepSeek Harness. / Chép toàn bộ thư mục skill. Với phạm vi project, dùng `<project>/.claude/skills/vlsit-vhdl-to-systemverilog/` cho Claude Code hoặc `<project>/.agents/skills/vlsit-vhdl-to-systemverilog/` cho Codex. Với phạm vi tài khoản, dùng `~/.claude/skills/vlsit-vhdl-to-systemverilog/` hoặc `~/.agents/skills/vlsit-vhdl-to-systemverilog/` (một số bản Codex dùng `~/.codex/skills/vlsit-vhdl-to-systemverilog/`).
+
+Windows PowerShell, one-session loading, and GitHub installation examples are in the [repository README](../../../README.md). / Ví dụ PowerShell trên Windows, nạp cho một phiên và cài từ GitHub nằm trong [README chung](../../../README.md).
 
 ## Rule matrix helper / Công cụ tạo bảng rule
 

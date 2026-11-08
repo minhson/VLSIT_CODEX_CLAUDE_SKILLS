@@ -25,6 +25,10 @@ Every check, expected value and assertion carries the requirement ID or the prot
 | Constrained-random test | Random traffic with a seed (`+SEED`) and a length (`+N`), checked by the same scoreboard and assertions. |
 | Result | A table of the assertions, a one-line PASS or FAIL, and a non-zero exit status on failure (`$fatal`). |
 
+Build the directed-test plan in two ordered groups (R-048): focused cases for each primary function named in the specification, then integrated flows that combine multiple functions. Use the minimum legal stimulus and dependencies for each focused case. If the architecture prevents isolation, name the required dependency and keep other functions inactive where possible.
+
+Before finalizing the plan, ask whether code coverage is wanted and which supported metric to measure (R-047). A line/statement example counts whether a specified function's RTL statements execute; a branch example counts both outcomes of a decision; a toggle example counts signal transitions; an FSM metric counts states or transitions. The installed simulator determines which metrics are available. Do not compare percentages from different metrics.
+
 ## 2a. Layout
 
 Keep the testbench and the assertions in their own folder beside the design files, for example `verification/` next to `rtl/`, never in the design file set or in `filelist.f` (R-010, R-022). The rule check of the skill (`vlsit_rtl_check.py`) and the lint run on the design folder only, because the design rules do not apply to verification code. A Makefile that runs the rule check, the lint and the simulation, and a folder for their logs and reports (for example `sanity/`), make the run repeatable.
@@ -141,4 +145,4 @@ end
 
 ## 8. Report
 
-State which standards and which requirements the testbench was derived from, the number of assertions and the table of their hits, the stimulus cases, the seeds, the result of `vlsit_sim_evidence.py` for the waveform evidence and, for a crossing, the runs of both branches, the number of injected bugs caught, every failure with its decision, and what was not verified (formal proof, coverage, a protocol feature that the stimulus models do not drive).
+State which standards and which requirements the testbench was derived from, the number of assertions and the table of their hits, the stimulus cases and their focused/combined group, the seeds, the result of `vlsit_sim_evidence.py` for the waveform evidence and, for a crossing, the runs of both branches, the number of injected bugs caught, every failure with its decision, and what was not verified. When code coverage is requested, report its status, selected metric, measured baseline and final covered/coverable counts, target, DUT scope and exclusions, simulator/version, uncovered points, and whether the target was met. Use `not_requested`, `not_supported`, `baseline_only`, `target_met`, or `target_unmet` where applicable; distinguish code coverage from functional/requirement coverage and mutation score.

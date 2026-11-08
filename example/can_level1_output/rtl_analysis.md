@@ -4,7 +4,7 @@ Companion of `rtl_hierarchy.drawio`. Skill: `vlsit-rtl-hierarchy-diagram`. Facts
 
 ## 1. Scope and evidence
 
-- RTL root: `C:\HQuan\100_ForMe\013_Opencore\CAN\can\rtl\verilog` (13 files: 12 Verilog modules/headers listed below, `can_defines.v`, `README.txt`). No RTL file was modified.
+- RTL root: `<RTL_SOURCE_DIRECTORY>\verilog` (13 files: 12 Verilog modules/headers listed below, `can_defines.v`, `README.txt`). No RTL file was modified.
 - Selected diagram level N = 1 (user choice): level 0 = `can_top`; level 1 = the direct children of `can_top` and the functional groups of `can_top` own logic. Effective level = 1 (the hierarchy is deeper, see section 7).
 - Top module: `can_top`. Evidence: `set_option -top_module "can_top"` in `syn/synplicity/can.prj:39`.
 - Configuration assumption: delivered `can_defines.v` with no extra macros. `CAN_WISHBONE_IF` (`can_defines.v:100`), vendor RAM macros (`:103-113`), and `CAN_BIST` (`:116`) are commented out. Active host interface: 8051-style (`can_top.v:276-287`, `834-871`). The WISHBONE branch (`can_top.v:782-831`) is inactive and excluded.

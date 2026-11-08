@@ -1,0 +1,504 @@
+{
+  "schema_version": 1,
+  "meta": {
+    "ip_name": "m_apb_tlul_bridge",
+    "title": "APB4 to TL-UL Bridge",
+    "revision": "0.1",
+    "date": "2026-11-07",
+    "source_spec": "common_rtl/007_APB2TLUL_Bridge/APB2TLUL_Bridge_Design_Specification.md",
+    "source_updated": "exports/007_APB2TLUL_Bridge/APB2TLUL_Bridge_Design_Specification_updated.md",
+    "template": ".dsh/skills/vlsit-spec-to-docx/reference/vlsit_spec_template.docx"
+  },
+  "sections": {
+    "overview": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The APB4 to TL-UL bridge (m_apb_tlul_bridge) connects an APB4 completer port to a TileLink Uncached Lightweight (TL-UL) manager port and lets one APB requester reach a TL-UL fabric or device of the OpenTitan type. Each APB transfer becomes exactly one TL-UL request, and the TL-UL response becomes the APB completion."},
+        {"type": "paragraph", "text": "The design targets low latency and clean static timing. The request is captured at the end of the APB Setup phase and launched on channel A from flip-flops in the first Access cycle (early launch), every output that changes value during operation is the Q pin of a flip-flop, the IP has one clock domain and one reset domain, and the APB-facing logic and the TL-UL-facing logic are separated into two modules."}
+      ]
+    },
+    "ip_description": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The bridge is a single-transfer protocol converter. It owns the APB handshake, the legality check of the request, the channel A launch, the response check on channel D, and the mapping of every outcome to PSLVERR. It holds no software-visible state: configuration is elaboration-time only and the only status the requester observes is PSLVERR of the current transfer."},
+        {"type": "paragraph", "text": "Inside the IP the APB-facing module m_apb_if detects the Setup phase, checks PSTRB and PADDR[1:0], runs the APB finite-state machine (FSM) and owns the response flip-flops. The TL-UL-facing module m_tlul_if owns the channel A flip-flops, the TL-UL FSM, the constant d_ready and the channel D checker. The two modules exchange one request bundle and one response bundle over internal wires, so neither reads a port of the other bus."},
+        {"type": "note", "text": "Scope boundary: the bridge performs no address decoding, no protection decision and no bus-integrity generation. The TL-UL fabric enforces access control, and the SoC watchdog handles a device that never responds."}
+      ]
+    },
+    "features": {
+      "status": "filled",
+      "blocks": [
+        {"type": "bullets", "items": [
+          "FEAT-001 APB4 full-strobe write converted to TL-UL PutFullData (REQ-FUNC-002).",
+          "FEAT-002 APB4 read converted to TL-UL Get, with PSTRB ignored on reads (REQ-FUNC-003).",
+          "FEAT-003 Early launch: channel A valid in the first Access cycle, driven from flip-flops (REQ-FUNC-001, REQ-PERF-001).",
+          "FEAT-004 Local error response with PSLVERR for an unsupported strobe or a misaligned address, with no TL-UL request (REQ-ERR-001, REQ-ERR-002).",
+          "FEAT-005 TL-UL response checking (d_error, d_opcode, d_source) and mapping to PSLVERR (REQ-ERR-003 to REQ-ERR-005).",
+          "FEAT-006 Back-to-back transfers with i_apb_psel held high and no added idle cycle (REQ-FUNC-008, REQ-PERF-004)."
+        ]}
+      ]
+    },
+    "limitations": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The following capabilities are deliberately excluded, each with the reason and the system consequence:"},
+        {"type": "numbered", "items": [
+          "Partial writes are not supported. A write with any PSTRB value other than 4'b1111, including 4'b0000, completes with PSLVERR and issues no TL-UL request (DEC-001); software that needs byte or half-word writes must use a different bridge.",
+          "Misaligned accesses are not supported. Any read or write with PADDR[1:0] not equal to 2'b00 completes with PSLVERR and issues no TL-UL request (DEC-001); the APB4 specification leaves this case unpredictable, so the bridge makes it an explicit error.",
+          "One request is outstanding at a time, and the bridge issues no TL-UL burst (DEC-002); throughput is one transfer per 2 to 4 cycles.",
+          "No response timeout and no drain mechanism exist in the IP (DEC-003); a device that never answers blocks the requester, and only a reset or the SoC watchdog recovers.",
+          "The bridge makes no security or privilege decision: PPROT is accepted and ignored (DEC-007) and o_tlul_a_user is driven to zero (DEC-004).",
+          "No software-visible register exists, so there is no driver-visible status, mask or error log inside the IP."
+        ]}
+      ]
+    },
+    "standard_compliance": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The IP implements two published interfaces. The APB4 profile is the Arm AMBA APB specification Issue D signal subset PPROT, PSTRB and PSLVERR; PWAKEUP, user signals and parity are absent. The TL-UL profile is the OpenTitan 32-bit uncached profile with a_size = 2 only and no bursts."},
+        {"type": "paragraph", "text": "Two deviations are intentional and are contract, not defect: PPROT is ignored (DEC-007), and a write whose PSTRB is not 4'b1111 is rejected with PSLVERR instead of being decomposed (DEC-001). A misaligned address, undefined in the APB4 specification, is rejected with PSLVERR as well."}
+      ]
+    },
+    "parameters": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "All parameters are elaboration-time values; none is writable at run time. The data width is fixed at 32 bits and has no parameter (DEC-011). The port list changes only through the width of i_apb_paddr, o_tlul_a_address, o_tlul_a_source, i_tlul_d_source, o_tlul_a_user and the two unused response fields."}
+      ]
+    },
+    "parameter_model_and_ownership": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The SoC integrator owns every parameter and sets it at elaboration of the IP. The IP author owns the legal ranges. An illegal value is reported at elaboration of the verification source set and is never silently clamped (REQ-PARAM-001)."}
+      ]
+    },
+    "user_configurable_parameters_dependencies_and_legal_combinations": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The only dependency between parameters is that PARA_SRC_ID must fit in PARA_SRC_W bits. The remaining parameters are independent; Table 2 lists purpose, default, legal range, dependency and hardware effect."}
+      ]
+    },
+    "parameter_validation_requirements": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Parameter legality is checked at elaboration, not in silicon: PARA_ADDR_W below 16 or above 32, PARA_SRC_W outside 1 to 8, PARA_SRC_ID wider than PARA_SRC_W, PARA_A_USER_W outside 1 to 32, PARA_D_SINK_W outside 1 to 4 and PARA_D_USER_W outside 1 to 32 are all illegal. TEST-014 sweeps the legal and illegal combinations."}
+      ]
+    },
+    "validated_configuration_examples": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Two configurations are delivered and elaborated: the default CFG-BASE and the narrow CFG-NARROW. Both use the same hierarchy and both are covered by the regression."}
+      ]
+    },
+    "block_diagram": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The block diagram shows the two functional modules under the structural top and the four internal channels between them: the request launch, the write/read flag, the response valid and the response data."}
+      ]
+    },
+    "ip_block_diagram": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Figure 1 gives the internal architecture. The APB completer port enters m_apb_if, the TL-UL manager port leaves m_tlul_if, and no signal of one bus appears inside the other module."}
+      ]
+    },
+    "block_behavior_and_inter_block_relationships": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "On the APB side the Setup detector raises w_req_launch for a legal request and w_local_err for an illegal one; the same cycle that captures the request loads channel A. On the TL-UL side the request is held stable until a_ready is sampled, then the FSM waits for a response. The D-channel checker validates d_error, d_opcode and d_source, forces read data to zero on error, and returns w_resp_valid; the APB FSM then presents PREADY, PRDATA and PSLVERR for one cycle."},
+        {"type": "paragraph", "text": "Table 4 lists the four blocks, and Table 5 lists the internal wires and their direction. No register crosses the module boundary, so both modules keep their own state and the top contains only instances and interconnect."}
+      ]
+    },
+    "control_and_status_registers": {
+      "status": "na",
+      "reason": "The bridge has no software-visible register; it is configured only by parameters and its only status is PSLVERR on each transfer (source section 11, confirmed by the user 2026-10-18 and again on 2026-11-07).",
+      "confirmed_by_user": true,
+      "blocks": []
+    },
+    "software_programming": {
+      "status": "na",
+      "reason": "The IP exposes no register or field, so there is no driver flow to program; the control interface is the APB bus itself, driven by any APB requester (confirmed by the user 2026-11-07).",
+      "confirmed_by_user": true,
+      "blocks": []
+    },
+    "integration_guideline": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The IP is integrated as an APB4 completer on the peripheral bus and as a TL-UL host on the interconnect. The integrator supplies the clock, the synchronized reset release, the address decoding in front of the APB port, and the watchdog that recovers a device which never answers."}
+      ]
+    },
+    "address_bus_and_access_integration": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The APB port must be selected by an external decoder; the bridge itself performs no address decode and no protection check. Connect i_apb_paddr directly to the APB address bus and leave i_apb_pprot unconnected or tied, because it is ignored. The TL-UL port presents one request at a time with a_size fixed at 4 bytes and a_mask fixed at 4'b1111, so the device must accept word accesses only."}
+      ]
+    },
+    "clock_reset_power_and_cdc_integration": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "One clock drives both buses. The reset controller must release i_rst_n_core synchronously to i_clk_core and must reset the APB requester and the TL-UL device together with the bridge (DEP-002). The IP contains no clock gating, no synchronizer and no power domain of its own, so no CDC constraint is needed."}
+      ]
+    },
+    "interrupt_dma_memory_and_pin_integration": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The IP has no interrupt, no event output, no DMA request and no memory interface. Errors reach software only as PSLVERR of the APB transfer, so the interrupt controller is programmed by the requester, not by the bridge. No pin is dedicated to this IP."}
+      ]
+    },
+    "integration_hazards_and_bring_up": {
+      "status": "filled",
+      "blocks": [
+        {"type": "bullets", "items": [
+          "A device that checks TL-UL command integrity may reject every request because a_user is zero (OI-001); check the device configuration before integration.",
+          "A reset applied to the bridge alone, while the requester continues, can leave a transfer without a Setup phase; the APB checker reports it and the transfer is never answered (ASM-001, OI-002).",
+          "Leaving i_tlul_d_ready unconnected is safe only because the bridge drives it; connect it as an output to the device.",
+          "The four unused response inputs d_param, d_size, d_sink and d_user and the input pprot need a lint waiver; leaving them unconnected is allowed."
+        ]}
+      ]
+    },
+    "performance_boundary_and_liveness_requirements": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "A transfer with a prompt device takes 3 Access cycles, 2 cycles when the response arrives in the acceptance cycle, and 1 cycle for a local error. The minimum Setup-to-Setup interval is 4, 3 and 2 cycles respectively, and it does not change when i_apb_psel is held high. The IP has no liveness condition of its own: a device that never responds blocks the requester until reset."}
+      ]
+    },
+    "synthesis_design_constraints_sdc": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The SDC section states the clock and the boundary constraints of the two buses. The source specification fixes no numeric period and no numeric input or output delay (OI-004): both are set by the SoC integrator. No numeric constraint is invented here; the tables below record the owner and the rationale of each constraint."}
+      ]
+    },
+    "clock_definitions_and_relationships": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "One primary clock, i_clk_core, serves both interfaces. There is no generated clock, no clock group and no phase relationship to declare. The period is owned by the integrator."}
+      ]
+    },
+    "input_output_delays_and_electrical_constraints": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The APB inputs are referenced to i_clk_core and are captured at the Setup edge; the TL-UL response inputs are referenced to i_clk_core and are sampled while the request is outstanding. Every changing output is a flip-flop Q pin, so the output delay is one clock-to-output plus the board load. The numeric minimum and maximum delays are set by the integrator."}
+      ]
+    },
+    "timing_exceptions": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The source specification declares no timing exception: no false path, no multicycle path, no minimum or maximum delay and no clock group is required, because the IP has a single synchronous clock and single-cycle paths only. The exception inventory is therefore empty."}
+      ]
+    },
+    "synthesis_and_sta_sign_off": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Sign-off is performed by the integrator with the target library, corner and voltage. The critical path to watch is the legality check (PSTRB and PADDR[1:0]) and the Setup detection in front of the enable of about 66 channel-A flip-flops. No timing closure is claimed from RTL alone (PPA-001 remains open as TBD-002)."}
+      ]
+    },
+    "design_for_test_dft": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The IP has no DFT port; all flip-flops are scan-eligible and the SoC DFT flow inserts the scan chain and controls the scan clock and reset override."}
+      ]
+    },
+    "test_modes_and_access": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "There is no test mode inside the IP. Test-mode entry and exit, the safe state and the clocking of the scan chain are handled by the SoC wrapper or reset controller. After reset the IP is in its idle state."}
+      ]
+    },
+    "scan_memory_test_and_embedded_instruments": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Scan insertion is possible because the RTL contains no latch, no combinational loop, no internal tri-state, no clock gating and no derived clock (REQ-DFT-001). Memory test, repair, logic BIST, test access and clock-gating test enable are not applicable: the IP has no memory, no embedded instrument and no clock gate."}
+      ]
+    },
+    "dft_verification_and_manufacturing_procedure": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "DFT verification is a static scan-rule check (TEST-018) that proves scan eligibility. ATPG constraints, exclusions, insertion architecture and test artefacts are defined by the SoC DFT flow and are not part of this IP."}
+      ]
+    },
+    "physical_design_pd": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The IP is delivered as soft RTL. Physical implementation, floorplan and macro placement are performed by the integrator with the library and corner of the project. The IP has no memory macro, no analogue block and no special pin."}
+      ]
+    },
+    "implementation_views_and_boundary": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Delivery is soft RTL with the file list, the SDC and the verification source set. No netlist, no hardened layout and no timing model are delivered."}
+      ]
+    },
+    "floorplan_pins_macros_and_power": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "No macro, no power switch and no isolation cell is required: the IP is always on and has no memory. The integrator places the two modules as ordinary standard-cell logic inside the peripheral subsystem."}
+      ]
+    },
+    "routing_reliability_and_sign_off": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "There is no routing-specific requirement. Reliability and sign-off follow the SoC flow; the IP contributes a single synchronous clock with single-cycle paths, so no special shielding, spacing or EM rule applies."}
+      ]
+    },
+    "ppa_results_by_configuration": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "No mapped PPA result exists yet: frequency, area and power targets remain open as TBD-002 and depend on the library and corner chosen by the integrator. The RTL-level proxy is about 105 flip-flops at PARA_ADDR_W = 32, of which 30 address, 32 write data, 32 read data and 11 control, and about 66 resettable channel-A flip-flops."}
+      ]
+    },
+    "verification_and_validation_dv": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Verification is block-level simulation with directed and constrained-random stimulus, an APB requester model, a TL-UL device model, both protocol checkers and a scoreboard. Formal proof is not part of the plan."}
+      ]
+    },
+    "verification_scope_and_requirements_traceability": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Every requirement of the source section 3 is covered by at least one test of Table 36, and every requirement carries its test or property in that matrix. The acceptance criterion is that all listed tests pass and every coverage bin is hit."}
+      ]
+    },
+    "testbench_architecture_and_dependencies": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The testbench drives legal and illegal APB transfers with configurable idle time, and the TL-UL device model delays a_ready and d_valid, answers in the acceptance cycle, injects d_error, a wrong opcode and a wrong source, and sends orphan responses. The APB protocol checker and the TL-UL protocol checker are bound at the ports, and a scoreboard compares each request with its completion."}
+      ]
+    },
+    "test_scenarios_assertions_and_coverage": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The test plan contains 19 tests (TEST-001 to TEST-019), 10 assertions (SVA-001 to SVA-010) and 5 coverage points (COV-001 to COV-005). Together they cover reset, the three transfer outcomes, channel A back pressure, orphan responses, same-cycle responses, buffer-free back-to-back traffic, parameter legality, protocol-checker binding, lint and CDC, structural output rules and scan eligibility."}
+      ]
+    },
+    "regression_results_and_sign_off": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The verification source set is delivered; the recorded sanity run in the RTL folder reports the default and narrow configurations with zero assertion failures and no unexercised assertion. Sign-off is the integrator's acceptance of that log together with the traceability matrix of Table 36."}
+      ]
+    },
+    "power_management_and_power_intent": {
+      "status": "na",
+      "reason": "The IP is in the always-on domain of the SoC and has no isolation, retention, power switch or power sequencing of its own (source section 7.4, confirmed by the user 2026-10-18 and again on 2026-11-07).",
+      "confirmed_by_user": true,
+      "blocks": []
+    },
+    "security_and_robustness": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The bridge is not a security boundary. It makes no privilege decision, stores no secret and implements no integrity or fault detection. Access control is enforced by the TL-UL fabric, and the only error containment is the PSLVERR mapping of an illegal request or a failed response."}
+      ]
+    },
+    "security_boundary_and_access_control": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "PPROT is accepted and ignored (DEC-007), so no privilege or instruction-fetch information reaches the TL-UL side; o_tlul_a_user is driven to zero (DEC-004). A component that needs a privilege check must implement it in the interconnect in front of the TL-UL port."}
+      ]
+    },
+    "integrity_ras_and_error_containment": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "No ECC, parity, bus integrity or fault detection is generated or checked (DEC-004, OI-001). An error is contained to the transfer that caused it: PSLVERR is raised with PREADY, PRDATA is forced to zero, and no sticky state is kept in the RTL. A device that never answers is not detected by the IP; the SoC watchdog recovers it (DEC-003)."}
+      ]
+    },
+    "security_and_robustness_verification": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "The security-relevant behaviour is covered by the error tests of the functional plan: illegal strobe (TEST-004), misaligned address (TEST-005), device error (TEST-007), wrong opcode and wrong source (TEST-008) and orphan response (TEST-010), each checking that PSLVERR and PRDATA are as specified."}
+      ]
+    },
+    "acronyms_and_definitions": {
+      "status": "filled",
+      "blocks": [
+        {"type": "paragraph", "text": "Table 44 lists the acronyms used in this document."}
+      ]
+    },
+    "references": {
+      "status": "filled",
+      "blocks": [
+        {"type": "numbered", "items": [
+          "Arm AMBA APB Protocol Specification, IHI 0024 Issue D: signals, transfers, error response and signal validity.",
+          "OpenTitan TL-UL bus specification, lowRISC: signals, opcodes, error cases and timing diagrams.",
+          "OpenTitan TL-UL protocol checker, lowRISC: channel A and channel D checks used in the verification section.",
+          "VLSIT RTL Design Rules v2: coding, hierarchy, reset and naming baseline.",
+          "VLSIT ASIC IP Design Specification Template: structure of this document."
+        ]}
+      ]
+    }
+  },
+  "functions": [
+    {
+      "id": "FN-001",
+      "name": "Full-strobe APB write launch",
+      "blocks": {
+        "overview_purpose_use_case_and_scope": [
+          {"type": "paragraph", "text": "Purpose: turn a legal APB write into one TL-UL PutFullData request. Trigger: i_apb_psel = 1 and i_apb_penable = 0 with i_apb_pwrite = 1, i_apb_pstrb = 4'b1111 and i_apb_paddr[1:0] = 2'b00 at the rising edge of i_clk_core. Completion: the APB completion cycle in which o_apb_pready = 1."},
+          {"type": "paragraph", "text": "The function covers the address, write data and strobe check, the channel A launch, the hold until acceptance, and the mapping of the AccessAck response to PRDATA = 0 with PSLVERR = 0. It does not cover partial writes, which end in the local-error function."}
+        ],
+        "function_description": [
+          {"type": "paragraph", "text": "At the end of the Setup cycle the APB side loads reg_a_valid, reg_a_rd = 1, reg_a_addr = i_apb_paddr[PARA_ADDR_W-1:2] and reg_a_data = i_apb_pwdata. In the next cycle o_tlul_a_valid = 1 with o_tlul_a_opcode = PutFullData (3'b000), o_tlul_a_size = 2'b10, o_tlul_a_mask = 4'b1111, o_tlul_a_address reconstructed from the stored word address, and o_tlul_a_data = the stored write data. Channel A is held unchanged until i_tlul_a_ready is sampled high."},
+          {"type": "paragraph", "text": "When the response arrives, the D-channel checker confirms that d_opcode is AccessAck (3'b000) and d_source equals PARA_SRC_ID, and forces the read data to zero. The APB FSM enters ENUM_ST_DONE and drives o_apb_pready = 1 for one cycle with o_apb_pslverr = 0 and o_apb_prdata = 0x0000_0000."},
+          {"type": "paragraph", "text": "Worked example: PADDR = 0x0000_1000, PWDATA = 0xDEADBEEF, PSTRB = 4'b1111, PWRITE = 1. Channel A carries a_opcode = 3'b000, a_address = 0x0000_1000, a_size = 2'b10, a_mask = 4'b1111 and a_data = 0xDEADBEEF. The device answers AccessAck; the APB completion has PRDATA = 0x0000_0000 and PSLVERR = 0 after 3 Access cycles with a prompt device."}
+        ]
+      }
+    },
+    {
+      "id": "FN-002",
+      "name": "Aligned APB read launch",
+      "blocks": {
+        "overview_purpose_use_case_and_scope": [
+          {"type": "paragraph", "text": "Purpose: turn an aligned APB read into one TL-UL Get request and return the read data. Trigger: i_apb_psel = 1, i_apb_penable = 0, i_apb_pwrite = 0 and i_apb_paddr[1:0] = 2'b00 at a rising edge. Completion: the APB completion cycle with o_apb_pready = 1."},
+          {"type": "paragraph", "text": "PSTRB is ignored on a read, so any strobe value is accepted. The function does not cover a misaligned address, which ends in the local-error function."}
+        ],
+        "function_description": [
+          {"type": "paragraph", "text": "The request is captured exactly as for a write, with reg_a_rd = 0. Channel A carries a_opcode = Get (3'b100), a_size = 2'b10, a_mask = 4'b1111 and the aligned address; a_data is a copy of PWDATA and is not meaningful for the device."},
+          {"type": "paragraph", "text": "The D-channel checker requires d_opcode = AccessAckData (3'b001); any other opcode, a wrong d_source or d_error = 1 turns the completion into an error with PRDATA = 0. On a valid response o_apb_prdata takes i_tlul_d_data in the completion cycle."},
+          {"type": "paragraph", "text": "Worked example: PADDR = 0x0000_2004, PWRITE = 0, PSTRB = 4'b0000. Channel A carries a_opcode = 3'b100 and a_address = 0x0000_2004; the device returns AccessAckData with data 0x1122_3344, and the APB completion presents PRDATA = 0x1122_3344, PSLVERR = 0 after 3 Access cycles."}
+        ]
+      }
+    },
+    {
+      "id": "FN-003",
+      "name": "Local error completion",
+      "blocks": {
+        "overview_purpose_use_case_and_scope": [
+          {"type": "paragraph", "text": "Purpose: reject an unsupported APB request without touching the TL-UL side. Trigger: a Setup phase in which i_apb_pwrite = 1 and i_apb_pstrb is not 4'b1111, or i_apb_paddr[1:0] is not 2'b00, on a read or a write. Completion: o_apb_pready = 1 with o_apb_pslverr = 1 in the first Access cycle."},
+          {"type": "paragraph", "text": "The function covers the legality check and the immediate completion. It issues no TL-UL request, so the TL-UL side stays idle."}
+        ],
+        "function_description": [
+          {"type": "paragraph", "text": "w_legal is false, so w_local_err rises at the Setup edge. The APB side loads reg_pready = 1, reg_pslverr = 1 and reg_prdata = 0 and enters ENUM_ST_DONE directly, skipping ENUM_ST_BUSY. The APB FSM returns to ENUM_ST_IDLE in the next cycle, so a new Setup phase may follow after one Access cycle."},
+          {"type": "paragraph", "text": "Worked example: PADDR = 0x0000_1000, PWRITE = 1, PSTRB = 4'b1011. No a_valid cycle appears; the completion has PREADY = 1, PSLVERR = 1 and PRDATA = 0x0000_0000 after 1 Access cycle, and the next transfer may start in the following cycle."}
+        ]
+      }
+    },
+    {
+      "id": "FN-004",
+      "name": "TL-UL response check and error mapping",
+      "blocks": {
+        "overview_purpose_use_case_and_scope": [
+          {"type": "paragraph", "text": "Purpose: decide whether an accepted response is valid and map every failure to PSLVERR. Trigger: i_tlul_d_valid with o_tlul_d_ready while the TL-UL FSM is in ENUM_ST_WAIT, or in ENUM_ST_REQ together with i_tlul_a_ready. Completion: the APB completion cycle."},
+          {"type": "paragraph", "text": "The function covers response validation, read-data qualification and orphan handling. It does not cover a device that never responds, which the IP cannot detect (DEC-003)."}
+        ],
+        "function_description": [
+          {"type": "paragraph", "text": "w_resp_err is the OR of d_error, of d_opcode not equal to the opcode expected for the captured transfer (AccessAckData for a read, AccessAck for a write) and of d_source not equal to PARA_SRC_ID. w_resp_rdata equals d_data only when the transfer was a read and no error was detected; otherwise it is 0x0000_0000."},
+          {"type": "paragraph", "text": "A d_valid that does not coincide with an accepted or outstanding request is an orphan and is discarded without any effect on the APB side. Worked example: a read whose response carries d_error = 1 completes with PSLVERR = 1 and PRDATA = 0x0000_0000 even if d_data is valid; a response with d_source = 3 completes the same way."}
+        ]
+      }
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "IF-001",
+      "name": "APB4 completer port",
+      "blocks": {
+        "if_001_interface_group_name": [
+          {"type": "paragraph", "text": "The APB4 port carries the register access from the peripheral bus. All signals except the reset are synchronous to i_clk_core. The address and control values are stable from the Setup phase until PREADY, which lets the bridge capture them once, at the end of Setup."}
+        ]
+      }
+    },
+    {
+      "id": "IF-002",
+      "name": "TL-UL manager port",
+      "blocks": {
+        "if_002_interface_group_name": [
+          {"type": "paragraph", "text": "The TL-UL port issues one request at a time on channel A and accepts the matching response on channel D. Channel A is held stable while valid and not accepted. The full OpenTitan signal set is present, but d_param, d_size, d_sink and d_user are not read, and a_user and a_param are constant zero."}
+        ]
+      }
+    }
+  ],
+  "tables": [
+    {"caption": "Table 1", "replace": true, "rows": [
+      ["1", "AMBA APB (IHI 0024 Issue D, APB4 subset)", "APB4", "Completer with PPROT, PSTRB and PSLVERR; PWAKEUP, user signals and parity absent. PPROT is ignored (DEC-007); a non-full strobe or a misaligned address gives PSLVERR (DEC-001)."],
+      ["2", "TileLink Uncached Lightweight, OpenTitan profile", "32-bit, a_size = 2, no bursts", "Host (manager). a_user driven to zero and no integrity generated (DEC-004); d_param, d_size, d_sink and d_user unused (DEC-006)."]
+    ]},
+    {"caption": "Table 2", "replace": true, "rows": [
+      ["PARA_ADDR_W", "Address width of both buses; integer; default 32; 16 to 32", "Elaboration", "None; width of i_apb_paddr and o_tlul_a_address", "Changes the two address port widths only."],
+      ["PARA_SRC_W", "Width of the TL-UL source identifier; integer; default 8; 1 to 8", "Elaboration", "PARA_SRC_ID must fit", "Width of o_tlul_a_source and i_tlul_d_source."],
+      ["PARA_SRC_ID", "Constant source identifier; integer; default 0; 0 to 2^PARA_SRC_W - 1", "Elaboration", "Must fit in PARA_SRC_W", "Value driven on a_source and expected on d_source."],
+      ["PARA_A_USER_W", "Width of the constant-zero a_user field; integer; default 1; 1 to 32", "Elaboration", "Layout depends on the integration project (TBD-001)", "Width of o_tlul_a_user; the value is always zero."],
+      ["PARA_D_SINK_W", "Width of the unused d_sink input; integer; default 1; 1 to 4", "Elaboration", "None", "Width only; no behaviour."],
+      ["PARA_D_USER_W", "Width of the unused d_user input; integer; default 1; 1 to 32", "Elaboration", "None", "Width only; no behaviour."]
+    ]},
+    {"caption": "Table 3", "replace": true, "rows": [
+      ["CFG-BASE", "Defaults: ADDR_W 32, SRC_W 8, SRC_ID 0, A_USER_W 1, D_SINK_W 1, D_USER_W 1", "FEAT-001 to FEAT-006; both interfaces", "Default delivery; all tests", "Elaborates, lints and simulates clean (TEST-016, sanity run)"],
+      ["CFG-NARROW", "ADDR_W 16, SRC_W 1, SRC_ID 1", "Same features, narrower ports", "Small address space, non-zero source ID", "Covered by TEST-014, TEST-002 and TEST-008"]
+    ]},
+    {"caption": "Table 4", "replace": true, "rows": [
+      ["BLK-001 Setup detect and legality check", "Detects the Setup phase by level, checks PSTRB and PADDR[1:0], raises launch or local error", "APB request to w_req_*; local error", "CLK-CORE / RST-CORE", "Combinational; an illegal request yields PSLVERR in the first Access cycle"],
+      ["BLK-002 APB FSM and response flops", "Sequences IDLE, BUSY and DONE; drives PREADY, PRDATA and PSLVERR", "w_resp_valid, w_resp_err, w_resp_rdata in; APB completion out", "CLK-CORE / RST-CORE", "State in reg_fsm_apb_current_state, reg_pready, reg_pslverr, reg_prdata"],
+      ["BLK-003 A-channel flops and TL-UL FSM", "Loads the request at the Setup edge, holds it until accepted, tracks the outstanding request", "w_req_* in; channel A out", "CLK-CORE / RST-CORE", "State in reg_fsm_tlul_current_state, reg_a_valid, reg_a_rd, reg_a_addr, reg_a_data"],
+      ["BLK-004 D-channel checker", "Detects the valid response and checks d_error, d_opcode and d_source; forms the read data", "Channel D in; w_resp_* out", "CLK-CORE / RST-CORE", "Combinational; an orphan response is discarded"]
+    ]},
+    {"caption": "Table 5", "replace": true, "rows": [
+      ["m_apb_if", "m_tlul_if", "w_req_launch", "none", "Setup phase of a legal request; loads channel A at the coming edge"],
+      ["m_apb_if", "m_tlul_if", "w_req_wr", "none", "1 = write (PutFullData), 0 = read (Get)"],
+      ["m_apb_if", "m_tlul_if", "w_req_addr", "none", "PADDR[PARA_ADDR_W-1:2]"],
+      ["m_apb_if", "m_tlul_if", "w_req_wdata", "none", "PWDATA, 32 bits"],
+      ["m_tlul_if", "m_apb_if", "w_resp_valid", "none", "A valid response for the outstanding request is accepted this cycle"],
+      ["m_tlul_if", "m_apb_if", "w_resp_err", "none", "d_error, a wrong opcode or a wrong source"],
+      ["m_tlul_if", "m_apb_if", "w_resp_rdata", "none", "Read data, forced to zero for writes and for errors"]
+    ]},
+    {"caption": "Table 10", "replace": true, "rows": [
+      ["1", "i_clk_core [1]", "Input", "Clock for both interfaces; rising edge."],
+      ["2", "i_rst_n_core [1]", "Input", "Active-low reset; asynchronous assertion, release synchronized by the SoC."],
+      ["3", "i_apb_psel [1]", "Input", "APB select; high for the whole transfer."],
+      ["4", "i_apb_penable [1]", "Input", "APB enable; high during the Access phase."],
+      ["5", "i_apb_pwrite [1]", "Input", "1 = write; captured at the Setup edge."],
+      ["6", "i_apb_paddr [PARA_ADDR_W]", "Input", "Byte address; bits [1:0] must be 0; captured at the Setup edge."],
+      ["7", "i_apb_pprot [3]", "Input", "Protection type; accepted and ignored (DEC-007)."],
+      ["8", "i_apb_pstrb [4]", "Input", "Write strobes; must be 4'b1111 for a write, ignored on a read."],
+      ["9", "i_apb_pwdata [32]", "Input", "Write data; captured at the Setup edge."],
+      ["10", "o_apb_pready [1]", "Output (flop)", "Transfer ready; one cycle per transfer."],
+      ["11", "o_apb_prdata [32]", "Output (flop)", "Read data; valid with PREADY, holds its last value otherwise."],
+      ["12", "o_apb_pslverr [1]", "Output (flop)", "Transfer error; high only with PREADY."]
+    ]},
+    {"caption": "Table 10", "replace": true, "rows": [
+      ["1", "o_tlul_a_valid [1]", "Output (flop)", "Request valid; set at the Setup edge, held until a_ready."],
+      ["2", "i_tlul_a_ready [1]", "Input", "Request accepted."],
+      ["3", "o_tlul_a_opcode [3]", "Output", "3'b000 PutFullData, 3'b100 Get."],
+      ["4", "o_tlul_a_param [3]", "Output (constant)", "Reserved; always 3'b000."],
+      ["5", "o_tlul_a_size [2]", "Output (constant)", "Always 2'b10, 4 bytes."],
+      ["6", "o_tlul_a_source [PARA_SRC_W]", "Output (constant)", "Always PARA_SRC_ID."],
+      ["7", "o_tlul_a_address [PARA_ADDR_W]", "Output", "Word address from flops, low bits zero."],
+      ["8", "o_tlul_a_mask [4]", "Output (constant)", "Always 4'b1111."],
+      ["9", "o_tlul_a_data [32]", "Output (flop)", "Copy of PWDATA; not meaningful on Get."],
+      ["10", "o_tlul_a_user [PARA_A_USER_W]", "Output (constant)", "Always zero (DEC-004)."],
+      ["11", "i_tlul_d_valid [1]", "Input", "Response valid."],
+      ["12", "o_tlul_d_ready [1]", "Output (flop)", "0 in reset, 1 from the first edge after release, then constant 1."],
+      ["13", "i_tlul_d_opcode [3]", "Input", "3'b000 AccessAck, 3'b001 AccessAckData."],
+      ["14", "i_tlul_d_source [PARA_SRC_W]", "Input", "Expected to equal PARA_SRC_ID."],
+      ["15", "i_tlul_d_data [32]", "Input", "Read data."],
+      ["16", "i_tlul_d_error [1]", "Input", "Response error."],
+      ["17", "i_tlul_d_param [3]", "Input", "Reserved; not read (DEC-006)."],
+      ["18", "i_tlul_d_size [2]", "Input", "Not checked (DEC-006)."],
+      ["19", "i_tlul_d_sink [PARA_D_SINK_W]", "Input", "Not read (DEC-006)."],
+      ["20", "i_tlul_d_user [PARA_D_USER_W]", "Input", "Not read (DEC-006)."]
+    ]},
+    {"caption": "Table 26", "replace": true, "rows": [
+      ["i_clk_core", "Set by the SoC integrator (OI-004); no numeric target in the source", "SoC clock controller; single primary clock", "Set by the integrator", "Single group, functional mode; no generated clock, no clock gating"]
+    ]},
+    {"caption": "Table 27", "replace": true, "rows": [
+      ["APB4 inputs (PSEL, PENABLE, PWRITE, PADDR, PSTRB, PWDATA)", "Set by the integrator", "APB requester, referenced to i_clk_core", "Set by the integrator", "Captured at the Setup edge; the legality path is the critical one"],
+      ["TL-UL inputs (a_ready, d_valid, d_opcode, d_source, d_error, d_data)", "Set by the integrator", "TL-UL device, referenced to i_clk_core", "Set by the integrator", "Sampled while the request is outstanding"],
+      ["APB4 and TL-UL outputs", "Set by the integrator; one clock-to-output plus load", "Referenced to i_clk_core", "Set by the integrator", "Every changing output is a flip-flop Q pin (REQ-IF-003)"]
+    ]},
+    {"caption": "Table 28", "replace": true, "rows": [
+      ["None", "No false path, multicycle path, min/max delay or clock group is required", "Single synchronous clock, single-cycle paths only", "Static lint and CDC run report zero crossings (TEST-016)", "IP author; to be confirmed by the integrator at sign-off"]
+    ]},
+    {"caption": "Table 44", "replace": true, "rows": [
+      ["APB", "Arm AMBA Advanced Peripheral Bus"],
+      ["TL-UL", "TileLink Uncached Lightweight, the OpenTitan interconnect"],
+      ["Requester / Completer", "APB terms for the master and the subordinate"],
+      ["Host / manager", "The TL-UL agent that issues requests, here the bridge"],
+      ["PSTRB / a_mask", "Byte-lane write strobes of APB4 and of TL-UL"],
+      ["PutFullData, Get", "TL-UL request opcodes 3'b000 and 3'b100"],
+      ["AccessAck, AccessAckData", "TL-UL response opcodes 3'b000 and 3'b001"],
+      ["Setup / Access phase", "The first cycle and the following cycles of an APB transfer"],
+      ["Early launch", "Capture of the request at the Setup edge so channel A is valid in the first Access cycle"],
+      ["Orphan response", "A TL-UL response for which no request has been accepted"],
+      ["FSM", "Finite-state machine"],
+      ["PSLVERR", "APB transfer error response"]
+    ]}
+  ],
+  "figures": [
+    {"id": "fig-arch", "path": "figures_out/block_diagram_diagram.png", "caption": "Figure 1. IP internal architecture", "width_in": 6.2, "section": "ip_block_diagram"}
+  ]
+}

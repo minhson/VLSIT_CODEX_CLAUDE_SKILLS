@@ -1,0 +1,4 @@
+# SHA-256 of the bundled WaveDrom files (npm package wavedrom 3.7.0, MIT licence, from cdn.jsdelivr.net/npm/wavedrom@3.7.0)
+e3579493c2a0c11eb0d32344ea0eadb2904a7c85ad729b28b6222ab837297742 *wavedrom.unpkg.min.js
+6d42a35297a5faa2e07e565ddc47dd6e1228af045881291a64a336b3f062d152 *skins/default.js
+68f6442e5967ddb6a75ec8a4570215cac8cc415ea293c05cf857843c73fa5a57 *LICENSE

@@ -2,7 +2,7 @@
 
 These rules are mandatory every time this skill runs, and they describe what every skill it creates must satisfy. When this file, SKILL.md and a file in `reference/` differ, this file wins.
 
-Each rule is one checkable requirement. It has a permanent ID (R-NNN) that is never reused or renumbered, a statement that starts with MUST or MUST NOT, a Why line and a Check line. No two rules may repeat or contradict each other. "validate" below means `scripts/vlsit_skillkit.py validate`.
+Each rule has a permanent ID that is never reused or renumbered. New house-format skills use a level-3 heading (`### R-001 Title`), a statement beginning with MUST or MUST NOT, a Why line and a Check line. Established domain-specific skills may retain their documented one-line ID namespace (for example, `- OCI-001 (MUST): ...`); do not mix the two formats in one rule file. No two rules may repeat or contradict each other. "validate" below means `scripts/vlsit_skillkit.py validate`.
 
 ## Layout
 
@@ -16,10 +16,10 @@ MUST NOT place any SKILL.md other than the top-level one inside a skill folder; 
 - Why: the tools discover every SKILL.md they find and would load a nested one as a second, unintended skill.
 - Check: validate.
 
-### R-003 One source, one mirror
-MUST write each skill in `.claude/skills/<name>/` and produce its copy in `.agents/skills/<name>/` only by running `scripts/vlsit_skillkit.py mirror` after the last edit.
-- Why: both tools read the same format from different folders; a single source stops the two copies from drifting apart.
-- Check: `scripts/vlsit_skillkit.py mirror --check` reports IN SYNC.
+### R-003 One source, three platform trees
+MUST write each skill in `.claude/skills/<name>/` and produce exact copies in `.agents/skills/<name>/` and `.dsh/skills/<name>/` only by running `scripts/vlsit_skillkit.py mirror` after the last edit.
+- Why: the three skill loaders use different discovery folders; one canonical source and scripted mirrors prevent the platform copies from drifting apart.
+- Check: `scripts/vlsit_skillkit.py mirror --check` reports IN SYNC for both `.agents/skills/<name>/` and `.dsh/skills/<name>/`.
 
 ## Metadata
 
@@ -58,14 +58,14 @@ MUST NOT name an AI tool product or write a tool-specific invocation of a skill 
 ## Rules file
 
 ### R-010 Rule identity
-MUST give each rule in rule.md a unique ID of the form R-NNN as a level-3 heading and keep that ID unchanged for the life of the rule.
+MUST give each rule a unique, permanent ID and keep that ID unchanged for the life of the rule. New house-format skills use an `R-NNN` level-3 heading; an established domain-specific skill MAY retain its documented prefix and one-line rule form.
 - Why: other files and reports cite rules by ID, so a changed or reused ID silently breaks those citations.
-- Check: validate.
+- Check: validate reports unique IDs and resolves rule citations for either supported format.
 
 ### R-011 Rule anatomy
-MUST write each rule as one checkable requirement that starts with `MUST` or `MUST NOT` and is followed by a Why line and a Check line.
+MUST write each house-format rule as one checkable requirement that starts with `MUST` or `MUST NOT` and is followed by a Why line and a Check line. A domain-specific rule file MAY retain its established direct-rule form and normative keywords.
 - Why: a rule with a reason can be applied to cases the author did not foresee, and a rule with a check can be verified instead of trusted.
-- Check: validate.
+- Check: validate checks the house-format anatomy or the domain-specific rule IDs and keywords.
 
 ### R-012 No repetition or contradiction
 MUST leave rule.md with no two rules that repeat or contradict each other, resolving each case by merging or rewording the rules instead of adding an exception rule.

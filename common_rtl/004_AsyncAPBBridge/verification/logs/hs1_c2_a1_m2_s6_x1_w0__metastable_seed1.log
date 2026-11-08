@@ -31,4 +31,4 @@ START 182.000
   [27] UP-PSLVERR-CLEARED         REQ-FUNC-006 (low outside the PREADY cycle)                     hits=1931 fails=0
 assertion failures: 0, assertions never exercised: 0
 RESULT PASS
-C:\HQuan\102_MyGithub\VLSIT_RTL_Generator_AI_Model\common_rtl\004_AsyncAPBBridge\verification\tb_apbcdc.sv:441: $finish called at 8066000 (1ps)
+<VLSIT_RTL_GENERATOR_REPO>\common_rtl\004_AsyncAPBBridge\verification\tb_apbcdc.sv:441: $finish called at 8066000 (1ps)

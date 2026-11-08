@@ -1,4 +1,4 @@
-# Skill format: facts for both tools
+# Skill format: shared facts and repository integration
 
 Checked on 2026-10-16 against the official pages:
 [Claude Code skills](https://code.claude.com/docs/en/skills) and
@@ -7,7 +7,7 @@ changes; if something here looks wrong, check the pages again before relying on 
 
 This file is background only. Mandatory requirements are in [rule.md](../rule.md).
 
-## What both tools share
+## Shared skill format
 
 A skill is a folder whose entry point is `SKILL.md`: a YAML frontmatter block, then
 Markdown instructions. The assistant always sees `name` and `description`. It loads
@@ -17,15 +17,16 @@ request matches the description), and it reads other files in the folder only wh
 
 ## Where each tool looks
 
-| | Claude Code | Codex |
-|---|---|---|
-| Project skills | `.claude/skills/<name>/SKILL.md` | `.agents/skills/<name>/SKILL.md` |
-| Personal skills | `~/.claude/skills/<name>/` | `$HOME/.agents/skills/<name>/` |
-| Other | enterprise, plugin, nested `.claude/skills/` in sub-folders | admin `/etc/codex/skills`, bundled system skills |
-| Search path | working directory up to the repository root | working directory up to the repository root |
+| | Claude Code | Codex | DeepSeek Harness integration in this repository |
+|---|---|---|---|
+| Project skills | `.claude/skills/<name>/SKILL.md` | `.agents/skills/<name>/SKILL.md` | `.dsh/skills/<name>/SKILL.md` |
+| Personal skills | `~/.claude/skills/<name>/` | `$HOME/.agents/skills/<name>/` | `~/.dsh/skills/<name>/` |
+| Invocation | `/skill-name` | `$skill-name`, or `/skills` to pick | `/skill-name` |
+| Other | enterprise, plugin, nested `.claude/skills/` in sub-folders | admin `/etc/codex/skills`, bundled system skills | This repository's harness also searches `.agents/skills/` at a lower project priority |
 
-Hence the house setup: author in `.claude/skills/`, generate the `.agents/skills/`
-copy with `vlsit_skillkit.py mirror`.
+The `.dsh/` locations describe this repository's DeepSeek Harness setup and may change
+with the harness runtime. Author in `.claude/skills/`; `vlsit_skillkit.py mirror`
+creates the `.agents/skills/` and `.dsh/skills/` copies and checks both.
 
 ## Frontmatter
 
@@ -47,19 +48,20 @@ that listing.
 
 ## Invocation
 
-| | Claude Code | Codex |
-|---|---|---|
-| Explicit | `/skill-name` | `$skill-name`, or `/skills` to pick |
-| Implicit | the assistant loads a skill whose description matches the request | same |
+| | Claude Code | Codex | DeepSeek Harness integration in this repository |
+|---|---|---|---|
+| Explicit | `/skill-name` | `$skill-name`, or `/skills` to pick | `/skill-name` |
+| Implicit | The assistant loads a skill whose description matches the request. | The assistant loads a skill whose description matches the request. | Harness discovery follows its configured project paths; this repository keeps `.dsh/skills/` in sync. |
 
-Skill files must not contain either syntax (see R-009); the README of the repository
-documents invocation for users.
+Skill files must not contain tool-specific invocation syntax (see R-009); the README files document invocation for users.
+
+New house-format rules use `### R-001 Title` headings with a normative statement, a Why line and a Check line. Existing VLSIT skills with a domain-specific namespace (for example `OCI-001` or `RHD-001`) may retain their established one-line rule entries; the validator checks their ID uniqueness, normative keyword and in-skill references without imposing the house-format Why/Check structure.
 
 ## Folder names inside a skill
 
 Only `SKILL.md` is special. Codex documentation names the optional folders
 `scripts/`, `reference/` and `assets/`; Claude Code documentation shows
-`reference.md` files. Neither tool requires those names, because supporting files are
+`reference.md` files. These assistants do not require those names, because supporting files are
 found through links in `SKILL.md`. The house format uses `reference/` (singular) and
 `scripts/`, plus `rule.md`.
 

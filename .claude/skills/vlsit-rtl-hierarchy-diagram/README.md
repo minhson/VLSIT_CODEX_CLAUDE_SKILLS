@@ -1,4 +1,4 @@
-# VLSIT RTL Hierarchy Diagram — Claude Code
+# VLSIT RTL Hierarchy Diagram
 
 ## Purpose / Mục đích
 
@@ -37,21 +37,17 @@ Bắt buộc cung cấp đường dẫn thư mục RTL cụ thể. Kết quả m
 
 ## Use / Cách gọi
 
-    /vlsit-rtl-hierarchy-diagram Analyze the RTL in <RTL_SOURCE_DIRECTORY> and create the hierarchy diagram.
+    Claude Code: /vlsit-rtl-hierarchy-diagram Analyze the RTL in <RTL_SOURCE_DIRECTORY> and create the hierarchy diagram.
+    Codex: $vlsit-rtl-hierarchy-diagram Analyze the RTL in <RTL_SOURCE_DIRECTORY> and create the hierarchy diagram.
+    DeepSeek Harness: /vlsit-rtl-hierarchy-diagram Analyze the RTL in <RTL_SOURCE_DIRECTORY> and create the hierarchy diagram.
 
 Instructions: [SKILL.md](SKILL.md)
 
-## Installation options / Các cách cài đặt
+## Install / Cài đặt
 
-1. **Use this repository / Dùng repository này:** Open this repository in Claude Code; its .claude/skills folder is project-scoped and can be shared with the team. / Mở repository này trong Claude Code; skill trong .claude/skills áp dụng cho project và có thể chia sẻ với nhóm.
-2. **Manual project copy / Chép thủ công vào project:** Copy this entire folder to the target project at .claude/skills/vlsit-rtl-hierarchy-diagram. / Chép toàn bộ thư mục này vào .claude/skills/vlsit-rtl-hierarchy-diagram trong project đích.
-3. **Personal installation / Cài cho tài khoản cá nhân:** Copy the folder to $HOME/.claude/skills/vlsit-rtl-hierarchy-diagram to make it available across local projects. / Chép thư mục vào $HOME/.claude/skills/vlsit-rtl-hierarchy-diagram để dùng trong các project cục bộ.
-4. **One-session loading / Nạp cho một phiên:** Start Claude Code with claude --add-dir "<path to this repository>" when working outside this repository. / Khi làm việc ngoài repository này, khởi chạy Claude Code với claude --add-dir "<đường dẫn tới repository>".
-5. **Plugin installation / Cài plugin:** This skill can be installed as a plugin only after it is packaged with a Claude Code plugin manifest and marketplace or loaded plugin directory. This repository is not packaged as a plugin yet. / Chỉ có thể cài skill dạng plugin sau khi đóng gói kèm manifest Claude Code và marketplace hoặc thư mục plugin. Repository này chưa được đóng gói thành plugin.
+Copy the entire skill folder. For project scope, use `<project>/.claude/skills/vlsit-rtl-hierarchy-diagram/` in Claude Code or `<project>/.agents/skills/vlsit-rtl-hierarchy-diagram/` in Codex, or `<project>/.dsh/skills/vlsit-rtl-hierarchy-diagram/` in DeepSeek Harness. For personal scope, use `~/.claude/skills/vlsit-rtl-hierarchy-diagram/` or `~/.agents/skills/vlsit-rtl-hierarchy-diagram/` (some Codex installs use `~/.codex/skills/vlsit-rtl-hierarchy-diagram/`), or `~/.dsh/skills/vlsit-rtl-hierarchy-diagram/` for DeepSeek Harness. / Chép toàn bộ thư mục skill. Với phạm vi project, dùng `<project>/.claude/skills/vlsit-rtl-hierarchy-diagram/` cho Claude Code hoặc `<project>/.agents/skills/vlsit-rtl-hierarchy-diagram/` cho Codex. Với phạm vi tài khoản, dùng `~/.claude/skills/vlsit-rtl-hierarchy-diagram/` hoặc `~/.agents/skills/vlsit-rtl-hierarchy-diagram/` (một số bản Codex dùng `~/.codex/skills/vlsit-rtl-hierarchy-diagram/`).
 
-Invoke with /vlsit-rtl-hierarchy-diagram or describe a matching request. Claude Code may also select the skill automatically. Use /skills to confirm it loaded. See the repository README for Windows examples and plugin details.
-
-Gọi bằng /vlsit-rtl-hierarchy-diagram hoặc mô tả yêu cầu phù hợp để Claude Code tự chọn. Dùng /skills để xác nhận skill đã được nạp. Xem README repository để biết ví dụ Windows và thông tin plugin.
+Windows PowerShell, one-session loading, and GitHub installation examples are in the [repository README](../../../README.md). / Ví dụ PowerShell trên Windows, nạp cho một phiên và cài từ GitHub nằm trong [README chung](../../../README.md).
 
 ## Language convention / Quy định ngôn ngữ
 

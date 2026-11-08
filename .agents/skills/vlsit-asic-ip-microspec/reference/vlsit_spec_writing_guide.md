@@ -2,6 +2,8 @@
 
 Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-013 to R-017, R-024, R-025). The template is `templates/VLSIT_ASIC_IP_Design_Specification_Template.md`; follow its section titles exactly.
 
+The specification source is Markdown. Write inline equations in TeX as `$...$` and display equations as `$$...$$`; keep each display equation outside Markdown tables. Link figures by relative Markdown paths under the specification's `figures/` directory. See [vlsit_document_formats.md](vlsit_document_formats.md) for examples and optional DOCX/PDF export.
+
 | Section | What to put there | Typical questions to the user |
 |---|---|---|
 | 1 Purpose, scope | Problem, boundary, included and excluded functions, SoC context, feature list, and the real-world applications of every feature in 1.4 (R-041) | Which function must it do and not do? Which SoC and workload? Which real product uses each feature and what number does it fix? |
@@ -14,7 +16,7 @@ Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-013 to
 | 8 Parameters | Parameter table, VLSIT comment lines, configurations, illegal values | Which values may change, and which are illegal? |
 | 9 Data representation | Widths, endianness, encodings, invalid behavior | Which encodings and overflow rules? |
 | 10 Functional behavior | States, operations, the waveform plan confirmed by the user (R-024), cycle tables, throughput, memories | What happens cycle by cycle, with backpressure? Which waveforms are the minimum? |
-| 11 Registers | Pointer to the CSR workbook, generator and clocks (11.1), software sequences (11.2), connection of the fields to the design (11.3), APB access behavior of the CSR (11.4) | Which settings, actions, state and events? (fill the workbook; question bank, Registers) |
+| 11 Registers | Pointer to the CSR workbook, generator and clocks (11.1), programming/use flowchart and step table (11.2, R-043), connection of the fields to the design (11.3), APB access behavior of the CSR (11.4) | Which settings, actions, state and events? What is the mandatory sequence, and which optional paths can software select? (fill the workbook; question bank, Registers) |
 | 12 Errors | Error table, precedence, recovery, waveforms | What are the errors and how does the system recover? |
 | 13 PPA | Hard requirements and goals with conditions | Frequency, area, power targets and corners? |
 | 14 RTL contract | Coding baseline, hierarchy, synthesis assumptions | Hierarchy and synthesis setup? |
@@ -25,6 +27,12 @@ Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-013 to
 | 19 Traceability | Every REQ to module, test, method, configuration | Generated from sections 3 and 15 |
 | 20 Assumptions, decisions | Assumptions, dependencies, decisions, open items, TBD with impact | Which points remain open? |
 | 21 Glossary, 22 References | Terms and the sources actually used | Not applicable |
+
+## Programming and use flow, section 11.2 (rule R-043)
+
+Include at least one Mermaid flowchart for the basic software programming and use of the IP. Do not mark 11.2 Not required, even when the IP has no software-visible CSR; in that case show its normal interface-use sequence and explain why the CSR column is N/A. Show the normal path and every optional or alternative mode the design supports. Label each node with a unique ID such as `S01` and `[M]` or `[O]`. A decision node and its branch labels state when an optional path is taken. `M` means the step is required on the shown operating path; `O` means it is conditional and may be skipped.
+
+Add a table directly under the flowchart with the exact columns `No.`, `Step`, `Option (M/O)`, `Interface`, `CSR`, and `Description`. Each node must map to one row, and the ID and M/O value must match. In `Interface`, name the actual master-facing protocol and action (for example APB write/read, status polling, interrupt acknowledge, or data transfer). In `CSR`, use the exact workbook register and field and state the software write/read/poll value or action. If there is no software-visible CSR, write `N/A` and explain why, while still identifying the actual IP usage interface. In `Description`, explain why the action is performed and the function it serves. Cross-check the sequence against sections 6 and 10 and the CSR workbook; ask the user about unresolved ordering or behavior rather than inventing it.
 
 ## Real-world applications of the features, section 1.4 (rule R-041)
 
