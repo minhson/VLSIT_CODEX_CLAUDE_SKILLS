@@ -1,6 +1,6 @@
 # APB-CSR-Generator: what the specification must know
 
-Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-016, R-030, R-031). The canonical repository `https://github.com/nguyenquanicd/APB-CSR-Generator` is at v3.3; the embedded VLSIT copy is v2.7. Both support the APB register-event sideband and `wo` hardware-clear behavior. The generator's specification is `spec/CSR_Generator_Specification.md` in that repository. The RTL skill chooses the newest discovered generator unless a path is supplied explicitly; this document describes the APB4 behavior used by the common RTL designs.
+Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-016, R-030, R-031, R-049 to R-050, R-073 to R-087). The canonical repository `https://github.com/nguyenquanicd/APB-CSR-Generator` is at v3.3; the embedded VLSIT copy is v2.7. Both support the APB register-event sideband and `wo` hardware-clear behavior. The generator's specification is `spec/CSR_Generator_Specification.md` in that repository. The RTL skill chooses the newest discovered generator unless a path is supplied explicitly; this document describes the APB4 behavior used by the common RTL designs.
 
 ## What it builds
 
@@ -77,7 +77,7 @@ All register outputs `o_*` are flip-flop outputs in the register clock domain (`
 
 Ask, for each function of the IP, in this order: (1) what software must configure (`rw`); (1a) which software-written secrets must read as zero (`wo`); (2) what software must start or stop and the hardware finishes (`rwi`); (3) what software must read as live state (`ro`); (4) what software must see as a sticky event, error or interrupt cause and clear (`w1c`; `r2c` when a read is the acknowledge, `w2c` when any write clears it); (5) the reset value of every field and whether software or hardware owns the reset state; (6) whether the register clock differs from the APB clock (`Asynchronous`); (6a) which registers repeat per channel or per instance (`FIXED` copies, or a `PARAMETERIZED` bank whose count is an elaboration parameter); (7) the software sequences (initialisation, start, completion, error clearing, safe reconfiguration). Put a status that is a counter or a wide bus in a `ro` register that is sampled when software reads; ask whether it must be coherent (a snapshot or a latch is then a design function, not a CSR function).
 
-## Register conventions checked by `generate` (rule R-043)
+## Register conventions checked by `generate` (rules R-043, R-086 and R-087)
 
 The specification skill (rules R-032 to R-040) writes the workbook with these conventions, and `vlsit_csr_generate.py generate` prints a `WARN R-043` line for each deviation (and stops with `--strict-names`):
 

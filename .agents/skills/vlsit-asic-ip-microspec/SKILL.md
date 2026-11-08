@@ -38,11 +38,11 @@ Then run `<python> "<skill folder>\scripts\vlsit_spec_tool.py" env`. It reports 
 
 ### 3. Fix the naming rule
 
-Before any name is written, ask the user which naming rule the specification follows (rule R-026), with the question format of R-003: A, the default naming rule of the skill `vlsit-rtl-generator` (section 2 of `VLSIT_RTL_Design_Rule.md` v2, recommended: the RTL generator checks the same rule); B, the user's own rule file or document (ask for the path and read it completely); C, other. If the user gives no rule, use A. Record the rule, its path and its version in section 2 of the specification. Apply it to every module, port, signal, parameter, state and instance name, in the text, the tables, the diagrams and the waveforms; if the user types a name that the rule does not allow, write the allowed form and tell the user (for example `i_sw_reset_n` becomes `i_rst_n_sw` under the default rule: NAM-08 writes "rst", and an active-low reset input is `i_rst_n_<domain>`).
+Before any name is written, ask the user which naming rule the specification follows (R-026), using the question format of R-003: A, the default naming rule of `vlsit-rtl-generator` section 2, `VLSIT_RTL_Design_Rule.md` v2; B, the user's own rule file or document (ask for its path and read it completely); C, other. If the user gives no rule, use A and record the rule, path and version in section 2 (R-054). Apply the selected rule to every module, port, signal, parameter, state and instance name in the text, tables, diagrams and waveforms (R-055); if the user supplies a forbidden name, use the allowed form and explain the clause (R-056).
 
 ### 4. Understand the IP
 
-Ask the user what the IP does, its protocols, configurations, performance goals and constraints, and the real-world application of each main feature (rule R-041: which product or system uses it, what number the application fixes, what fails without it; for a PWM generator, for example, the dead-time feature serves the three-phase inverter of a brushless motor drive). Use the question style of [reference/vlsit_question_bank.md](reference/vlsit_question_bank.md): at most four questions per message, each with options, explanations, an example and an open choice (rule R-003). Record every "you decide" as an assumption (rule R-004).
+Ask the user what the IP does, its protocols, configurations, performance goals and constraints, and the real-world application of each main feature (R-041, R-046 to R-048): which concrete product or system uses it, what measurable need it has, and what fails without it. Use the question style of [reference/vlsit_question_bank.md](reference/vlsit_question_bank.md): at most four questions per message, each with options, explanations, an example and an open choice (R-003). Record every "you decide" as an assumption (R-004).
 
 ### 5. Ground the protocols
 
@@ -58,7 +58,7 @@ Walk through the template sections with the user in groups, using [reference/vls
 
 For section 6.2, describe every input and output with its function, its clock domain and its signal type: level, pulse (with the width in cycles), clock, reset, data (with the qualifier that makes it valid) or static (rule R-025). Ask the user about each port whose type or clock domain is not clear; the signal-type questions are in the question bank.
 
-For section 11.2, agree on the ordinary programming/use sequence and any optional mode paths. The flowchart and matching step table are required by rule R-043 even when the IP has no CSR; in that case identify the non-CSR interface and explain why the CSR column is N/A. Do not mark a step optional unless its condition and alternate path are clear.
+For section 11.2, agree on the ordinary programming/use sequence and any optional mode paths. The flowchart and matching step table are required by R-043 and R-060 to R-065 even when the IP has no CSR; in that case identify the non-CSR interface and explain why the CSR column is N/A. Do not mark a step optional unless its condition and alternate path are clear.
 
 ### 8. Write the specification
 
@@ -72,7 +72,7 @@ Keep this Markdown file as the authoritative specification. Write inline equatio
 
 ### 9. Registers
 
-If the IP has software-visible registers, the register RTL will be built by APB-CSR-Generator from the workbook (the RTL skill runs it), so plan the registers for what that generator can build. Read [reference/vlsit_csr_generator.md](reference/vlsit_csr_generator.md) first. Ask the questions of the question bank (Registers, rule R-030): for each function of the IP the settings (`rw`), values that software writes but must not read back (`wo`), the hardware clear source for every `wo` field (including zeroize), the actions that software starts and hardware finishes (`rwi`), the live state (`ro`), the sticky events (`w1c`), the reset values, the software sequences and whether the register clock differs from the APB clock. Describe the answer in JSON, validate it, fill the workbook, and print the module ports for the specification; section 11 points to the workbook and states the connection and the APB behavior (rules R-016, R-031). Details in [reference/vlsit_csr_workbook.md](reference/vlsit_csr_workbook.md).
+If the IP has software-visible registers, the register RTL will be built by APB-CSR-Generator from the workbook (the RTL skill runs it), so plan the registers for what that generator can build. Read [reference/vlsit_csr_generator.md](reference/vlsit_csr_generator.md) first. Ask the question-bank items (Registers, R-030): for each function, identify `rw`, `wo`, `rwi`, `ro` and `w1c` fields, reset values, software sequences and whether the register clock differs from APB. Describe the answer in JSON, validate it, fill the workbook and print module ports for the specification; section 11 records the workbook, the generator's behavior (R-031), and any unsupported behavior with the user's decision (R-049 to R-050). Details in [reference/vlsit_csr_workbook.md](reference/vlsit_csr_workbook.md).
 
 ```powershell
 <python> "<skill folder>\scripts\vlsit_csr_tool.py" validate regs.json
@@ -80,13 +80,13 @@ If the IP has software-visible registers, the register RTL will be built by APB-
 <python> "<skill folder>\scripts\vlsit_csr_tool.py" ports regs.json
 ```
 
-Use the module name of the project naming rule (rule R-026) in the JSON. Ask the user for the design prefix of the register names (question bank 25) and write every register and field name and description as rules R-032 to R-034 and R-037 require: `<prefix>_<function>` register names, fields of at most 20 characters, a one-line register description and a field description with `Usage: `, a `Values:` block of hexadecimal value lines (rule R-037), `Unit: ` and `Limits: ` (question 26); `validate` checks these. Fill sections 11.1, 11.3 and 11.4 of the template from the `ports` output and the generator reference; ask the user for the source of `i_protect_en` and `i_slverr_en`, for the connection of each field to the design, and for the decision on every limit of the generator that the IP meets (rule R-031). Then write the 11.2 Mermaid programming/use flowchart and its six-column step table from the agreed sequence (rule R-043); if the IP has no software-visible CSR, state why in the CSR column and document its actual usage interface.
+Use the module name required by the selected project naming rule (R-026, R-054 to R-056) in the JSON. Ask for the design prefix of register names (question bank 25) and follow R-032 to R-034, R-037 and R-051 for naming and field descriptions: `<prefix>_<function>` registers, fields of at most 20 characters, a one-line register description and a field description with `Usage: `, a hexadecimal `Values:` block, `Unit: ` and `Limits: `; `validate` checks these. Fill sections 11.1, 11.3 and 11.4 from the `ports` output and generator reference; ask the user about `i_protect_en`, `i_slverr_en`, field connections and each applicable generator limit (R-031, R-049 and R-050). Then write the 11.2 Mermaid programming/use flowchart and six-column step table under R-043 and R-060 to R-065; if there is no software-visible CSR, state why the CSR column is N/A and document the actual usage interface.
 
 ### 10. Waveform plan, block diagram and waveforms
 
 1. **Agree the waveform plan first (rule R-024).** From sections 6.3 and 10.2 build a list with an ID (WF-001, ...), the function or operation, the scenario (success, error or corner case) and the signals shown. It must cover every operation of 10.2, the success and the error case of every interface, and the special cases of this IP (reset, backpressure, back-to-back, boundary, timeout). Show the list to the user and ask which waveforms are the minimum, with the question format of R-003: for example A, the proposed list (recommended); B, only one success and one error per interface; C, the proposed list plus extra corner cases; D, the user's own list. Record the answer in the table of section 10.3 with the date; a waveform the user declines gets a dated Not required line in its Figure cell. Draw nothing before the answer.
 2. Draw the block diagram with draw.io (rules R-018 to R-020, R-027 to R-029): fill a diagram spec JSON from sections 5, 6 and 14.2 (`vlsit_spec_diagram.py template` or `from-spec`), run `vlsit_spec_diagram.py check`, `build` (draw.io, library validation, geometry check, SVG) and `insert` (section 5.2); the rules are in [reference/drawio/vlsit_diagram_rules.md](reference/drawio/vlsit_diagram_rules.md). LaTeX (`vlsit_block_diagram.py`) is the fallback.
-3. Describe each waveform of the plan as WaveJSON and render it to SVG (rule R-017); link the image in the Figure cell of the plan. Formats and commands are in [reference/vlsit_diagrams_and_waveforms.md](reference/vlsit_diagrams_and_waveforms.md). Waveforms need no LaTeX; the block diagram of step 10.2 is draw.io by default (rules R-018 to R-020; the library and reference diagram are in [reference/drawio/](reference/drawio/README.md)).
+3. Describe each waveform of the plan as WaveJSON and render it to SVG (R-017 and R-057 to R-058); link the image in the Figure cell of the plan. Formats and commands are in [reference/vlsit_diagrams_and_waveforms.md](reference/vlsit_diagrams_and_waveforms.md). Waveforms need no LaTeX; the block diagram of step 10.2 is draw.io by default (rules R-018 to R-020; the library and reference diagram are in [reference/drawio/](reference/drawio/README.md)).
 
 ### 11. Check and review
 
@@ -100,7 +100,7 @@ Generate DOCX and/or PDF from the Markdown source with `scripts/vlsit_spec_expor
 
 ### 13. Verify against the rules
 
-Check the result against every rule ID in [rule.md](rule.md): R-013, R-014, R-015, R-016, R-019, R-020, R-024, R-025, R-026, R-031, R-041, R-043, R-044 and R-045 by the script outputs where supported and otherwise by inspection of the conversation and files. Report which rules were verified and how, and say plainly what could not be verified.
+Check the result against every rule ID in [rule.md](rule.md), using script outputs where supported and otherwise inspecting the conversation and files. Include every applicable rule from R-046 to R-065 in this review. Report which rules were verified and how, and say plainly what could not be verified.
 
 ## Reference
 
@@ -112,14 +112,14 @@ Read a file only when the step needs it.
 | [reference/vlsit_protocol_catalog.md](reference/vlsit_protocol_catalog.md) | Step 5: which protocols and revisions to look for, where to get them, licences |
 | [reference/md_doc/vlsit_INDEX.md](reference/md_doc/vlsit_INDEX.md) | Step 5: the converted standards available now |
 | [reference/vlsit_ip_reference_criteria.md](reference/vlsit_ip_reference_criteria.md) | Step 6: evidence filter and research log format |
-| [reference/vlsit_spec_writing_guide.md](reference/vlsit_spec_writing_guide.md) | Steps 7 and 8: what each template section must contain, including the required programming/use flow in 11.2 (R-043) |
+| [reference/vlsit_spec_writing_guide.md](reference/vlsit_spec_writing_guide.md) | Steps 7 and 8: what each template section must contain, including applications (R-041, R-046 to R-048) and the programming/use flow in 11.2 (R-043, R-060 to R-065) |
 | [reference/vlsit_document_formats.md](reference/vlsit_document_formats.md) | Steps 8 and 12: Markdown/TeX syntax, Pandoc DOCX/PDF export, PDF engine requirements and optional Word reference styles |
 | [reference/vlsit_csr_workbook.md](reference/vlsit_csr_workbook.md) | Step 9: workbook layout and JSON format |
 | [reference/vlsit_csr_generator.md](reference/vlsit_csr_generator.md) | Step 9: what APB-CSR-Generator builds, its limits, field types, APB behavior, what section 11 must state |
 | [reference/vlsit_diagrams_and_waveforms.md](reference/vlsit_diagrams_and_waveforms.md) | Step 10: diagram and waveform formats |
 | [reference/drawio/README.md](reference/drawio/README.md) | Step 10 with draw.io: the library and the reference diagram |
 | [reference/templates/VLSIT_ASIC_IP_Design_Specification_Template.md](reference/templates/VLSIT_ASIC_IP_Design_Specification_Template.md) | Step 8: the template (copied by `vlsit_spec_tool.py init`) |
-| [reference/templates/VLSIT_RTL_Design_Rule.md](reference/templates/VLSIT_RTL_Design_Rule.md) | Steps 3, 7 and 8: naming and coding rules the specification must follow (the default naming rule, R-026) |
+| [reference/templates/VLSIT_RTL_Design_Rule.md](reference/templates/VLSIT_RTL_Design_Rule.md) | Steps 3, 7 and 8: naming and coding rules the specification must follow (R-026 and R-054 to R-056) |
 | [reference/templates/README.md](reference/templates/README.md) | Step 8: the original README of the spec_template folder (the three template files here are exact copies; the draw.io library is in `reference/drawio/`) |
 | [reference/templates/VLSIT_CSR_Specification_Template.xlsx](reference/templates/VLSIT_CSR_Specification_Template.xlsx) | Step 9: the workbook template (copied by `vlsit_csr_tool.py fill`) |
 | [reference/org_doc/README.md](reference/org_doc/README.md) | Step 5: where original documents are kept and why |

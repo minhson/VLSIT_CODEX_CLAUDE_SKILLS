@@ -15,7 +15,7 @@ Standard library only, Windows and Linux.
 
   vlsit_reuse_scan.py scan SPEC.md [--lib DIR] [--min-score N]
       Rank the modules whose name or header description share keywords with the specification (title, purpose,
-      requirements, glossary). The result is a list of CANDIDATES for the question of rule R-037; it is a keyword
+requirements, glossary). The result is a list of CANDIDATES for the designer questions of rule R-049; it is a keyword
       match, so the person or the agent judges whether the function is really equivalent (ports, parameters,
       behavior) before the designer is asked.
 
@@ -169,7 +169,7 @@ def main():
         print("          keywords: %s" % ", ".join(hit[:12]))
         print("          parameters: %s" % (", ".join(m["params"][:6]) or "none"))
         print("          %s" % first_sentence(m["desc"]))
-    print("RESULT: %d CANDIDATE(S) (%d shown): confirm that each is equivalent, then ask the designer (rule R-037)"
+    print("RESULT: %d CANDIDATE(S) (%d shown): confirm that each is equivalent, then ask the designer (rule R-049)"
           % (len(ranked), min(len(ranked), args.top)))
 
 

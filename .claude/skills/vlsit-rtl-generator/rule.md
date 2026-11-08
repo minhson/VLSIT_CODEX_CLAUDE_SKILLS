@@ -46,14 +46,79 @@ MUST take the project name and the user name for the file header from the design
 - Check: manual - the Project and Author lines of the headers match the designer's answer.
 
 ### R-037 Offer the library before generating an equivalent function
-MUST run `vlsit_reuse_scan.py scan` on the specification against the reusable library `common_rtl` before writing RTL for any function of it, judge from the ports, parameters and header of each candidate whether it implements an equivalent function, and ask the designer for each equivalent module or IP, in the question format of R-006, whether to reuse it by instantiation instead of generating new RTL. The question MUST explain the advantages of reuse: the library code already passed the rule check, lint and, where its folder says so, simulation, so it needs no new review; names, reset style and clock-domain-crossing structure stay uniform across designs; and the AI model spends its effort, and the designer's review time, on the functions that do not exist yet, which makes those functions more likely to be right. Reuse is the recommended option. MUST NOT generate a new module for such a function unless the designer says so; when the designer chooses reuse, MUST instantiate the library module (add its file to `filelist.f`, never copy or edit it); when the library is not found, MUST ask the designer for its path.
+MUST run `vlsit_reuse_scan.py scan` against `common_rtl` before writing RTL for any specified function and judge from each candidate's ports, parameters and header whether it provides an equivalent function.
 - Why: a function that the library already provides and that was checked once is safer than a new copy written and checked again, and every module that is reused leaves more of the generation effort and of the review for the new functions, where an error is still possible.
-- Check: manual - the output of `vlsit_reuse_scan.py scan` and the designer's answer for each equivalent candidate are in the run before the first RTL line of that function; `filelist.f` lists the reused library files and the report names each reuse decision.
+- Check: manual - the scan output is present before the first RTL line of each function and equivalent candidates are identified.
+
+### R-049 Ask about equivalent library modules
+MUST ask the designer, in the question format of R-006, whether to instantiate each equivalent library module instead of generating new RTL.
+- Why: reuse is a design choice that belongs to the designer and can affect review effort and implementation consistency.
+- Check: manual - each equivalent candidate has a recorded question and answer before its RTL is written.
+
+### R-050 Explain and recommend reuse
+MUST explain that a reusable module has already passed the checks documented for it, keeps names/reset/clock-crossing structure uniform, and frees design and review effort for new functions; recommend reuse when the candidate is equivalent.
+- Why: the designer needs the trade-offs behind the choice, not only a module name.
+- Check: manual - each reuse question includes those advantages and the recommendation.
+
+### R-051 Do not duplicate an approved reusable function
+MUST defer generating a new module for an equivalent library function until the designer explicitly declines reuse.
+- Why: duplicate implementations drift and repeat verification work.
+- Check: manual - an equivalent function is either instantiated or has the designer's decision to generate a new module.
+
+### R-052 Instantiate approved reuse
+MUST instantiate the selected library module and list its source in `filelist.f`; never copy or edit the library source.
+- Why: using the reviewed source preserves its verification evidence and prevents an untracked fork.
+- Check: manual - the design instantiates the library module and the filelist names the original source.
+
+### R-053 Locate a missing library
+MUST ask the designer for the path when the reusable library cannot be found.
+- Why: guessing a library location can select stale or unrelated RTL.
+- Check: manual - the request for the library path appears before generation continues.
 
 ### R-046 Implementation decisions fed back into the specification
-MUST record the question, the options, the answer and the reason whenever the designer answers a question of this run (R-005, R-006, R-037) that chooses how a function or feature is implemented (micro-architecture option, latency, storage, algorithm, behavior of a corner case, reuse or not), and MUST update the specification in the same run before the next module is written, with: (1) a decision row DEC-nnn in section 20 (next free number, date, requirement IDs, status Confirmed by the designer); (2) the description of the function in its functional section (6.3, 9, 10.x or 12), rewritten so that a reader can implement and test it: purpose, rule or formula, behavior in each case, and at least one numbered example with concrete values; (3) a figure that makes it easy to understand: a waveform (WaveJSON and SVG, a row WF-nnn in the waveform plan of 10.3, signal names as in the RTL) for every behavior that depends on cycle timing, handshake, order or latency, and a block or state diagram for a structure or a state machine; (4) the requirement and test impact: the REQ rows of sections 3 and 19, and a test row in section 15 whose expected result is the example. The specification MUST say what the RTL does, the RTL header or comment MUST name the DEC ID, and the specification MUST be edited only after the designer agreed at the start of the run to edit it in place (R-002); otherwise the updated copy goes to the output folder (R-018) and the original stays unchanged.
+MUST record the question, options, answer and reason whenever a designer decision to an in-run question (R-005, R-006 or R-037) chooses how a function or feature is implemented, including architecture, latency, storage, algorithm, corner-case behavior or reuse.
 - Why: an answer that lives only in the chat is lost at the next review, and a later reader, a verification engineer or the next generation run would not know why the RTL behaves that way or what to test; a description with an example and a waveform turns the decision into a testable requirement.
-- Check: manual - for each answered implementation question the specification has the DEC row, the description with an example, the figure or waveform and the test row, the DEC ID appears in the RTL, and `vlsit_spec_tool.py check` of the skill vlsit-asic-ip-microspec (when installed) reports no new error; the report lists each DEC added and the figures made.
+- Check: manual - every implementation decision has its question, options, answer and reason recorded.
+
+### R-054 Update the specification before continuing RTL
+MUST save the design-record update in the same run before writing the next RTL module after an implementation decision.
+- Why: the implementation decision must become a reviewed design input before it spreads into more RTL.
+- Check: manual - the specification update precedes the next module written after the decision.
+
+### R-055 Record a decision row
+MUST add a section 20 decision row with the next `DEC-nnn` ID, date, requirement IDs and status `Confirmed by the designer` for each approved implementation decision.
+- Why: a stable decision ID makes the approved choice traceable across the specification and RTL.
+- Check: manual - each implementation decision has the required section 20 row.
+
+### R-056 Specify the decided behavior
+MUST rewrite the relevant functional section (6.3, 9, 10.x or 12) with the purpose, rule or formula, behavior in each case, and at least one numbered example with concrete values.
+- Why: a decision record alone may not explain enough behavior to implement and test the feature.
+- Check: manual - each updated functional section contains the listed details and a concrete numbered example.
+
+### R-057 Add a decision figure
+MUST add a WaveJSON and SVG waveform with a `WF-nnn` plan row for each decision behavior depending on cycle timing, handshake, order or latency; add a block or state diagram for a structure or state machine.
+- Why: a visual contract makes timing and architecture decisions easier to implement and verify.
+- Check: manual - each timing-dependent decision has its waveform and plan row, and each structural/state-machine decision has a diagram.
+
+### R-058 Update requirements and tests
+MUST update the affected REQ rows in sections 3 and 19 and add a section 15 test row whose expected result is the numbered example.
+- Why: requirements and tests must reflect the approved implementation choice.
+- Check: manual - the decision maps to updated requirements and a test row using the example's expected result.
+
+### R-059 State the implementation behavior
+MUST document the approved implementation's externally observable behavior in the design specification instead of leaving it only in the conversation.
+- Why: the specification must remain the authoritative description of the design.
+- Check: manual - the updated specification describes the RTL behavior for each approved decision.
+
+### R-060 Trace the decision in RTL
+MUST name the relevant `DEC-nnn` ID in the RTL header or comment.
+- Why: the RTL reviewer needs to find the approved design rationale from the implementation.
+- Check: manual - each affected RTL module header or comment cites its decision ID.
+
+### R-061 Preserve the original specification
+MUST edit the original specification in place only when the designer agreed at the start of the run; otherwise save the updated copy in the output folder under R-018 and leave the original unchanged.
+- Why: an unapproved in-place edit can destroy the designer's source of record.
+- Check: manual - the chat shows prior approval for in-place edits, or the output folder contains the updated copy and the source hash is unchanged.
 
 ## Writing and changing RTL
 
@@ -78,14 +143,29 @@ MUST write a reason in the module header for every deviation from a SHOULD rule 
 - Check: manual - each deviation named in the report has its reason in the header of the file.
 
 ### R-028 Cell instance names
-MUST name every instance of a technology library cell or memory macro (an instance of a module that is not an `m_<function>` design module) `u_dont_touch_<function>`, in lowercase with `<function>` naming what the cell does and the whole name at most 30 characters, and MUST instantiate such cells only in the dedicated wrapper modules.
+MUST name every instance of a technology library cell or memory macro (a module other than an `m_<function>` design module) `u_dont_touch_<function>`, in lowercase, with `<function>` naming the cell function and the whole instance name at most 30 characters.
 - Why: the implementation flow applies `dont_touch` to these cells by the name pattern, and one fixed prefix keeps the pattern simple and the cells easy to find in a netlist (rule file NAM-09, CLK-02, HIE-07).
 - Check: `vlsit_rtl_check.py check` reports no NAM-09 finding; manual - the instances of design modules keep the form `u_<function>`.
 
+### R-062 Technology-cell wrappers
+MUST instantiate technology library cells and memory macros only inside dedicated wrapper modules.
+- Why: a wrapper isolates technology-specific structure from functional RTL.
+- Check: manual - each technology-cell or memory-macro instance is inside its dedicated wrapper.
+
 ### R-029 Branch layout
-MUST write the statement of an `if`, `else if` or `else` branch that has no `begin` on its own line, indented two spaces more than the `if` or `else`, and MUST NOT put it after the condition or after `else` on the same line, nor align the statements of different branches to a common column; with `begin`, the `begin` stays at the end of the `if` or `else` line.
+MUST place the single statement of an `if`, `else if` or `else` branch that has no `begin` on its own line, indented two spaces more than the branch header.
 - Why: one statement per line with a fixed indent keeps the code aligned, makes each branch easy to read and to compare in a diff, and avoids the ragged columns that appear when single-line branches are aligned by hand (rule file FIL-04).
 - Check: `vlsit_rtl_check.py check` reports no FIL-04 finding.
+
+### R-064 Branch indentation
+MUST NOT align statements from different branches to a shared column when their branch headers have different indentation.
+- Why: branch-relative indentation keeps nested control flow readable.
+- Check: `vlsit_rtl_check.py check` reports no FIL-04 branch-alignment finding.
+
+### R-065 Begin placement
+MUST place the opening `begin` token on the same line as its `if`, `else if` or `else` header when the branch uses a block.
+- Why: a stable header format makes the block boundary easy to scan.
+- Check: `vlsit_rtl_check.py check` reports no FIL-04 finding for block branch headers.
 
 ### R-030 Port list alignment
 MUST write the ports of a module one per line in four aligned columns, direction keyword, type, width, and name, each column starting at the same position for every port and as narrow as its longest entry plus one space, with a blank width field for a port without a width.
@@ -93,19 +173,49 @@ MUST write the ports of a module one per line in four aligned columns, direction
 - Check: `vlsit_rtl_check.py check` reports no FIL-05 finding.
 
 ### R-031 Port groups by function
-MUST declare the ports in functional groups, with the inputs and the outputs of one function together, a comment line that names each group, one blank line between groups, and the clock and reset group first, and MUST NOT list all inputs before all outputs.
+MUST declare ports in functional groups, keeping each function's inputs and outputs together, naming each group in a comment, separating groups with one blank line, and placing the clock and reset group first.
 - Why: the ports of one interface, protocol or memory port are read together, so grouping by function shows the structure of the module; this replaces the earlier grouping by direction (rule file FIL-06, HIE-03).
-- Check: `vlsit_rtl_check.py check` reports no FIL-06 finding; manual - each group holds the ports of one function.
+- Check: `vlsit_rtl_check.py check` reports no FIL-06 finding; manual - each group holds one function's inputs and outputs.
+
+### R-066 Port ordering by function
+MUST NOT list all module inputs before all module outputs.
+- Why: direction-only grouping hides which ports form an interface or function.
+- Check: `vlsit_rtl_check.py check` reports no FIL-06 finding; manual - ports are ordered by function.
 
 ### R-032 Cell model VLSIT_CELL_<function>
-MUST name a module that models a basic technology cell `VLSIT_CELL_<FUNCTION>` in uppercase (for example `VLSIT_CELL_AND2`, `VLSIT_CELL_DFF_RN`), write it as one module per file in the shared library folder `common_rtl/000_Common/rtl_cells`, and give its ports the usual pin names of a library cell (`A`, `B`, `I0`, `S`, `Z`, `ZN`, `CK`, `D`, `Q`, `RN`, `SN`, `E`, `SE`, `SI`, `TE`) instead of the `i_`, `o_` names. The header MUST state that the model is synthesizable RTL and that a real design uses the cell of the synthesis library, not this model. All other rules apply to the model (header, layout, `reg_` state, `p_ff_` label, no delay, no `initial`); only the module name, the pin names, the parameter names (a library macro has parameters such as `ADDR_W`) and the names of the internal nets of the model are exempt from the naming table, and a latch (`always_latch`) is accepted only in a cell model of a latch or a clock gate.
-- Why: the model is a stand-in for a library cell, so it keeps the cell name pattern and the pin names that the library and the netlist use, which makes it easy to swap the model for the real cell; the header tells the reader not to rely on the model in the implementation flow.
-- Check: `vlsit_rtl_check.py check` prints one `WARN R-032` per cell file with the reason that the naming was not checked, reports no NAM-TBL or SEQ-01 finding for the pin names, and gives an ERROR R-032 when the module name is not `VLSIT_CELL_<FUNCTION>` or the header lacks the two statements; manual - the report lists the R-032 WARN lines.
+MUST name a basic technology-cell model `VLSIT_CELL_<FUNCTION>` in uppercase (for example `VLSIT_CELL_AND2` or `VLSIT_CELL_DFF_RN`) and place it as one module per file in `common_rtl/000_Common/rtl_cells`.
+- Why: the model is a stand-in for a library cell, so the module name and location make it easy to identify and swap for the real cell.
+- Check: `vlsit_rtl_check.py check` reports an ERROR R-032 for an invalid cell model name; manual - every cell module is in the shared library folder and each file has one module.
+
+### R-068 Cell-model pin names
+MUST give a technology-cell model the usual library pin names (`A`, `B`, `I0`, `S`, `Z`, `ZN`, `CK`, `D`, `Q`, `RN`, `SN`, `E`, `SE`, `SI`, `TE`) instead of `i_` and `o_` names.
+- Why: library pin names make the model swappable with the implementation cell.
+- Check: manual - every cell-model port uses a pin in the allowed list; the report explains the `WARN R-068` notice that ordinary naming checks are skipped.
+
+### R-069 Cell-model header
+MUST state in each cell-model header that the model is synthesizable RTL and that a real design uses the synthesis-library cell instead of this model.
+- Why: the header prevents the simulation or teaching model from being mistaken for the implementation cell.
+- Check: `vlsit_rtl_check.py check` reports no missing-header ERROR R-069.
+
+### R-070 Other rules for cell models
+MUST apply all other RTL rules to cell models, including header, layout, `reg_` state, `p_ff_` labels, and no delay or `initial`; only module name, library pin names, library-macro parameter names, and internal-net names are exempt from the naming table. A latch is accepted only in a latch or clock-gate cell model.
+- Why: cell models need the same predictable RTL structure while retaining the library's interface names.
+- Check: `vlsit_rtl_check.py check` reports no rule finding outside the stated naming exemptions; manual - any `always_latch` model is a latch or clock-gate cell.
 
 ### R-035 No redundant declarations
-MUST declare a one-bit port, signal or enum base type without a range (`logic w_x`, `input wire i_x`, `typedef enum logic {...}`), never with a one-bit range such as `[0:0]`, and MUST select one bit with `[i]`, never with `[i:i]`; and MUST NOT declare an internal signal, localparam or type that nothing in the module uses. Ports and parameters are part of the interface and are exempt. A one-bit signal can be connected to a vector port whose width is 1 (for example `.o_data (w_x)` to `[W-1:0]` with W = 1), so no `[0:0]` wrapper is needed for it.
-- Why: a range that spans one bit and a declaration that nothing uses add noise, hide the real interface and cause lint warnings that a reviewer must read; the plain form says the same in fewer words (rule file TYP-06, P30, which this rule enforces).
-- Check: `vlsit_rtl_check.py check` reports no R-035 finding; manual - a signal that is assigned but never read is a lint finding handled under R-013.
+MUST declare every one-bit port, signal or enum base type without a range, for example `logic w_x`, `input wire i_x` or `typedef enum logic {...}`; a one-bit signal may connect directly to a width-one vector port.
+- Why: a numeric range that spans one bit adds noise and hides the signal's actual width; the plain declaration says the same in fewer words (rule file TYP-06, P30).
+- Check: `vlsit_rtl_check.py check` reports no R-035 one-bit declaration finding.
+
+### R-071 Single-bit selection
+MUST select one bit with `[i]`, never `[i:i]`.
+- Why: a single index expresses a bit-select directly without introducing a redundant range.
+- Check: `vlsit_rtl_check.py check` reports no R-071 one-bit select finding.
+
+### R-072 No unused internal declarations
+MUST NOT declare an internal signal, localparam or type that nothing in the module uses; ports and parameters are exempt.
+- Why: unused declarations obscure the implemented logic and can hide mistakes.
+- Check: `vlsit_rtl_check.py check` reports no unused internal declaration; manual - an assigned but unread signal is handled as a lint finding under R-013.
 
 ### R-036 FSM current state in its own always_ff
 MUST assign the current-state register of an FSM (`reg_fsm_<function>_current_state`) in an `always_ff` that holds that register only: its reset value and its update from the next state, and no other signal, so that every other flip-flop of the module (output registers, counters, flags, handshake bits) is in another `always_ff`; each FSM has its own such block.
@@ -168,29 +278,104 @@ endcase
 ## CSR block
 
 ### R-039 CSR block from the generator
-MUST build every register block (APB slave with control and status registers) from the CSR workbook named in section 11 of the specification by running `vlsit_csr_generate.py generate` with the APB-CSR-Generator (found by `vlsit_csr_generate.py locate`, or at the path the designer gives), MUST NOT write or edit that RTL by hand, and MUST generate it again after any change of the workbook; when the workbook, its sheet or the generator is missing, MUST ask the designer in the question format of R-006.
+MUST build every APB control/status register block from the CSR workbook named in section 11 of the specification by running `vlsit_csr_generate.py generate` with the APB-CSR-Generator found by `locate` or at the designer's supplied path.
 - Why: the workbook is the single source of the register map (microspec rule R-016), so hand-written or edited register RTL would drift from the specification and from the software view.
-- Check: `vlsit_csr_generate.py verify <csr folder>` prints RESULT: PASS (files equal the hashes of `CSR_GENERATED.md`); manual - the manifest names the generator commit and the workbook hash that the report repeats.
+- Check: `vlsit_csr_generate.py verify <csr folder>` prints RESULT: PASS; manual - the manifest and report identify the generator commit and workbook hash.
+
+### R-073 Do not hand-edit generated CSR RTL
+MUST NOT write or edit generated CSR RTL by hand.
+- Why: a hand edit breaks the link between the CSR workbook and its generated RTL.
+- Check: `vlsit_csr_generate.py verify <csr folder>` reports the generated files match `CSR_GENERATED.md` hashes.
+
+### R-074 Regenerate changed CSR workbooks
+MUST run CSR generation again after any change to the workbook.
+- Why: the generated register RTL must correspond to the current workbook contents.
+- Check: the manifest workbook hash matches the current workbook and verification passes.
+
+### R-075 Ask when CSR generator inputs are missing
+MUST ask the designer in the question format of R-006 when the workbook, its sheet or the generator is missing.
+- Why: the assistant cannot safely substitute a different workbook or generator.
+- Check: manual - the missing input is identified and the question is asked before generation proceeds.
 
 ### R-040 Generated CSR files follow the rules and are never edited
-MUST keep the generated CSR files in their own folder (`csr` under the output folder) and check them like every other file: the rule check (R-012) and the lint (R-014) cover them, and a finding is corrected by changing the workbook or the generator and generating again, never by editing the generated file. The generator MUST be version 2.0 or later (its header says that the RTL follows the Design Rule v2); `vlsit_csr_generate.py generate` refuses an older one, and `vlsit_rtl_check.py check` reports a WARN R-040 and skips the rule check of a file from an older generator, which the report MUST repeat with its reason (R-011).
+MUST keep generated CSR files in their own `csr` folder under the output folder and check them with the same rule check (R-012) and lint (R-014) as the other delivered RTL.
 - Why: since version 2.0 the generator writes RTL in the style of the rule file, so there is no reason to exempt it; an edit of the output breaks R-039, and a finding in it points to the workbook (for example a name that spells out a NAM-08 word) or to the generator.
-- Check: `vlsit_rtl_check.py check` and `vlsit_lint_rtl.py lint` over the whole output folder print PASS; manual - no WARN R-040 is left, or the report explains each one.
+- Check: `vlsit_rtl_check.py check` and `vlsit_lint_rtl.py lint` over the whole output folder print PASS.
+
+### R-076 Correct generated-CSR findings at the source
+MUST remediate a finding in generated CSR output by changing its source input or generator and regenerating the output.
+- Why: generated files are derived artifacts, so a direct edit is lost on regeneration and breaks reproducibility.
+- Check: `vlsit_csr_generate.py verify <csr folder>` passes after a finding is corrected.
+
+### R-077 Minimum CSR generator version
+MUST use APB-CSR-Generator version 2.0 or later, identified by a header stating that the RTL follows Design Rule v2.
+- Why: version 2.0 introduced output that follows the current RTL coding rules.
+- Check: `vlsit_csr_generate.py generate` accepts the selected generator and its header identifies Design Rule v2.
+
+### R-078 Report legacy-generator warnings
+MUST repeat each `WARN R-077` for output from a generator older than 2.0 with its reason in the report.
+- Why: a skipped rule check must remain visible to reviewers.
+- Check: manual - every `WARN R-077` line from `vlsit_rtl_check.py check` appears in the report with its reason.
 
 ### R-041 Library synchronizer in the CSR
-MUST NOT use the placeholder model `m_csr_sync` of the generator for an asynchronous sheet (`Asynchronous` = 1), nor for a design that sets the parameter `PARA_ASYNCHRONOUS` to 1 (the generated module instantiates the synchronizer in its asynchronous branch; use the `ASYNC_CSR` sheet so that the adapter is delivered); the adapter `m_vlsit_csr_sync` that `vlsit_csr_generate.py` writes (the script renames the generator's module `m_csr_sync` to `m_vlsit_csr_sync` in the generated file, so every module name has the `m_vlsit_` prefix) forwards to the library wrapper `m_vlsit_afifo_cell_sync`, and MUST be listed in the filelist after the wrapper and its cells (R-037), in place of the generator's `models/m_csr_sync.sv`, and the testbench of such a design runs both branches (R-034).
+MUST NOT use the generator's placeholder model `m_csr_sync` when the sheet is asynchronous (`Asynchronous` = 1) or the design sets `PARA_ASYNCHRONOUS` to 1.
 - Why: the placeholder is a plain two-flop model without a library cell; the library wrapper holds the technology synchronizer cell and the metastability model, so every design crosses a clock the same checked way.
-- Check: the filelist names `m_vlsit_afifo_cell_sync.sv` and the adapter and not the generator's `models` folder; manual - the report says which synchronizer stages were chosen.
+- Check: the generated asynchronous CSR design does not instantiate the generator's `models/m_csr_sync.sv` placeholder.
+
+### R-079 Generate the asynchronous CSR adapter
+MUST select the `ASYNC_CSR` workbook sheet when the design uses an asynchronous CSR clock domain so the expected adapter module is generated.
+- Why: the asynchronous sheet defines the generated adapter that connects the CSR to the library synchronizer.
+- Check: the generated CSR output includes `m_vlsit_csr_sync` for the asynchronous design.
+
+### R-080 Connect the CSR adapter to the library wrapper
+MUST wire the generated `m_vlsit_csr_sync` adapter's synchronization path through `m_vlsit_afifo_cell_sync`.
+- Why: the wrapper supplies the technology synchronizer and its metastability model.
+- Check: manual - the adapter's implementation forwards to `m_vlsit_afifo_cell_sync`.
+
+### R-081 Asynchronous CSR filelist order
+MUST list the generated adapter in `filelist.f` after its library wrapper and cells.
+- Why: compile order ensures the wrapper and its technology cells are available before the adapter is elaborated.
+- Check: `filelist.f` places the wrapper and cells before the generated adapter.
 
 ### R-042 CSR integration
-MUST instantiate the CSR module once, in the top module or in a wrapper that the specification names, with every port connected by name: the APB ports of the IP (section 6.2) to `i_apb_paddr`, `i_apb_pwdata`, `i_apb_pwrite`, `i_apb_penable`, `i_apb_psel`, `i_apb_pstrb`, `i_apb_pprot`, `o_apb_pready`, `o_apb_pslverr`, `o_apb_prdata`; `i_protect_en` and `i_slverr_en` to a port of the IP or to a constant from the library module `m_vlsit_tie` as section 11 says (never open, never toggled after reset); the field ports to the design signals of section 11.3 in the register clock domain; and `i_clk_apb`, `i_rst_n_apb`, `i_clk_reg`, `i_rst_n_reg` to the two clock domains of the specification (all four ports exist in both modes: with `PARA_ASYNCHRONOUS` = 0 tie `i_clk_reg` and `i_rst_n_reg` to the APB clock and reset); the parameter `PARA_ASYNCHRONOUS` and the count parameter `PARA_<BASE>_COUNT` of every `PARAMETERIZED` register group MUST be set by name to the values of section 11. A design signal of another clock domain MUST pass its own synchronizer before it reaches a field port.
+MUST instantiate the CSR module exactly once in the top module or in the wrapper named by the specification, with every port connected by name.
 - Why: the generated module has no knowledge of the IP; a port left open, a tie-off that moves, or an input from another clock domain gives a silent register error that the CSR lint cannot see.
-- Check: the lint of R-014 reports no unconnected or width-mismatched port on the CSR instance; manual - the report lists each CSR port, the signal it connects to and its clock domain.
+- Check: lint under R-014 reports no unconnected or width-mismatched CSR port; manual - the CSR instance appears once in the specified module.
+
+### R-082 Connect CSR ports to the IP
+MUST connect APB ports to the matching `i_apb_*` and `o_apb_*` ports in section 6.2; connect `i_protect_en` and `i_slverr_en` to specified IP ports or `m_vlsit_tie` constants (never leave them open or toggle them after reset); and connect field ports to section 11.3 design signals in the register clock domain.
+- Why: correct, stable port mapping ties the CSR behavior to the documented APB and register interfaces.
+- Check: lint under R-014 reports no unconnected or width-mismatched port; manual - the report lists each connection and clock domain.
+
+### R-083 Connect CSR clock and reset ports
+MUST connect `i_clk_apb`, `i_rst_n_apb`, `i_clk_reg` and `i_rst_n_reg` to the specified clock domains; when `PARA_ASYNCHRONOUS` is 0, connect register clock and reset to the APB clock and reset.
+- Why: explicit domain connections prevent register logic from using an unspecified clock or reset.
+- Check: manual - all four clock/reset ports are connected to the required domains in both modes.
+
+### R-084 Set CSR parameters by name
+MUST set `PARA_ASYNCHRONOUS` and every parameterized register group's `PARA_<BASE>_COUNT` by name to the values in section 11.
+- Why: named parameter connections make the configured CSR shape traceable to the specification.
+- Check: manual - every parameter connection matches section 11 and uses its parameter name.
+
+### R-085 Synchronize cross-domain CSR signals
+MUST pass a design signal from another clock domain through its own synchronizer before connecting it to a CSR field port.
+- Why: a field port is sampled in the register clock domain and cannot safely consume an asynchronous source directly.
+- Check: manual - every cross-domain source has a synchronizer between it and the field port.
 
 ### R-043 Workbook follows the register conventions
-MUST let `vlsit_csr_generate.py generate` compare the workbook with the register conventions of the specification skill (microspec rules R-032 to R-040: module name `m_vlsit_csr_<function>`, one design prefix on every register name, register names under 30 characters, field names of at most 20 characters, the one-line register description, the field description layout with hexadecimal value lines, the fixed description of reserved fields, and the same fields in the enable, injection and status registers as in the raw interrupt register), MUST report every `WARN R-043` line in the report, and MUST use `--strict-names` when the specification was written under those rules; the workbook is changed only by the designer or after the designer agrees (R-002), never to silence a warning.
+MUST let `vlsit_csr_generate.py generate` compare the workbook with the register conventions of the specification skill (microspec rules R-032 to R-040), including module/register/field naming and descriptions, reserved fields, and matching enable, injection and status fields.
 - Why: the register names and descriptions go into the RTL ports and into the software documents, so a workbook that departs from the conventions makes the RTL and the specification disagree on names.
-- Check: `vlsit_csr_generate.py generate --strict-names` prints no WARN R-043 and no FAIL; manual - every warning that remains is in the report with the designer's answer.
+- Check: `vlsit_csr_generate.py generate` prints the convention comparison; use `--strict-names` when the specification follows those rules.
+
+### R-086 Report CSR convention warnings
+MUST include every `WARN R-043` line from generation in the report.
+- Why: workbook deviations must be visible to the designer reviewing the generated CSR.
+- Check: manual - every `WARN R-043` output line appears in the report.
+
+### R-087 Strict CSR naming mode
+MUST use `--strict-names` when the specification follows the register conventions checked by R-043.
+- Why: strict mode prevents convention violations from silently entering the generated CSR.
+- Check: the generation command includes `--strict-names` for specifications using those conventions.
 
 ## Verification
 
@@ -220,9 +405,19 @@ MUST end with a report by rule ID that names the rules failed, justified, clean 
 - Check: manual - the report lists the manual rules from `vlsit_rtl_check.py coverage` with the result of each inspection.
 
 ### R-027 Simulation branch of VLSIT_SYNTHESIS (only exception)
-MUST accept simulation-only code inside a design file only in the one form that the specification fixes: the body of `` `ifndef VLSIT_SYNTHESIS `` (up to its `` `else `` or `` `endif ``), or the `` `else `` body of `` `ifdef VLSIT_SYNTHESIS ``, with one `` `else `` at most and no `` `elsif ``. The synthesizable branch and every other line of the file stay under all rules. `vlsit_rtl_check.py check` skips the rule check of the simulation branch only, and prints one WARN with rule ID R-027, the line range and the reason for each such branch; the report MUST repeat each of these WARN lines with the reason. A condition on any other macro name gets no exception.
+MUST accept simulation-only code in a design file only inside the specification-defined body of `` `ifndef VLSIT_SYNTHESIS `` (through its optional `` `else `` or `` `endif ``) or the `` `else `` body of `` `ifdef VLSIT_SYNTHESIS ``, with at most one `` `else `` and no `` `elsif ``; all synthesizable and other lines remain subject to the RTL rules.
 - Why: the specification (DEC-021, REQ-RTL-002) selects the metastability model, the SRAM macro model and the cell model by the macro inside the same module, and these models are simulation code (initial, delays, random numbers) that is never synthesized; the exception keeps the macro structure of the specification while the rest of the design stays rule-checked, and the WARN keeps the unchecked lines visible.
-- Check: `vlsit_rtl_check.py check` prints one `WARN R-027` per simulation branch with the reason and no ERROR for the lines inside it; an `` `ifndef `` or `` `ifdef `` of another macro containing `initial`, `#` or a plain `always` still gives an ERROR; manual - the report lists the R-027 WARN lines with the reason.
+- Check: `vlsit_rtl_check.py check` accepts only the specified macro forms and reports no errors inside an accepted simulation-only branch.
+
+### R-088 Report excluded simulation branches
+MUST have `vlsit_rtl_check.py check` skip only the accepted simulation branch and print a `WARN R-027` with its line range and reason; repeat every such warning in the report.
+- Why: every excluded source line must remain visible to reviewers.
+- Check: each accepted branch has one corresponding warning in the checker output and report.
+
+### R-089 Check simulation code under other macros
+MUST apply the ordinary RTL checks to code excluded by any preprocessing macro other than the designated `VLSIT_SYNTHESIS` branch.
+- Why: an unrestricted macro exception could hide unsynthesizable code in the implementation branch.
+- Check: `vlsit_rtl_check.py check` reports an error for simulation-only constructs under another macro.
 
 ## Simulation testbench
 
@@ -254,14 +449,39 @@ MUST give the designer a detailed analysis of the specification text, the RTL be
 - Check: manual - for each unexplained failure the report holds the analysis of [reference/vlsit_testbench_guide.md](reference/vlsit_testbench_guide.md) section 5 and the designer's decision, and no edit came before it.
 
 ### R-033 Simulated waveform evidence
-MUST save, for every waveform of the waveform plan of the specification (section 10.3), the waveform that the simulation of the same scenario produced, in one evidence folder `waveforms_sim` of the testbench folder: a VCD dump, a WaveJSON file and an SVG rendering of the window of the specification figure, with the same stem as that figure and with the port signals of the figure, and an index `waveform_compare.md` that gives for each waveform ID the specification figure, the simulated file, a result (MATCH, DIFFERENT or NOT-SIMULATED) and a note. A result other than MATCH MUST carry the reason, and a difference goes through R-026 before the RTL or the test is changed.
+MUST save simulation evidence for every waveform in the specification plan (section 10.3) under the testbench folder `waveforms_sim`: a VCD dump, WaveJSON file, SVG rendering of the specification figure's time window with the same stem and port signals, and a `waveform_compare.md` index listing each waveform ID, specification figure, simulated file, result (`MATCH`, `DIFFERENT` or `NOT-SIMULATED`) and note.
 - Why: the designer verifies the RTL against the specification by comparing the simulated waveform with the specified one, and one folder with the same names makes that comparison direct and repeatable; a plan waveform that was never simulated is a hole in the verification.
-- Check: `vlsit_sim_evidence.py check` prints RESULT: PASS (every plan waveform has its dump, WaveJSON and index row); manual - each WARN or DIFFERENT line of the script has a decision in the report.
+- Check: `vlsit_sim_evidence.py check` prints RESULT: PASS for every planned waveform artifact and index row.
+
+### R-090 Explain non-matching waveform evidence
+MUST give a reason in `waveform_compare.md` for each result other than `MATCH`.
+- Why: an unexplained difference cannot be distinguished from missing or invalid evidence.
+- Check: `vlsit_sim_evidence.py check` reports no non-MATCH result without a note; manual - each WARN or DIFFERENT finding has a decision in the report.
+
+### R-091 Resolve waveform differences before edits
+MUST follow the failure analysis and designer-decision process of R-026 before changing RTL or a test because of a waveform difference.
+- Why: changing implementation or stimulus before resolving the source of a mismatch can mask a real defect.
+- Check: manual - the R-026 analysis and designer decision precede any related RTL or test edit.
 
 ### R-034 Both branches for a clock-domain crossing
-MUST run the complete testbench of a design that has a clock-domain crossing (section 7.2 of the specification lists crossings, or a synchronizer wrapper is instantiated) in two flows: the synthesis branch, compiled with the flow macro `VLSIT_SYNTHESIS` (library cell models, no random delay), and the simulation branch, compiled without it, in which the metastability model adds a random extra latency to the synchronizers, with at least three different seeds; every run MUST pass R-025, and the log of each run MUST print `SIM-BRANCH: synthesis` or `SIM-BRANCH: metastable seed=<n>`. When the wrapper has no metastability model, MUST report that as a gap and ask the designer (R-005) instead of skipping the branch.
+MUST run the complete testbench of a design with a clock-domain crossing (listed in section 7.2 or implemented by a synchronizer wrapper) in both flows: the synthesis branch compiled with `VLSIT_SYNTHESIS` and library cell models without random delay, and the simulation branch without that macro using the metastability model with at least three distinct seeds.
 - Why: the synthesis branch is the netlist that is built and the simulation branch is the one that exposes a dependence on the arrival time of a crossing signal, so a crossing is only verified when both pass, and one seed shows only one latency pattern.
-- Check: `vlsit_sim_evidence.py cdc` (or `check` with `--logs`) prints RESULT: PASS; manual - the report lists the runs of both branches with their seeds.
+- Check: `vlsit_sim_evidence.py cdc` (or `check` with `--logs`) prints RESULT: PASS and the report lists the runs and seeds.
+
+### R-092 Pass every CDC branch run
+MUST require every synthesis and metastability-model run to pass the assertion requirements of R-025.
+- Why: one failing seed or branch is sufficient evidence of a design or test failure.
+- Check: `vlsit_sim_evidence.py cdc` reports every required run as passing.
+
+### R-093 Label CDC branch logs
+MUST print `SIM-BRANCH: synthesis` in the synthesis log and `SIM-BRANCH: metastable seed=<n>` in each metastability-model log.
+- Why: exact labels make each run and random seed auditable.
+- Check: `vlsit_sim_evidence.py cdc` recognizes the required branch labels in all logs.
+
+### R-094 Missing metastability model
+MUST report the missing metastability model as a verification gap and ask the designer under R-005 instead of skipping the simulation branch.
+- Why: omitting the model leaves clock-crossing timing behavior unverified.
+- Check: manual - the report names the gap and the designer is asked before the branch is waived.
 
 ### R-047 Coverage intent, metric, and target
 MUST ask, before finalizing a requested testbench plan, whether code coverage is wanted; when it is, record the metric/type and any target already supplied. If the metric is missing, present only types supported by the installed simulator, such as line/statement (which statements execute), branch (which decision outcomes execute), toggle (which signal transitions occur), or FSM state/transition coverage, and ask the designer to choose; recommend line/statement first when supported because its denominator is easier to explain. If no target is supplied, run or reuse the approved plan with coverage instrumentation, then show the measured baseline, metric, covered/coverable counts, DUT scope, exclusions, simulator/version, and uncovered points before asking for a target from 0 to 100 percent. If the user requests a different metric, measure and report that metric's baseline before asking for its target. Explain that unlike metrics cannot be combined and that code coverage differs from functional coverage, requirement coverage, and mutation score. Do not infer a target from an example or choose a percentage for the user. If coverage is unsupported, report N/A and ask whether to use a supported tool or proceed without coverage. If the user already supplied the metric and target, preserve them, report the baseline first, and do not ask them to repeat the choice. Follow R-006 for the question format.

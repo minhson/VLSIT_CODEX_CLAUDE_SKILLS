@@ -1,12 +1,12 @@
 # Specification writing guide
 
-Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-013 to R-017, R-024, R-025). The template is `templates/VLSIT_ASIC_IP_Design_Specification_Template.md`; follow its section titles exactly.
+Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-013 to R-017, R-024, R-025, R-046 to R-065). The template is `templates/VLSIT_ASIC_IP_Design_Specification_Template.md`; follow its section titles exactly.
 
 The specification source is Markdown. Write inline equations in TeX as `$...$` and display equations as `$$...$$`; keep each display equation outside Markdown tables. Link figures by relative Markdown paths under the specification's `figures/` directory. See [vlsit_document_formats.md](vlsit_document_formats.md) for examples and optional DOCX/PDF export.
 
 | Section | What to put there | Typical questions to the user |
 |---|---|---|
-| 1 Purpose, scope | Problem, boundary, included and excluded functions, SoC context, feature list, and the real-world applications of every feature in 1.4 (R-041) | Which function must it do and not do? Which SoC and workload? Which real product uses each feature and what number does it fix? |
+| 1 Purpose, scope | Problem, boundary, included and excluded functions, SoC context, feature list, and the real-world applications of every feature in 1.4 (R-041, R-046 to R-048) | Which function must it do and not do? Which SoC and workload? Which real product uses each feature and what number does it fix? |
 | 2 References | Exact title, revision and clauses; conflict order; compliance table | Which protocol revision and role? Which deviations are accepted? |
 | 3 Requirements | One shall per requirement with REQ-ID, source, applicability and verification method | Which behaviors are mandatory and how are they verified? |
 | 4 Features and configurations | Configuration table; optional features absent, tied off or runtime-disabled | Which configurations ship? |
@@ -16,7 +16,7 @@ The specification source is Markdown. Write inline equations in TeX as `$...$` a
 | 8 Parameters | Parameter table, VLSIT comment lines, configurations, illegal values | Which values may change, and which are illegal? |
 | 9 Data representation | Widths, endianness, encodings, invalid behavior | Which encodings and overflow rules? |
 | 10 Functional behavior | States, operations, the waveform plan confirmed by the user (R-024), cycle tables, throughput, memories | What happens cycle by cycle, with backpressure? Which waveforms are the minimum? |
-| 11 Registers | Pointer to the CSR workbook, generator and clocks (11.1), programming/use flowchart and step table (11.2, R-043), connection of the fields to the design (11.3), APB access behavior of the CSR (11.4) | Which settings, actions, state and events? What is the mandatory sequence, and which optional paths can software select? (fill the workbook; question bank, Registers) |
+| 11 Registers | Pointer to the CSR workbook, generator and clocks (11.1), programming/use flowchart and step table (11.2, R-043, R-060 to R-065), connection of the fields to the design (11.3), APB access behavior of the CSR (11.4, R-031, R-049 to R-050) | Which settings, actions, state and events? What is the mandatory sequence, and which optional paths can software select? (fill the workbook; question bank, Registers) |
 | 12 Errors | Error table, precedence, recovery, waveforms | What are the errors and how does the system recover? |
 | 13 PPA | Hard requirements and goals with conditions | Frequency, area, power targets and corners? |
 | 14 RTL contract | Coding baseline, hierarchy, synthesis assumptions | Hierarchy and synthesis setup? |
@@ -28,13 +28,13 @@ The specification source is Markdown. Write inline equations in TeX as `$...$` a
 | 20 Assumptions, decisions | Assumptions, dependencies, decisions, open items, TBD with impact | Which points remain open? |
 | 21 Glossary, 22 References | Terms and the sources actually used | Not applicable |
 
-## Programming and use flow, section 11.2 (rule R-043)
+## Programming and use flow, section 11.2 (rules R-043, R-060 to R-065)
 
 Include at least one Mermaid flowchart for the basic software programming and use of the IP. Do not mark 11.2 Not required, even when the IP has no software-visible CSR; in that case show its normal interface-use sequence and explain why the CSR column is N/A. Show the normal path and every optional or alternative mode the design supports. Label each node with a unique ID such as `S01` and `[M]` or `[O]`. A decision node and its branch labels state when an optional path is taken. `M` means the step is required on the shown operating path; `O` means it is conditional and may be skipped.
 
 Add a table directly under the flowchart with the exact columns `No.`, `Step`, `Option (M/O)`, `Interface`, `CSR`, and `Description`. Each node must map to one row, and the ID and M/O value must match. In `Interface`, name the actual master-facing protocol and action (for example APB write/read, status polling, interrupt acknowledge, or data transfer). In `CSR`, use the exact workbook register and field and state the software write/read/poll value or action. If there is no software-visible CSR, write `N/A` and explain why, while still identifying the actual IP usage interface. In `Description`, explain why the action is performed and the function it serves. Cross-check the sequence against sections 6 and 10 and the CSR workbook; ask the user about unresolved ordering or behavior rather than inventing it.
 
-## Real-world applications of the features, section 1.4 (rule R-041)
+## Real-world applications of the features, section 1.4 (rules R-041, R-046 to R-048)
 
 One row per feature ID of 1.3. Columns: Feature ID, Real-world application, What the application needs, Typical values, Consequence if missing or wrong, Requirements, Source. How to write each cell:
 
@@ -73,7 +73,7 @@ Section 6.2 may hold the table of the top level and, below it, one table per int
 
 The table sits at the start of section 10.3, with the columns Waveform ID, Function / operation, Scenario, Signals shown, Figure and Confirmed by user. Build it from the operations of 10.2 and the interface cases of 6.3, add the special cases of the IP, show it to the user, and draw only what the user confirms. Typical entries: one success waveform per operation, one error waveform per error mechanism, reset, backpressure, back-to-back transfers, full and empty boundaries, timeout. A declined waveform stays in the table with a dated Not required line in the Figure cell, so `vlsit_spec_tool.py check` can see that the operation was considered.
 
-## Names (rule R-026)
+## Names (rules R-026, R-054 to R-056)
 
 Ask the user for the naming rule first and record it in section 2 (the line `Naming rule:` that `init` adds). If the user gives none, use the default naming rule of the skill `vlsit-rtl-generator`, section 2 of `VLSIT_RTL_Design_Rule.md` v2, summarized here. If the user's rule or the default forbids a name that the user typed, write the allowed form and tell the user.
 

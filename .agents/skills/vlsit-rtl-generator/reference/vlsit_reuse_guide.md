@@ -1,6 +1,6 @@
 # Reusing the library common_rtl
 
-Guidance only; the mandatory requirement is R-037 in [rule.md](../rule.md). Read this before step 4c of the workflow.
+Guidance only; the mandatory requirements are R-037 and R-049 to R-053 in [rule.md](../rule.md). Read this before step 4c of the workflow.
 
 ## 1. What the library is
 

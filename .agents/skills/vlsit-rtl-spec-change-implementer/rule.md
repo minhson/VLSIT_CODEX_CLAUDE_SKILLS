@@ -44,7 +44,7 @@ Precedence: this `rule.md` overrides `SKILL.md`, and `SKILL.md` overrides the re
 - RSC-041 (MUST): Minimality MUST NOT compromise correctness, timing/interface contracts, reset behavior, parameterized configurations, or maintainability. If a tiny patch would be fragile or incomplete, use the smallest robust approach and explain why.
 - RSC-042 (MUST NOT): Invent unspecified behavior. If new evidence changes the planned solution, return to the approval gate.
 - RSC-043 (MUST): Modify only approved RTL files and explicitly approved supporting files. MUST NOT edit either specification unless separately requested.
-- RSC-044 (MUST): Preserve the RTL source language and existing comment style, and write new functional comments in scientific English.
+- RSC-044 (MUST): Preserve the RTL source language and existing comment style when modifying existing RTL.
 
 ## F. Validation and report
 

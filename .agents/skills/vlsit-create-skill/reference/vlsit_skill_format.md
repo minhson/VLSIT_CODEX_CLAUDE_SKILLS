@@ -55,7 +55,7 @@ that listing.
 
 Skill files must not contain tool-specific invocation syntax (see R-009); the README files document invocation for users.
 
-New house-format rules use `### R-001 Title` headings with a normative statement, a Why line and a Check line. Existing VLSIT skills with a domain-specific namespace (for example `OCI-001` or `RHD-001`) may retain their established one-line rule entries; the validator checks their ID uniqueness, normative keyword and in-skill references without imposing the house-format Why/Check structure.
+New house-format rules use `### R-001 Title` headings with a normative statement, a Why line and a Check line. Existing VLSIT skills with a domain-specific namespace (for example `OCI-001` or `RHD-001`) may retain their established one-line rule entries; the validator checks their ID uniqueness, normative keyword, in-skill references, and possible overlaps without imposing the house-format Why/Check structure.
 
 ## Folder names inside a skill
 

@@ -71,7 +71,7 @@ State the problem this IP solves, intended users/system context, observable beha
 
 ### 1.4 Real-world applications of the features
 
-For every feature of 1.3 name the real product or system that uses it and why that application needs it (rule R-041). Name a concrete system and an example product, not a field ("three-phase inverter of a brushless DC motor drive in an e-bike controller", not "motor control"); give the quantity that the application fixes, at least one number with unit, and the failure that follows when the feature is missing or wrong. Ask the user; if the user does not know, propose the application from a reference IP or a standard and record it as an assumption in section 20.
+For every feature of 1.3 name the real product or system that uses it and why that application needs it (rules R-041 and R-046 to R-048). Name a concrete system and an example product, not a field ("three-phase inverter of a brushless DC motor drive in an e-bike controller", not "motor control"); give the quantity that the application fixes, at least one number with unit, and the failure that follows when the feature is missing or wrong. Ask the user; if the user does not know, propose the application from a reference IP or a standard and record it as an assumption in section 20.
 
 | Feature ID | Real-world application (named system, example product) | What the application needs from the feature | Typical values | Consequence if missing or wrong | Requirements | Source |
 |---|---|---|---|---|---|---|
@@ -316,7 +316,7 @@ Workbook requirements:
 
 ### 11.2 Software sequences
 
-Use register and field names exactly as written in the workbook. Document initialization, enable/disable, interrupt service, error clearing, safe reconfiguration, ordering, completion polling, and updates while active. This subsection must contain at least one Mermaid programming/use flowchart and a matching step-by-step table even when the IP has no CSR (rule R-043); in that case explain why the CSR column is N/A and describe the normal interface-use sequence.
+Use register and field names exactly as written in the workbook. Document initialization, enable/disable, interrupt service, error clearing, safe reconfiguration, ordering, completion polling, and updates while active. This subsection must contain at least one Mermaid programming/use flowchart and a matching step-by-step table following R-043 and R-060 to R-065, even when the IP has no CSR; in that case explain why the CSR column is N/A and describe the normal interface-use sequence.
 
 Mark every flowchart node with a unique step ID and `[M]` or `[O]`, and use the same ID and option in the table. `M` means mandatory for the shown operating path; `O` means optional or conditional, with its selection condition shown in the flowchart. The Interface column names the master-facing protocol and action. The CSR column names the exact workbook register/field and software write/read/poll value or action, or `N/A` with a reason if there are no software-visible CSRs. The Description column explains the purpose and role of the step.
 

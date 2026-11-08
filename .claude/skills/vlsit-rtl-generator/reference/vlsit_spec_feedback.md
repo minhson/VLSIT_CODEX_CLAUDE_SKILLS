@@ -1,6 +1,6 @@
 # Writing implementation decisions back into the specification
 
-Guidance only; the mandatory requirement is R-046 in [rule.md](../rule.md). Read this at step 5c.
+Guidance only; the mandatory requirements are R-046 and R-054 to R-061 in [rule.md](../rule.md). Read this at step 5c.
 
 ## When it applies
 

@@ -37,7 +37,7 @@ The `wo` type stores software-written data for hardware, returns zero on softwar
 
 - JSON key `prefix`: 2 to 8 lower-case letters or digits that represent the design (for example `axi2apb`). Every register is `<prefix>_<function>` with fewer than 30 characters, for example `axi2apb_ctrl`. A field name states its function clearly with at most 20 characters, for example `wr_posted`. Generated port names `o_<register>_<field>` must stay within 30 characters.
 - Register description, one line: `Full name derived from the register name. Main meaning.` Example: `AXI to APB control register. Enables the bridge and selects its basic operation.`
-- Field description, lines in one cell (separated by a line feed, written `\n` in JSON; rules R-034 and R-037):
+- Field description, lines in one cell (separated by a line feed, written `\n` in JSON; rules R-034, R-037 and R-051):
 
 ```text
 Full name of the field. Technical explanation for a reader who does not know the design (at least 40 characters).
@@ -57,7 +57,7 @@ Limits: limits, or none.
 
 Every value line starts with the hexadecimal number as software writes it (`0x0`, `0x1 to 0xF`); never a decimal number. All lines but the last end with `;`, the last with `.`, and a blank line separates the block from `Unit:`. One blank line also separates the other parts (rule R-038).
 
-Write the lines at the level of detail of the register documentation of ARM, Synopsys and Cadence, from the viewpoint of the software engineer. A field named `reserved` always gets the fixed text "This field is unused." and "Read-as-zero and write-ignored." on two lines (rule R-039); leave its description empty in the JSON. `vlsit_csr_tool.py fill` wraps the description cells so that the lines show in the workbook; APB-CSR-Generator copies the description only to its debug file, so the lines do not enter the RTL.
+Write the lines at the level of detail of the register documentation of ARM, Synopsys and Cadence, from the viewpoint of the software engineer. A field named `reserved` always gets the exact two-line description and no additional text (rules R-039 and R-052); leave its description empty in the JSON. `vlsit_csr_tool.py fill` applies that description to all reserved fields it creates, including those added by `--auto-reserved` (R-053). It wraps the description cells so that the lines show in the workbook; APB-CSR-Generator copies the description only to its debug file, so the lines do not enter the RTL.
 
 ## Workbook format (rule R-035)
 

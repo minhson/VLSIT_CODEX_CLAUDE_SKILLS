@@ -9,7 +9,7 @@ compatibility: Python 3.8 or later; offline RTL analysis with the standard libra
 ## Operating contract
 
 1. Read [rule.md](rule.md) completely before doing anything. Its numbered rules (RSC-xxx) are mandatory and rank above everything else.
-Precedence: `rule.md` overrides this file, and this file overrides the reference files. Reply to the user in the language they use.
+Precedence: `rule.md` overrides this file, and this file overrides the reference files. Reply to the user in their language for conversational questions and clarifications; keep plans, reports, RTL comments, and chat summaries in precise scientific and engineering English as RSC-001 requires.
 2. Follow the workflow below. It orders the work; it never relaxes a rule.
 3. Consult `reference/` for the review-document template. References rank below `rule.md`.
 4. Prerequisite (RSC-096): locate Python first with `scripts/vlsit_find_python.ps1` on Windows or `scripts/vlsit_find_python.sh` on Linux and macOS. Use the printed executable path for subsequent script calls (examples that say `python` use it as shorthand). If no Python 3 is found, propose installing it (Windows: `winget install Python.Python.3.12`) and wait for approval.

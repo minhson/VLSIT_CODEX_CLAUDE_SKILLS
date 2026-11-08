@@ -210,6 +210,7 @@ def get_rules(text, report):
                 report.add("ERROR", "R-010", "rule.md line %d: a rule heading must look like '### R-001 Title', got '%s'" % (number, line))
         else:
             domain_match = re.match(r"^\s*-\s+([A-Z][A-Z0-9]{0,7}-\d{3})\s+\((MUST NOT|MUST|SHOULD|MAY)\):\s*(\S.*)$", line)
+            domain_candidate = re.match(r"^\s*-\s+([A-Z][A-Z0-9]{0,7}-\d{3})\b", line)
             if domain_match:
                 if current:
                     rules.append(current)
@@ -222,6 +223,8 @@ def get_rules(text, report):
                     "body": [domain_match.group(2) + " " + domain_match.group(3)],
                     "domain_style": True,
                 })
+            elif domain_candidate:
+                report.add("ERROR", "R-010", "rule.md line %d: domain rule %s must use '- PREFIX-001 (MUST): statement' form" % (number, domain_candidate.group(1)))
             elif current is not None:
                 current["body"].append(line)
     if current:
@@ -242,7 +245,6 @@ def check_rules(report, text):
         return None
     seen = {}
     parsed = []
-    domain_style = any(rule.get("domain_style") for rule in rules)
     for rule in rules:
         if rule["id"] in seen:
             report.add("ERROR", "R-010", "%s is used twice (lines %d and %d)" % (rule["id"], seen[rule["id"]], rule["line"]))
@@ -281,13 +283,6 @@ def check_rules(report, text):
         if len(re.findall(r"\bMUST\b", bare)) > 1:
             report.add("WARN", "R-011", "%s uses MUST more than once; it may hold more than one requirement" % rule["id"])
         parsed.append({"id": rule["id"], "statement": statement, "negative": statement.startswith("MUST NOT"), "tokens": tokens(statement)})
-
-    # Established VLSIT skills may use a domain-specific rule namespace and its
-    # compact, one-line rule format. Their direct references are still checked
-    # below, while the standard-format Why/Check and lexical-overlap checks apply
-    # only to the house R-NNN heading format.
-    if domain_style:
-        return parsed
 
     # Words that occur in many rules ("skill", "rule", "script" ...) say nothing about whether two
     # rules overlap, so they are dropped before comparing. Needs a reasonably long list to be meaningful.

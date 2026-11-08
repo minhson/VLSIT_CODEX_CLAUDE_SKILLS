@@ -605,7 +605,7 @@ def action_generate(args):
     (out / "filelist_csr.f").write_text("\n".join(lines) + "\n", encoding="utf-8")
     rows = ["| %s | %s |" % (n, sha256(out / n)) for n in files]
     man = ["# Generated CSR block", "",
-           "Do not edit these files by hand (rule R-039). Change the workbook and run `vlsit_csr_generate.py generate` again.", "",
+        "Do not edit these files by hand (rule R-073). Change the workbook and run `vlsit_csr_generate.py generate` again (R-074).", "",
            "| Item | Value |", "|---|---|",
            "| Generator | %s |" % (gen / GEN_NAME),
            "| Generator commit | %s |" % git_commit(gen),

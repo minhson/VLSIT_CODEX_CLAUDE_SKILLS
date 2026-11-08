@@ -78,10 +78,25 @@ MUST write the specification in the VLSIT template `reference/templates/VLSIT_AS
 - Check: `scripts/vlsit_spec_tool.py check` reports no section difference.
 
 ### R-041 Real-world applications of every feature
-MUST write, in section 1.4 of the specification, one row for every feature of section 1.3 that names the real product or system in which the feature is used, what that application needs from the feature (the quantity it fixes: frequency, resolution, throughput, latency, depth, current or voltage class), the typical values, what goes wrong when the feature is missing or wrong, the requirements that implement it, and where the statement comes from (user answer, standard, reference IP or an assumption of section 20); MUST name a concrete system or product class and give at least one number or measurable need, MUST ask the user for the applications before writing them, and MUST NOT write a generic phrase such as "used in many systems", "general purpose" or "various applications".
+MUST write one section 1.4 row for every feature in section 1.3, recording the application's need, typical values, consequence if the feature is missing or wrong, implementing requirements, and source (user answer, standard, reference IP or an assumption in section 20).
 - Why: a feature that has no named real use cannot be sized, prioritized or verified with a realistic case, and a reviewer cannot judge whether a parameter range or a corner case matters; the application also tells the RTL and verification teams which behavior must never fail (for example shoot-through in a motor drive).
-- Check: `scripts/vlsit_spec_tool.py check` reports a missing section 1.4, a feature of 1.3 without a row, an empty cell, a generic phrase and an application cell without a digit in the need or values column; manual - the application is a real system and the number came from the user or a cited source.
+- Check: `scripts/vlsit_spec_tool.py check` reports a missing section 1.4, a feature of 1.3 without a row or an empty cell; manual - each row records the listed information and its source.
 - Example (PWM generator, feature FEAT-003 dead-time insertion): Real-world application = three-phase inverter of a brushless DC motor drive in an e-bike controller; Need = the high-side and low-side switch of one half-bridge must never conduct together, so the gate signals are separated by a dead time longer than the switch turn-off time; Typical values = PWM 20 kHz, dead time 0.5 to 2 us, resolution of one 100 MHz clock (10 ns); Consequence = shoot-through destroys the power transistors; Requirements = REQ-FUNC-012, REQ-FUNC-013; Source = user answer 2026-10-28. A wrong row: "PWM is used in motor control and many other systems".
+
+### R-046 Concrete application evidence
+MUST name a concrete product or system class for each feature application and give at least one numeric or otherwise measurable need.
+- Why: a concrete use and measurable need let reviewers judge whether the feature's range and performance are appropriate.
+- Check: manual - every section 1.4 row names a concrete product or system and a measurable need, with a source under R-041.
+
+### R-047 Ask for application context
+MUST ask the user for the real-world applications of the features before writing application rows from user-specific context.
+- Why: application context affects performance targets and consequences, so it must come from the user or a cited source.
+- Check: manual - the conversation or cited source supplies the application information before the specification records it.
+
+### R-048 Avoid generic application claims
+MUST NOT use generic phrases such as "used in many systems", "general purpose" or "various applications" as a feature application.
+- Why: generic claims do not identify a measurable design need or a failure consequence.
+- Check: `scripts/vlsit_spec_tool.py check` reports no generic application phrase; manual - every application row identifies a specific use.
 
 ### R-014 Sections that are not needed
 MUST write the exact line `**Not required (confirmed by user, YYYY-MM-DD):** reason` for every section or table row that the user confirms is not needed, and write a TBD only with its impact and the decision needed in section 20.
@@ -104,9 +119,19 @@ MUST derive the registers from the control and status needs of the IP by asking 
 - Check: manual - each field in the workbook traces to a user answer or a requirement, and section 11.2 holds a sequence that uses it.
 
 ### R-031 Generator limits respected
-MUST write section 11 so that it states the behavior of the generated CSR module (reference/vlsit_csr_generator.md: APB wait states, `PSLVERR` cases, unmapped address, reserved bits, priority between a software write and a hardware load: software first for `rwi`, hardware first for `w1c`, and `wo` hardware clear synchronous to the register clock with clear priority over software writes) in sections 11.3 and 11.4, MUST ask the user and record a decision in section 20 when the IP needs something that the generator cannot do (another bus or width, byte-strobe or sub-word access, set-only fields, an error for an unmapped address), and MUST NOT promise a fixed wait-state count for an asynchronous sheet.
+MUST state the generated CSR module's behavior in sections 11.3 and 11.4, including APB wait states, `PSLVERR` cases, unmapped addresses, reserved bits, write/load priority (`rwi`: software first; `w1c`: hardware first), and `wo` hardware-clear timing and priority, as defined by reference/vlsit_csr_generator.md.
 - Why: software and verification depend on these behaviors, and a promise that the generated RTL cannot keep is found only in silicon.
-- Check: `scripts/vlsit_csr_tool.py validate` prints PASS and `ports` lists the module ports; manual - sections 11.1, 11.3 and 11.4 are filled, and every limit that applies has a decision in section 20.
+- Check: `scripts/vlsit_csr_tool.py validate` prints PASS and `ports` lists the module ports; manual - sections 11.1, 11.3 and 11.4 describe the listed behavior.
+
+### R-049 Decide unsupported CSR requirements
+MUST ask the user and record a decision in section 20 when the IP needs behavior the generator cannot provide, such as another bus or width, byte-strobe or sub-word access, set-only fields, or an error response for an unmapped address.
+- Why: the specification must expose generator limits before implementation commits to unsupported behavior.
+- Check: manual - each unsupported need has a question and a recorded decision in section 20.
+
+### R-050 Asynchronous wait-state limits
+MUST NOT promise a fixed wait-state count for an asynchronous CSR sheet.
+- Why: asynchronous clock-domain timing makes a fixed wait-state promise unsupported by the generator's behavior.
+- Check: manual - sections 11.3 and 11.4 contain no fixed wait-state promise for an asynchronous sheet.
 
 ### R-032 Register and field names
 MUST ask the user for a keyword that represents the design (2 to 8 lower-case letters or digits, for example `axi2apb`), record it as `prefix` in the JSON description, and name every register `<prefix>_<function>` and every field with a short abbreviation, using only lower-case letters, digits and underscores; the register name abbreviates the main function of the whole register and has fewer than 30 characters, the field name states its function clearly and has at most 20 characters, and the resulting port names keep the 30-character limit of the naming rule (R-026).
@@ -124,9 +149,14 @@ MUST write the description of every field except `reserved` in one cell with the
 - Check: `scripts/vlsit_csr_tool.py validate` reports a missing part, a wrong label or a first line shorter than 40 characters; manual - the content of each part is technically complete and agrees with sections 10 and 11.2.
 
 ### R-037 Values block of a field
-MUST write the programmable values of a field as a block: a line "Values:" alone, then one line for each value or range of values that starts with its hexadecimal number as software writes it (`0x0`, `0x1`, `0x2 to 0x5`) followed by its meaning and the mark "(reset value)" where it applies, every line ending with ";" except the last, which ends with "."; then a blank line and the "Unit: " line. A decimal number MUST NOT be the key of a value line.
+MUST write each programmable field's values in a block with a standalone `Values:` line, one hexadecimal-keyed line per value or range, its meaning and any `(reset value)` mark, semicolons on all but the final line, a period on the final line, then a blank line and a `Unit: ` line.
 - Why: software and verification read and write registers in hexadecimal, and one value on one line is read faster than a list in a sentence.
 - Check: `scripts/vlsit_csr_tool.py validate` reports a "Values:" line that is not alone, a value line without a hexadecimal key or with a wrong ending, and a missing blank line.
+
+### R-051 Hexadecimal value keys
+MUST NOT use a decimal number as the key of a programmable value line.
+- Why: the register workbook and software-facing values use hexadecimal notation consistently.
+- Check: `scripts/vlsit_csr_tool.py validate` reports no programmable value line with a decimal key.
 
 ### R-035 Workbook format
 MUST produce the CSR workbook with `scripts/vlsit_csr_tool.py fill` and not format it by hand: only black, white and purple colors (purple header rows with white text, light purple register rows, white field rows, thin black borders); font size 13 in every cell; every cell wraps its text and is aligned to the middle vertically; every row is just as high as its lines need, so that the bottom border lies close to the last line of text; header text stays on one line; the six columns REGISTER to RESET VALUE have the same width, fitted to the longest content, and the DESCRIPTION column is 5 times as wide.
@@ -139,9 +169,19 @@ MUST lay out the description of a field with one blank line between the parts, i
 - Check: `scripts/vlsit_csr_tool.py validate` reports a description whose parts or blank lines are not in this order.
 
 ### R-039 Reserved field description
-MUST give every `reserved` field the description "This field is unused." on the first line and "Read-as-zero and write-ignored." on the second line, and MUST NOT write any other text; `fill` writes it for every reserved field, including those that `--auto-reserved` adds.
+MUST give every `reserved` field exactly these two description lines: `This field is unused.` and `Read-as-zero and write-ignored.`
 - Why: a reserved bit is never programmable, and one fixed text tells software the safe behavior (read as zero, writes ignored).
-- Check: `scripts/vlsit_csr_tool.py validate` reports a reserved field with another description; manual - the workbook shows the fixed text.
+- Check: `scripts/vlsit_csr_tool.py validate` reports no reserved field with a different description; manual - the workbook shows the two lines in order.
+
+### R-052 No extra reserved-field text
+MUST NOT add any text to the fixed description of a `reserved` field.
+- Why: additional wording can imply behavior that does not apply to reserved bits.
+- Check: `scripts/vlsit_csr_tool.py validate` reports no reserved field with extra description text.
+
+### R-053 Reserved fields added by the tool
+MUST apply the fixed reserved-field description to fields created by `fill`, including fields added by `--auto-reserved`.
+- Why: generated reserved fields need the same software-facing description as manually defined reserved fields.
+- Check: manual - every reserved field created by `fill` has the two lines required by R-039.
 
 ### R-040 Interrupt register set
 MUST give the interrupt enable, injection and masked-status registers exactly the same fields as the raw interrupt status register of the same IP, with the same field names and the same bit positions, so that bit N means the same event in every register; only the descriptions differ; the injection fields are type `rw` (not `rwi`), and the IP raises the raw event on the rising edge of the injection bit.
@@ -154,16 +194,41 @@ MUST describe every port of section 6.2 with its function, its clock domain (or 
 - Check: `scripts/vlsit_spec_tool.py check` reports a port without a function, a clock domain or a valid signal type; manual - pulse widths and clock domains agree with sections 7 and 10.
 
 ### R-026 Naming rule from the user
-MUST ask the user which naming rule the specification follows (a rule file or document of the user) before naming any module, port, signal, parameter, state or instance in it, and apply that rule to every name in the specification; when the user supplies none, MUST use the default naming rule of the skill `vlsit-rtl-generator`, that is section 2 of `VLSIT_RTL_Design_Rule.md` (v2, the copy in `reference/templates/`, and the `spec_template` file that skill reads by default), and record in section 2 of the specification which rule is used, with its path and version. A name that the user's rule or the default rule forbids MUST NOT be used even when the user typed it: write the name in the form the rule requires and tell the user the form and the clause.
+MUST ask the user which naming rule the specification follows before naming a module, port, signal, parameter, state or instance.
 - Why: the specification is the source of the RTL, and a name that breaks the naming rule here is renamed in every later file and in every waveform, so the rule must be fixed before the first name is written.
-- Check: manual - the question and the answer are in the chat and section 2 names the rule; `scripts/vlsit_spec_tool.py check` (with `--naming user` when the user supplied a rule) reports a missing record and, with the default rule, a port name that breaks the direction prefix, `i_clk_<domain>`, `i_rst_n_<domain>`, the 30-character limit or the NAM-08 abbreviations; manual - the names that are not ports follow the same rule.
+- Check: manual - the question and answer appear in the chat before names are written.
+
+### R-054 Default naming rule
+MUST use section 2 of `VLSIT_RTL_Design_Rule.md` v2 from `vlsit-rtl-generator` when the user supplies no naming rule, and record the chosen rule, path and version in section 2 of the specification.
+- Why: a documented default keeps names consistent across the specification and generated RTL.
+- Check: `scripts/vlsit_spec_tool.py check` reports a missing naming-rule record; manual - section 2 identifies the rule, path and version.
+
+### R-055 Apply the selected naming rule
+MUST apply the selected naming rule to every module, port, signal, parameter, state and instance name in the specification.
+- Why: inconsistent naming between prose, tables, diagrams and waveforms creates avoidable implementation mismatches.
+- Check: `scripts/vlsit_spec_tool.py check` (with `--naming user` when applicable) reports no checked naming violation; manual - non-port names follow the selected rule as well.
+
+### R-056 Correct forbidden names
+MUST NOT use a name forbidden by the selected naming rule, even when the user supplied it; use the permitted form and explain the applicable clause to the user.
+- Why: preserving a forbidden name would make the specification unusable as a compliant RTL source.
+- Check: manual - every corrected name is accompanied by its allowed form and rule clause.
 
 ## Diagrams and waveforms
 
 ### R-017 Block diagram and key waveforms
-MUST include in every specification a block diagram in section 5.2 and the key waveform of each important transaction of every external interface (at least one success case and one error case per interface), each as an image file with its source file beside it. Every waveform MUST be drawn with WaveDrom: its source is a WaveJSON file (`.json`) beside the image, and the image (SVG or PNG) and any HTML viewer are generated from that WaveJSON, by the bundled WaveDrom or by `scripts/vlsit_waveform_svg.py`; a waveform taken from a simulation is first converted from its VCD to WaveJSON (`vlsit-wavedrom-waveform`, `vcd-to-wavejson`) and then drawn the same way. A specification written before 2026-10-30 may keep figures that come from a simulation without a WaveJSON when its waveform plan marks them `R-017 exempt`. The complete list of waveforms is agreed with the user under R-024.
+MUST include a block diagram in section 5.2 and at least one success-case and one error-case key waveform for each important transaction of every external interface.
 - Why: a reader checks a protocol bridge by looking at its handshakes, and an image with a source can be reviewed and edited.
-- Check: manual - section 5.2 links a block diagram and the interface sections link waveform images whose `.json` or `.tex` sources exist; `vlsit_wavedrom_waveform.py lint` prints PASS for every WaveJSON.
+- Check: manual - section 5.2 links a block diagram and each external interface has the required success and error waveforms; the complete waveform list is agreed under R-024.
+
+### R-057 Figure source files
+MUST provide every block diagram and waveform as an image with its editable source file beside it.
+- Why: source files let the designer review and revise the figures without reconstructing them from images.
+- Check: manual - every diagram and waveform image has its source file alongside it.
+
+### R-058 Waveform rendering
+MUST draw each waveform with WaveDrom from an adjacent WaveJSON `.json` file, rendering SVG or PNG and any HTML viewer from that source; convert simulation VCD data to WaveJSON before drawing. A specification written before 2026-10-30 may retain a simulation waveform without WaveJSON only when its plan marks it `R-017 exempt`.
+- Why: WaveJSON gives the waveform a reproducible, editable source and preserves simulation evidence in the same format.
+- Check: `scripts/vlsit_wavedrom_waveform.py lint` prints PASS for every WaveJSON; manual - any legacy exemption meets its date and plan conditions.
 
 ### R-018 draw.io first
 MUST draw the block diagram of section 5.2 as a draw.io file with `scripts/vlsit_spec_diagram.py` from a JSON diagram spec that is filled from sections 5, 6 and 14.2 of the specification; LaTeX (`scripts/vlsit_block_diagram.py`) is the fallback only when the user asks for it or the draw.io build fails.
@@ -223,9 +288,39 @@ MUST name every specification created or revised with this skill exactly `VLSIT_
 - Check: manual - the specification basename matches `^VLSIT_[A-Z0-9]+(?:_[A-Z0-9]+)*_HDS\.md$`, and repository links resolve to the renamed file.
 
 ### R-043 Software programming and use flow
-MUST include in section 11.2 of every specification at least one basic flowchart for programming and using the IP and a matching step-by-step table; this requirement MUST NOT be waived by marking section 11.2 Not required. The flowchart MUST be a Mermaid `flowchart` and label every step with a unique ID and `[M]` or `[O]`; the table MUST use exactly these columns: `No.`, `Step`, `Option (M/O)`, `Interface`, `CSR`, and `Description`. Define `M` as mandatory for the shown operating path and `O` as an optional or conditional step that may be omitted; show the condition or branch that selects every optional path. `Interface` MUST state how the master interacts with the IP (protocol and action, such as a CSR read/write, polling, interrupt service, or a data transfer); if no master-facing interface applies, write `N/A` with the reason and identify the relevant pin or integration mechanism. `CSR` MUST name the exact workbook register and field plus the value/action software writes, reads, or polls; when the IP has no software-visible CSR, write `N/A` with the reason and name the applicable non-CSR interface in `Interface`, then document the IP's normal use sequence. Keep the diagram and table in one-to-one agreement, and do not invent register names or values.
+MUST include in section 11.2 a basic flowchart for programming and using the IP and a matching step-by-step table, and keep both artifacts required even when the section appears inapplicable; do not mark it `Not required`.
 - Why: software, integration and verification teams need a concrete sequence that shows which actions are required, which modes are optional, how the IP is accessed, and what each configuration step accomplishes.
-- Check: manual - section 11.2 contains a Mermaid flowchart and a table with the six exact columns; every node has a unique ID and an M/O label matching its row; all optional branches have a condition; the Interface, CSR and Description cells are complete and agree with the interface definition, CSR workbook and functional behavior.
+- Check: manual - section 11.2 contains both artifacts, their steps agree, and the section is not marked `Not required`.
+
+### R-060 Flowchart notation
+MUST write the section 11.2 flowchart as a Mermaid `flowchart` and label every step with a unique ID and `[M]` or `[O]`.
+- Why: consistent identifiers and option labels make each flow step traceable to its table row.
+- Check: manual - each flowchart node has a unique ID and one of the two required labels.
+
+### R-061 Step-table columns
+MUST use exactly these columns in the section 11.2 step table: `No.`, `Step`, `Option (M/O)`, `Interface`, `CSR`, and `Description`.
+- Why: a fixed table shape makes flows comparable and keeps interface and register actions visible.
+- Check: manual - the table header contains exactly the six named columns in order.
+
+### R-062 Mandatory and optional paths
+MUST define `M` as mandatory for the shown operating path and `O` as optional or conditional; show the condition or branch that selects each optional path.
+- Why: an unlabeled condition can make a required programming step appear optional or vice versa.
+- Check: manual - every optional step names its selecting condition or branch.
+
+### R-063 Interface actions
+MUST state in the `Interface` column how the master interacts with the IP, including protocol and action; when no master-facing interface applies, write `N/A` with the reason and identify the relevant pin or integration mechanism.
+- Why: the flow must explain how software or the surrounding system reaches the IP.
+- Check: manual - each `Interface` cell names the protocol/action or the required `N/A` rationale and integration point.
+
+### R-064 CSR and non-CSR actions
+MUST name the exact workbook register and field plus the value/action software writes, reads or polls in the `CSR` column; when the IP has no software-visible CSR, write `N/A` with the reason, name the non-CSR interface in `Interface`, and document the normal use sequence.
+- Why: exact register actions make the flow implementable and prevent invented register semantics.
+- Check: manual - each CSR action matches the workbook, or the non-CSR case has all three required explanations.
+
+### R-065 Flow consistency
+MUST keep the flowchart and table in one-to-one agreement and use only register names and values present in the workbook.
+- Why: mismatched artifacts or invented register data would mislead implementation and software teams.
+- Check: manual - each flowchart node has exactly one matching table row and every register name/value traces to the workbook.
 
 ### R-044 Markdown is the authoritative specification
 MUST use the Markdown file as the sole editable specification source, write inline and display equations in Pandoc-supported TeX math delimiters (`$...$` and `$$...$$`), and link figures with relative Markdown image paths under `figures/`; do not maintain a separate LaTeX specification source.

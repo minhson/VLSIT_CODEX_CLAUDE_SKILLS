@@ -1,6 +1,6 @@
 # Diagrams and waveforms
 
-Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-017 to R-020, R-024, R-027 to R-029).
+Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-017 to R-020, R-024, R-027 to R-029, R-057 and R-058).
 
 ## Block diagram (draw.io, rules R-018 to R-020, R-027 to R-029)
 

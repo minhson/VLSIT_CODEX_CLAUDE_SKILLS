@@ -21,7 +21,7 @@ Run `vlsit_spec_gaps.py facts <spec.md>` to print the tables below in compact fo
 | Arbitration, FIFOs, memories | 10.4, 10.5 | Depths, tie-breaking, read-during-write |
 | Error behavior | 12 error handling | Status outputs, which input is dropped or retried |
 | Synthesis environment | 14.3 | Top, frontend, options: copy into the report (SCP-02) |
-| CSR registers | 11 (workbook), 6.2 (APB ports), 7 (clocks) | Not written by hand: `vlsit_csr_generate.py` builds the CSR RTL with APB-CSR-Generator (R-039); the top instantiates it and connects the fields to the design (11.3, R-042) |
+| CSR registers | 11 (workbook), 6.2 (APB ports), 7 (clocks) | Generated from the workbook and not hand-edited (R-039, R-073 to R-075); the top instantiates it once, connects the fields and clocks, sets parameters and synchronizes cross-domain inputs (11.3, R-042, R-082 to R-085) |
 
 Sections 15 to 19 (verification, DFT, physical, security, traceability) do not create RTL, but read 16 for DFT ports (`i_dft_*`) that the RTL must expose.
 

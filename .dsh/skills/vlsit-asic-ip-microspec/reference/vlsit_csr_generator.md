@@ -1,6 +1,6 @@
 # APB-CSR-Generator: what the specification must know
 
-Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-016, R-030, R-031). The generator is the repository `https://github.com/nguyenquanicd/APB-CSR-Generator` (script `CSR_Generation.py`, version 3.2 in the canonical repository (the embedded VLSIT APB copy is 2.7); both support `wo` hardware clear; its single specification is `spec/CSR_Generator_Specification.md` in that repository). In the VLSIT flow it is the submodule `APB-CSR-Generator` of `VLSIT_RTL_Generator_AI_Model`. The RTL skill runs it; this skill only plans registers that it can build, and states the behavior it gives.
+Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-016, R-030, R-031, R-049 and R-050). The generator is the repository `https://github.com/nguyenquanicd/APB-CSR-Generator` (script `CSR_Generation.py`, version 3.2 in the canonical repository (the embedded VLSIT APB copy is 2.7); both support `wo` hardware clear; its single specification is `spec/CSR_Generator_Specification.md` in that repository). In the VLSIT flow it is the submodule `APB-CSR-Generator` of `VLSIT_RTL_Generator_AI_Model`. The RTL skill runs it; this skill only plans registers that it can build, states the behavior it gives, and records the user's decision when a requested behavior is unsupported.
 
 ## What it builds
 

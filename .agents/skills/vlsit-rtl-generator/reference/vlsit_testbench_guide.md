@@ -1,6 +1,6 @@
 # Simulation testbench guide
 
-Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-010, R-022 to R-026). Read this before you write or change a simulation testbench. A testbench is written only when the user asks for one (R-022).
+Guidance only; the mandatory requirements are in [rule.md](../rule.md) (R-010, R-022 to R-026, R-033 to R-034, R-088 to R-094). Read this before you write or change a simulation testbench. A testbench is written only when the user asks for one (R-022).
 
 ## 1. What the testbench is derived from (R-023)
 
@@ -99,7 +99,7 @@ When the cause is clear from this (for example the RTL breaks a named requiremen
 
 The designer decides; then make exactly that change.
 
-## 6. Waveform evidence of the specification plan (R-033)
+## 6. Waveform evidence of the specification plan (R-033, R-088 to R-091)
 
 The specification lists its key waveforms in the plan of section 10.3 (WF-001, WF-002, ...), each with a figure and a WaveJSON source. The testbench reproduces the same scenarios, and the waveforms that the simulation produces are kept in one folder so that the designer can put the simulated and the specified waveform side by side.
 
@@ -118,9 +118,9 @@ The specification lists its key waveforms in the plan of section 10.3 (WF-001, W
 
 The waveforms of the specification may themselves come from a prototype; the evidence of the delivered RTL replaces that statement only when the comparison says MATCH.
 
-## 7. Both branches of a design with a clock-domain crossing (R-034)
+## 7. Both branches of a design with a clock-domain crossing (R-034, R-092 to R-094)
 
-A design with a crossing has a synchronizer wrapper that holds two branches (rule R-027): the branch with `VLSIT_SYNTHESIS` instantiates the library cells and is the netlist that is built; the other branch is a simulation model of the same chain with a random extra latency of a few cycles (the metastability model), controlled by plusargs for the seed and for enabling the model. The testbench shall pass in both.
+A design with a crossing has a synchronizer wrapper that holds two branches (rules R-027, R-086 to R-089): the branch with `VLSIT_SYNTHESIS` instantiates the library cells and is the netlist that is built; the other branch is a simulation model of the same chain with a random extra latency of a few cycles (the metastability model), controlled by plusargs for the seed and for enabling the model. The testbench shall pass in both and use the branch labels required by R-093.
 
 1. **Detect.** `vlsit_sim_evidence.py plan <spec.md>` says whether section 7.2 of the specification lists crossings. A synchronizer wrapper in the RTL also makes the rule apply.
 2. **Synthesis branch.** Compile the design, the wrapper, the cell models and the testbench with the flow macro defined (for example `iverilog -DVLSIT_SYNTHESIS`, or `+define+VLSIT_SYNTHESIS`). The latency is deterministic; this run is the one whose waveforms are compared with the specification (section 6 of this guide).

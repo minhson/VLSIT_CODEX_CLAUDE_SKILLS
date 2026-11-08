@@ -16,9 +16,9 @@ Tạo RTL SystemVerilog tổng hợp được từ specification theo mẫu ASIC
 |---|---|
 | `vlsit_find_python.ps1` / `vlsit_find_python.sh` | Find or install Python 3 (Windows / Linux, macOS). / Tìm hoặc cài Python 3. |
 | `vlsit_spec_gaps.py` | `gaps`: list open items of the specification; `facts`: print its tables. / Liệt kê điểm còn trống; in các bảng. |
-| `vlsit_reuse_scan.py` | `list`, `scan`: catalog of the reusable library `common_rtl` and candidates for the functions of a specification (R-037). / Danh mục thư viện `common_rtl` và các ứng viên tái sử dụng cho chức năng trong spec. |
-| `vlsit_rtl_check.py` | `check`: mechanical rules by ID; `coverage`: what is checked by script, lint or by hand. / Kiểm rule máy đọc được theo ID. |
+| `vlsit_reuse_scan.py` | `list`, `scan`: catalog of the reusable library `common_rtl` and equivalent candidates (R-037, R-049 to R-053). / Danh mục thư viện `common_rtl` và các ứng viên tương đương để tái sử dụng. |
+| `vlsit_rtl_check.py` | `check`: mechanical rules by ID; `coverage`: what is checked by script, lint or by hand, including cell models and redundant declarations (R-032, R-035, R-068 to R-072, R-077). / Kiểm rule theo ID; báo rule được kiểm bằng script, lint hoặc thủ công. |
 | `vlsit_lint_rtl.py` | `tools`, `filelist`, `lint`. / Tìm công cụ, tạo filelist, chạy lint. |
-| `vlsit_sim_evidence.py` | `plan`, `check`, `cdc`: waveform evidence folder of the testbench against the specification plan (R-033) and the logs of both simulation branches of a clock-domain crossing (R-034). / Kiểm thư mục waveform mô phỏng so với plan trong spec và log hai nhánh mô phỏng của design có CDC. |
+| `vlsit_sim_evidence.py` | `plan`, `check`, `cdc`: waveform evidence and CDC branch logs, with non-match analysis and branch evidence requirements (R-033 to R-034, R-088 to R-094). / Kiểm waveform mô phỏng, phân tích sai khác và log hai nhánh CDC. |
 
 Claude Code: `/vlsit-rtl-generator`; Codex: `$vlsit-rtl-generator`; DeepSeek Harness: `/vlsit-rtl-generator`; or describe the task naturally. / Claude Code: `/vlsit-rtl-generator`; Codex: `$vlsit-rtl-generator`; DeepSeek Harness: `/vlsit-rtl-generator`; hoặc mô tả trực tiếp yêu cầu.

@@ -113,12 +113,17 @@ COVERAGE = OrderedDict([
     ("FIL-06", ("script", "ports declared in functional groups with a comment per group")),
     ("FIL-04", ("script", "if / else branch statements on their own line, no alignment after the condition")),
     ("R-027", ("script", "only exception: simulation branch of VLSIT_SYNTHESIS, reported as WARN")),
-    ("R-032", ("script", "cell model VLSIT_CELL_<function>: library pin names accepted, reported as WARN")),
-    ("R-040", ("script", "output of an APB-CSR-Generator older than 2.0 (header without Design Rule v2) is not rule-checked; reported as WARN")),
-    ("R-035", ("script", "no redundant declaration: no one-bit range such as [0:0], no unused internal signal, localparam or type")),
+    ("R-032", ("script", "cell model module name uses VLSIT_CELL_<FUNCTION>")),
+    ("R-068", ("manual", "cell-model ports use permitted library pin names; the checker reports that ordinary naming checks are skipped")),
+    ("R-069", ("script", "cell-model header identifies synthesizable RTL and use of the real synthesis-library cell")),
+    ("R-040", ("manual", "generated CSR files are stored in csr and included in the full RTL rule check and lint")),
+    ("R-077", ("script", "output of an APB-CSR-Generator older than 2.0 is not rule-checked; reported as WARN")),
+    ("R-035", ("script", "one-bit declarations do not use a one-bit numeric range such as [0:0]")),
+    ("R-071", ("script", "single-bit selections do not use a redundant [i:i] range")),
+    ("R-072", ("script", "no unused internal signal, localparam or type")),
     ("R-038", ("script", "no `default_nettype directive in design RTL; undeclared identifiers are found by lint (TYP-03, P5)")),
     ("R-036", ("script", "the always_ff that assigns an FSM current state holds that register only")), ("ENM-06", ("script", "FSM current-state register in its own always_ff (rule file): same check as R-036")),
-    ("TYP-06", ("script", "no redundant declaration (rule file): same check as R-035")), ("P30", ("script", "one-bit ranges and unused internal declarations (rule file): same check as R-035")),
+    ("TYP-06", ("script", "no redundant declaration (rule file): same checks as R-035, R-071 and R-072")), ("P30", ("script", "one-bit ranges and unused internal declarations (rule file): same checks as R-035, R-071 and R-072")),
 ])
 
 
@@ -344,6 +349,7 @@ def check_if_chains(code, name, f):
 
 
 ONE_BIT_RANGE = re.compile(r"\[\s*(\d+)\s*:\s*(\d+)\s*\]")
+ONE_BIT_VARIABLE_RANGE = re.compile(r"\[\s*([A-Za-z_]\w*)\s*:\s*\1\s*\]")
 DECL_SIGNAL = re.compile(r"(?m)^[ \t]*(?:logic|wire|[A-Za-z_]\w*_type_def)\b[ \t]*(?:\[[^\]\n]*\][ \t]*)?"
                          r"([A-Za-z_]\w*(?:[ \t]*\[[^\]\n]*\])*(?:[ \t]*,[ \t]*[A-Za-z_]\w*(?:[ \t]*\[[^\]\n]*\])*)*)[ \t]*;")
 DECL_LPARA = re.compile(r"\blocalparam\b[^=;]*?\b(LPARA_\w+)\s*=")
@@ -351,14 +357,17 @@ DECL_TYPEDEF = re.compile(r"\}\s*([A-Za-z_]\w*_type_def)\s*;")
 
 
 def check_redundant(code, name, f):
-    """R-035: no one-bit range such as [0:0] (declare a one-bit signal without a range, select a bit with [i]) and no
-    internal signal, localparam or type that nothing uses. Ports and parameters belong to the interface and are exempt."""
-    f.mark("R-035", "TYP-06", "P30")
+    """Check R-035 one-bit declarations, R-071 single-bit selects and R-072 unused internal declarations."""
+    f.mark("R-035", "R-071", "R-072", "TYP-06", "P30")
     for m in ONE_BIT_RANGE.finditer(code):
         if m.group(1) == m.group(2):
             f.add("ERROR", "R-035", name, line_of(code, m.start()),
-                  "one-bit range [%s:%s]: declare a one-bit signal without a range and select one bit with [%s] (R-035)"
-                  % (m.group(1), m.group(2), m.group(1)))
+                  "one-bit declaration range [%s:%s]: declare a one-bit signal without a range (R-035)"
+                  % (m.group(1), m.group(2)))
+    for m in ONE_BIT_VARIABLE_RANGE.finditer(code):
+        f.add("ERROR", "R-071", name, line_of(code, m.start()),
+              "single-bit selection [%s:%s] uses a redundant range; select [%s] instead (R-071)"
+              % (m.group(1), m.group(1), m.group(1)))
     declared = []
     for m in DECL_SIGNAL.finditer(code):
         for part in m.group(1).split(","):
@@ -371,8 +380,8 @@ def check_redundant(code, name, f):
         declared.append((m.group(1), m.start()))
     for ident, pos in declared:
         if len(re.findall(r"\b%s\b" % re.escape(ident), code)) == 1:
-            f.add("ERROR", "R-035", name, line_of(code, pos),
-                  "'%s' is declared but nothing uses it: remove the declaration (R-035)" % ident)
+            f.add("ERROR", "R-072", name, line_of(code, pos),
+                  "'%s' is declared but nothing uses it: remove the declaration (R-072)" % ident)
 
 
 FSM_CURRENT = re.compile(r"^reg_fsm_\w+_current_state$")
@@ -425,8 +434,8 @@ SIM_MACRO = "VLSIT_SYNTHESIS"
 SIM_REASON = ("simulation-only branch of `%s` is excluded from the RTL rules (spec DEC-021 and REQ-RTL-002, rule R-027): "
               "it is never synthesized, so the design rules were NOT checked in these lines; it is covered by simulation only" % SIM_MACRO)
 CELL_PREFIX = "VLSIT_CELL_"
-CELL_REASON = ("module `%s` is a cell model (rule R-032): its module and pin names keep the usual style of a library cell, so the "
-               "port and signal naming of the rule file was NOT checked; a real design uses the cell of the synthesis library")
+CELL_REASON = ("module `%s` is a cell model (rule R-068): library pin names are exempt from ordinary naming checks and need manual confirmation; "
+               "a real design uses the cell of the synthesis library")
 DIRECTIVE = re.compile(r"^\s*`(ifdef|ifndef|elsif|else|endif)\b[ \t]*(\w*)")
 
 
@@ -528,7 +537,7 @@ def check_port_layout(raw, code, name, f):
 
 
 GENERATED_MARK = "APB-CSR-Generator"
-GENERATED_REASON = ("generated CSR file of an APB-CSR-Generator older than 2.0 (rule R-040): its style does not follow the RTL rule file, so the rule "
+GENERATED_REASON = ("generated CSR file of an APB-CSR-Generator older than 2.0 (rule R-077): its style does not follow the RTL rule file, so the rule "
                     "check is skipped; generate it again with version 2.0 or later instead of editing it, the lint of rule R-014 still applies")
 
 
@@ -541,8 +550,8 @@ def check_file(path, f):
     raw = Path(path).read_text(encoding="utf-8-sig")
     name = Path(path).name
     if is_generated(path):
-        f.mark("R-040")
-        f.add("WARN", "R-040", name, 1, GENERATED_REASON)
+        f.mark("R-077")
+        f.add("WARN", "R-077", name, 1, GENERATED_REASON)
         return
     raw, sim_regions = mask_sim_branches(raw, f, name)
     f.mark("R-027")
@@ -608,11 +617,12 @@ def check_file(path, f):
     is_cell = mod_name.startswith(CELL_PREFIX)
     f.mark("R-032")
     if is_cell:
-        f.add("WARN", "R-032", name, line_of(code, mod_pos), CELL_REASON % mod_name)
+        f.mark("R-068", "R-069")
+        f.add("WARN", "R-068", name, line_of(code, mod_pos), CELL_REASON % mod_name)
         if not re.match(r"^VLSIT_CELL_[A-Z][A-Z0-9_]*$", mod_name):
             f.add("ERROR", "R-032", name, line_of(code, mod_pos), "cell module name must be VLSIT_CELL_<FUNCTION> in uppercase")
         if not re.search(r"(?i)synthesizable", raw.split("*/")[0]) or not re.search(r"(?i)synthesis library", raw.split("*/")[0]):
-            f.add("ERROR", "R-032", name, 1, "cell header must say that the model is synthesizable and that the cell of the synthesis library is used in a real design")
+            f.add("ERROR", "R-069", name, 1, "cell header must say that the model is synthesizable and that the cell of the synthesis library is used in a real design")
     if Path(path).stem != mod_name:
         f.add("ERROR", "HIE-01", name, line_of(code, mod_pos), "file name '%s' must equal the module name '%s'" % (name, mod_name))
 
